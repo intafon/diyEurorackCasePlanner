@@ -75,7 +75,7 @@
         var actualRailSeparation = 123;
         var actualRailDepth = 14;
         var actualPanelDepth = 55;
-        var useStaticRise = true;
+        var useStaticRise = false;
         var caseMaterialThickness = 5;
 
         var panelHeight = 350;
@@ -238,7 +238,7 @@
             var railDepthInfo = ["Rails depth inset: ", actualDistance(actualRailDepth, true)];
             var railSpacingInfo = ["Rail screw spacing*: ", actualDistance(actualRailSeparation, true)];
             var footnote = ["*Note: rail spacing based on the measurements provided by " +
-                "Future Music's cardboard DIY case using TipTop Audio Z-Rails.", ""];
+                '<a href="http://www.musicradar.com/tuition/tech/how-to-build-your-own-cardboard-eurorack-modular-case-625196">Future Music\'s cardboard DIY</a> case using TipTop Audio Z-Rails.', ""];
             var info = [
                 cabinetInfo,
                 panelHeightInfo,
@@ -366,6 +366,8 @@
             inputDepth = document.getElementById('the-input-depth');
             calcRiseCb = document.getElementById('calc-rise');
             calcRiseCb.checked = !useStaticRise;
+            matThickness = document.getElementById('material-thickness');
+            matThickness.value = caseMaterialThickness;
 
             canvasDiv = document.getElementById('canvas-div');
             canvas = document.getElementById('the-canvas');
@@ -406,6 +408,10 @@
                     useStaticRise = !event.target.checked;
                     break;
                 }
+                case matThickness: {
+                    caseMaterialThickness = event.target.value;
+                    break;
+                }
             }
 
             drawSide();
@@ -415,15 +421,33 @@
 <body onload="init();">
     <div id="container">
         <div id="input-div">
-            <span class="input-span">Module Depth Max:&nbsp;<input id="the-input-depth" onchange="changeValue(event);" value="0" /><span class="input-span unit">mm</span>&nbsp;<span class="input-span">Calculate needed rise: <input type="checkbox" id="calc-rise" onchange="changeValue(event)"></span></span>
-            <span class="input-span">Row 1 Angle:&nbsp;<input id="the-input-one" onchange="changeValue(event);" value="0" /><span class="input-span unit">degrees</span></span>
-            <span class="input-span">Row 2 Angle:&nbsp;<input id="the-input-two" onchange="changeValue(event);" value="0" /><span class="input-span unit">degrees</span></span>
+            <span class="input-span">Module Depth Max:&nbsp;
+                <input id="the-input-depth" onchange="changeValue(event);" value="0" />
+                <span class="input-span unit">mm</span>&nbsp;<span class="input-span">
+                    Calculate needed rise:
+                    <input type="checkbox" id="calc-rise" onchange="changeValue(event)">
+                </span>
+            </span>
+            <span class="input-span">
+                Row 1 Angle:&nbsp;
+                <input id="the-input-one" onchange="changeValue(event);" value="0" />
+                <span class="input-span unit">degrees</span>
+            </span>
+            <span class="input-span">
+                Row 2 Angle:&nbsp;
+                <input id="the-input-two" onchange="changeValue(event);" value="0" />
+                <span class="input-span unit">degrees</span>
+            </span>
+            <span class="input-span">
+                Material thickness:&nbsp;
+                <input id="material-thickness" onchange="changeValue(event);" value="0" />
+                <span class="input-span unit">mm</span>
+            </span>
         </div>
         <div id="canvas-div">
             <canvas id="the-canvas" width="150" height="150"></canvas>
         </div>
         <div id="summary-div">
-
         </div>
     </div>
 </body>
