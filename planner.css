@@ -1,0 +1,59 @@
+html, body {
+    background-color: #EEEEEE;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin : 0;
+    font-family: sans-serif;
+    font-size: 11px;
+}
+
+body {
+}
+
+input {
+    /*margin: 5px;*/
+}
+
+.input-span {
+    padding-right: 20px;
+    white-space: nowrap;
+}
+
+.input-span.unit {
+    font-size: 80%;
+    padding-left: 2px;
+}
+
+#container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-flow: column;
+}
+
+#input-div {
+    margin: 5px;
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+#canvas-div {
+    background-color: #FFFFFF;
+    margin-left: 5px;
+    margin-right: 5px;
+    flex: 1;
+    overflow: auto;
+    /*width: 100%;*/
+}
+
+#the-canvas {
+    width: 100%;
+    height: 100%;
+    padding: 0px;
+}
+
+#summary-div {
+    margin: 5px;
+    min-height: 100px;
+}
