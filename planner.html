@@ -25,6 +25,11 @@
             white-space: nowrap;
         }
 
+        .input-span.unit {
+            font-size: 80%;
+            padding-left: 2px;
+        }
+
         #container {
             width: 100%;
             height: 100%;
@@ -33,7 +38,6 @@
         }
 
         #input-div {
-            /*background-color: #FFFFFF;*/
             margin: 5px;
             margin-left: 5px;
             margin-right: 5px;
@@ -69,9 +73,10 @@
 
         var actualPanelHeight = 133.4;
         var actualRailSeparation = 123;
-        var actualRailDepth = 15;
+        var actualRailDepth = 14;
         var actualPanelDepth = 55;
         var useStaticRise = true;
+        var caseMaterialThickness = 5;
 
         var panelHeight = 350;
         var heightRatio = actualPanelHeight / panelHeight;
@@ -101,23 +106,22 @@
 
         function drawSide() {
 
-            // TODO:
-            // -- accomodate for the way the carboard is set for the FutureMusic plans
-            // -- accomodate for the angle to determine the necessary depth based on panel depth
-            // -- measure the actual depth used for FM placement of the rails into the case
-
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.setLineDash([]);//([1, 5]);
 
             var maxX = 0, maxY = 0;
             var x, y;
             var p = [];
 
-            function add(xn, yn) {
+            function add(xn, yn, noWriteMarker) {
                 x = xn;
                 y = yn;
                 maxX = Math.max(maxX, xn);
                 maxY = Math.max(maxY, yn);
                 p.push(xn, yn);
+                if (noWriteMarker) {
+                    p.push(noWriteMarker);
+                }
             }
 
             panels = [
@@ -131,25 +135,64 @@
                 }
             ];
 
+            var frontPieceOutline = [];
+            var backPieceOutline = [];
+
             add(0, 0);
+
+            // bottom panel goes underneath the sides, front, and back
 
             var bottomPanelDepth = useStaticRise ?
                 actualPanelDepth :
                 Math.abs(actualPanelDepth * Math.sin(Math.PI / 2 - rad(angle1)));
             add(x, y + bottomPanelDepth);
-            panels[0].coords.push(x, y);
 
+            // Add the points for drawing the dotted line representing the cardboard
+            // piece for the case front on the other side of the side panel.
+            frontPieceOutline.push(
+                x + Math.cos(rad(angle1)) * caseMaterialThickness,
+                y + Math.sin(rad(angle1)) * caseMaterialThickness,
+            );
+            frontPieceOutline.push(x + Math.cos(rad(angle1)) * caseMaterialThickness, 0);
+            frontPieceOutline.push(0, 0);
+            add(
+                x + Math.cos(rad(angle1)) * caseMaterialThickness,
+                y + Math.sin(rad(angle1)) * caseMaterialThickness,
+                "nowrite"
+            );
+
+            panels[0].coords.push(x, y);
             add(
                 x + Math.cos(rad(angle1)) * actualPanelHeight,
                 y + Math.sin(rad(angle1)) * actualPanelHeight,
             );
             panels[0].coords.push(x, y);
+
             panels[1].coords.push(x, y);
             add(
                 x + Math.cos(rad(angle1 + angle2)) * actualPanelHeight,
-                y + Math.sin(rad(angle1 + angle2)) * actualPanelHeight
+                y + Math.sin(rad(angle1 + angle2)) * actualPanelHeight,
+                "nowrite"
             );
             panels[1].coords.push(x, y);
+
+            // Add the points for drawing the dotted line representing the cardboard
+            // piece for the case back on the other side of the side panel.
+            backPieceOutline.push(x, y);
+            backPieceOutline.push(
+                x + Math.sin(rad(angle1 + angle2)) * actualPanelDepth,
+                y - Math.cos(rad(angle1 + angle2)) * actualPanelDepth
+            );
+            backPieceOutline.push(
+                x + Math.sin(rad(angle1 + angle2)) * actualPanelDepth,
+                0
+            );
+
+            add(
+                x + Math.cos(rad(angle1 + angle2)) * caseMaterialThickness,
+                y + Math.sin(rad(angle1 + angle2)) * caseMaterialThickness,
+            );
+
             add(
                 x + Math.sin(rad(angle1 + angle2)) * actualPanelDepth,
                 y - Math.cos(rad(angle1 + angle2)) * actualPanelDepth
@@ -160,6 +203,25 @@
             );
             add(0, 0);
 
+            ctx.setLineDash([1, 5]);
+            ctx.beginPath();
+            drawPath(false, 0, 0,
+                     maxX, 0,
+                     maxX, -caseMaterialThickness,
+                     0, -caseMaterialThickness,
+                     0, 0);
+            ctx.closePath();
+
+            frontPieceOutline.unshift("false");
+            backPieceOutline.unshift("false");
+            ctx.beginPath();
+            drawPath(frontPieceOutline);
+            ctx.closePath();
+            ctx.beginPath();
+            drawPath(backPieceOutline);
+            ctx.closePath();
+
+            ctx.setLineDash([]);
             drawPath(p);
 
             drawPanelRails(panels);
@@ -259,13 +321,29 @@
             if (!Array.isArray(pts)) {
                 pts = Array.prototype.slice.call(arguments);
             }
+            if (pts.length === 0) {
+                return;
+            }
+            var shouldWriteCoords = true;
+            if (typeof(pts[0]) !== 'number') {
+                pts.shift();
+                shouldWriteCoords = false;
+            }
             ctx.beginPath();
             moveTo(pts.shift(), pts.shift());
             while (pts.length > 0) {
                 var x = pts.shift();
                 var y = pts.shift();
+                console.info(x, y, pts[0]);
                 lineTo(x, y);
-                writeCoords(x, y);
+                if (typeof(pts[0]) === 'number') {
+                    if (shouldWriteCoords) {
+                        writeCoords(x, y);
+                    }
+                } else {
+                    console.info("no writing for ", x, y, pts[0]);
+                    pts.shift();
+                }
             }
             ctx.stroke();
             ctx.closePath();
@@ -337,9 +415,9 @@
 <body onload="init();">
     <div id="container">
         <div id="input-div">
-            <span class="input-span">Module Depth Max:&nbsp;<input id="the-input-depth" onchange="changeValue(event);" value="0" />&nbsp;<span class="input-span">Calculate needed rise: <input type="checkbox" id="calc-rise" onchange="changeValue(event)"></span></span>
-            <span class="input-span">Row 1 Angle:&nbsp;<input id="the-input-one" onchange="changeValue(event);" value="0" /></span>
-            <span class="input-span">Row 2 Angle:&nbsp;<input id="the-input-two" onchange="changeValue(event);" value="0" /></span>
+            <span class="input-span">Module Depth Max:&nbsp;<input id="the-input-depth" onchange="changeValue(event);" value="0" /><span class="input-span unit">mm</span>&nbsp;<span class="input-span">Calculate needed rise: <input type="checkbox" id="calc-rise" onchange="changeValue(event)"></span></span>
+            <span class="input-span">Row 1 Angle:&nbsp;<input id="the-input-one" onchange="changeValue(event);" value="0" /><span class="input-span unit">degrees</span></span>
+            <span class="input-span">Row 2 Angle:&nbsp;<input id="the-input-two" onchange="changeValue(event);" value="0" /><span class="input-span unit">degrees</span></span>
         </div>
         <div id="canvas-div">
             <canvas id="the-canvas" width="150" height="150"></canvas>
