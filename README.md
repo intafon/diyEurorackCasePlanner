@@ -20,4 +20,5 @@ Pixels per cm -- this for now is my poor man's way of allowing the user to make 
 ## WARNING! DISCLAIMER! HEY! READ THIS!
 **Disclaimer: I have not yet actually built a case from this planner. I put the planner together in order to help me build one! (will post update once I've successfully completed one (or someone else does ;-))**
 
+## Allons-y!
 Go to [the planner](./planner.html).
