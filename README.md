@@ -18,7 +18,15 @@ Material thickness is set by default to 5mm -- this indicates the thickness of t
 Pixels per cm -- this for now is my poor man's way of allowing the user to make the printed image of the case plan larger on the screen. I may remove this at a later date and just try to calculate the best guess at the sizing of the plan on the page to accomodate changes in window size.
 
 ## WARNING! DISCLAIMER! HEY! READ THIS!
-**Disclaimer: I have not yet actually built a case from this planner. I put the planner together in order to help me build one! (will post update once I've successfully completed one (or someone else does ;-))**
+**Disclaimer: ~~I have not yet actually built a case from this planner. I put the planner together in order to help me build one! (will post update once I've successfully completed one (or someone else does ;-))**~~
+
+## Finished build
+
+The two photos below are of the first case I built from cardboard using the planner as a guide (and also the full bottom width measurement from the FM guide). The angles used were 10 and 15 degrees (where the 15 degree is from the 10 degree line, so actually 25 degrees). This uses 2 pair of Tiptop Audio Z-Rails, 84hp, and a Tiptop uZeus for power.
+
+![Case without rails.](./imx/shape_finished.jpg "Case without rails.")
+
+![Case with rails and modules.](./imx/case_finished.jpg "Case with rails and modules.")
 
 ## Allons-y!
 Go to [the planner](https://intafon.github.io/diyEurorackCasePlanner/planner.html).
