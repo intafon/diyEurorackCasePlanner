@@ -1,27 +1,31 @@
 'use strict';
 
+// wait for the DOM to load before init
+document.addEventListener("DOMContentLoaded", function() {
+    init();
+});
+
 var input,
     canvasDiv,
     canvas,
     calcRiseCb,
     ctx, w, h;
 
-var inputDepth, input1, input2, matThickness, pxPerCmInput;
+var inputDepth, input1, input2, input3, matThickness, pxPerCmInput;
+var angle1u, angle2u, angle3u;
 
-var actualPanelHeight = 133.4;
 var actualRailSeparation = 123;
 var actualRailDepth = 14;
 var actualPanelDepth = 55;
 var useStaticRise = false;
 var caseMaterialThickness = 5;
 
-var pxPerCm = 400 / actualPanelHeight;
-var panelHeight = actualPanelHeight * pxPerCm;
-var heightRatio = actualPanelHeight / panelHeight;
 var angle1 = 10;
-var angle2 = 15;
+var angle2 = 20;
+var angle3 = 15;
 var panel1 = [];
 var panel2 = [];
+var panel3 = [];
 var panels = [];
 var startX = function() {
     return 70;
@@ -29,6 +33,25 @@ var startX = function() {
 var startY = function() {
     return canvas.height - 70;
 };
+
+function actualPanelHeight(racku){
+    if(parseInt(racku) == 1)
+        return 44.45;
+    else
+        return 133.4;
+}
+
+function pxPerCm(racku){
+    return 400 / actualPanelHeight(racku);
+}
+
+function panelHeight(racku){
+    return actualPanelHeight(racku) * pxPerCm(racku);
+}
+
+function heightRatio(racku){
+    return actualPanelHeight(racku) / panelHeight(racku);
+}
 
 function rad(d) {
     return d / 180 * Math.PI;
@@ -66,10 +89,17 @@ function drawSide() {
     panels = [
         {
             angle: angle1,
+            u: angle1u.value,
             coords: []
         },
         {
             angle: angle1 + angle2,
+            u: angle2u.value,
+            coords: []
+        },
+        {
+            angle: angle2 + angle3,
+            u: angle3u.value,
             coords: []
         }
     ];
@@ -102,39 +132,47 @@ function drawSide() {
 
     panels[0].coords.push(x, y);
     add(
-        x + Math.cos(rad(angle1)) * actualPanelHeight,
-        y + Math.sin(rad(angle1)) * actualPanelHeight
+        x + Math.cos(rad(angle1)) * actualPanelHeight(panels[0].u),
+        y + Math.sin(rad(angle1)) * actualPanelHeight(panels[0].u)
     );
     panels[0].coords.push(x, y);
 
     panels[1].coords.push(x, y);
     add(
-        x + Math.cos(rad(angle1 + angle2)) * actualPanelHeight,
-        y + Math.sin(rad(angle1 + angle2)) * actualPanelHeight,
+        x + Math.cos(rad(angle1 + angle2)) * actualPanelHeight(panels[1].u),
+        y + Math.sin(rad(angle1 + angle2)) * actualPanelHeight(panels[1].u),
         "nowrite"
     );
     panels[1].coords.push(x, y);
+
+    panels[2].coords.push(x, y);
+    add(
+        x + Math.cos(rad(angle2 + angle3)) * actualPanelHeight(panels[2].u),
+        y + Math.sin(rad(angle2 + angle3)) * actualPanelHeight(panels[2].u),
+        "nowrite"
+    );
+    panels[2].coords.push(x, y);
 
     // Add the points for drawing the dotted line representing the cardboard
     // piece for the case back on the other side of the side panel.
     backPieceOutline.push(x, y);
     backPieceOutline.push(
-        x + Math.sin(rad(angle1 + angle2)) * actualPanelDepth,
-        y - Math.cos(rad(angle1 + angle2)) * actualPanelDepth
+        x + Math.sin(rad(angle1 + angle2 + angle3)) * actualPanelDepth,
+        y - Math.cos(rad(angle1 + angle2 + angle3)) * actualPanelDepth
     );
     backPieceOutline.push(
-        x + Math.sin(rad(angle1 + angle2)) * actualPanelDepth,
+        x + Math.sin(rad(angle1 + angle2 + angle3)) * actualPanelDepth,
         0
     );
 
     add(
-        x + Math.cos(rad(angle1 + angle2)) * caseMaterialThickness,
-        y + Math.sin(rad(angle1 + angle2)) * caseMaterialThickness
+        x + Math.cos(rad(angle1 + angle2 + angle3)) * caseMaterialThickness,
+        y + Math.sin(rad(angle1 + angle2 + angle3)) * caseMaterialThickness
     );
 
     add(
-        x + Math.sin(rad(angle1 + angle2)) * actualPanelDepth,
-        y - Math.cos(rad(angle1 + angle2)) * actualPanelDepth
+        x + Math.sin(rad(angle1 + angle2 + angle3)) * actualPanelDepth,
+        y - Math.cos(rad(angle1 + angle2 + angle3)) * actualPanelDepth
     );
     add(
         x,
@@ -172,7 +210,9 @@ function writeSummary(width, height) {
     var cabinetInfo = ["Cabinet depth and height: ",
                       actualDistance(width, true) + " x " +
                       actualDistance(height, true)];
-    var panelHeightInfo = ["Panel height used: ", actualDistance(actualPanelHeight, true)];
+    var panel1HeightInfo = ["Panel 1 height used: ", actualDistance(actualPanelHeight(angle1u.value), true)];
+    var panel2HeightInfo = ["Panel 2 height used: ", actualDistance(actualPanelHeight(angle2u.value), true)];
+    var panel3HeightInfo = ["Panel 3 height used: ", actualDistance(actualPanelHeight(angle3u.value), true)];
     var panelDepthInfo = ["Panel depth used: ", actualDistance(actualPanelDepth, true)];
     var railDepthInfo = ["Rails depth inset: ", actualDistance(actualRailDepth, true)];
     var railSpacingInfo = ["Rail screw spacing*: ", actualDistance(actualRailSeparation, true)];
@@ -182,7 +222,9 @@ function writeSummary(width, height) {
         'case using TipTop Audio Z-Rails.', ""];
     var info = [
         cabinetInfo,
-        panelHeightInfo,
+        panel1HeightInfo,
+        panel2HeightInfo,
+        panel3HeightInfo,
         panelDepthInfo,
         railDepthInfo,
         railSpacingInfo,
@@ -197,20 +239,20 @@ function writeSummary(width, height) {
         }).join("<br/>");
 }
 
-function getPlot(x, y) {
+function getPlot(x, y, racku) {
     return {
-        x: startX() + x / heightRatio,
-        y: startY() - y / heightRatio
+        x: startX() + x / heightRatio(racku),
+        y: startY() - y / heightRatio(racku)
     };
 }
 
-function moveTo(x, y) {
-    var plot = getPlot(x, y);
+function moveTo(x, y, racku) {
+    var plot = getPlot(x, y, racku);
     ctx.moveTo(plot.x, plot.y);
 }
 
-function lineTo(x, y) {
-    var plot = getPlot(x, y);
+function lineTo(x, y, racku) {
+    var plot = getPlot(x, y, racku);
     ctx.lineTo(plot.x, plot.y);
 }
 
@@ -220,7 +262,7 @@ function roundToPlace(v, p) {
 
 function drawPanelRail(panel) {
     var circR = 3;
-    var screwDist = (actualPanelHeight - actualRailSeparation) / 2;
+    var screwDist = (actualPanelHeight(panel.u) - actualRailSeparation) / 2;
     var screwDistX = Math.cos(rad(panel.angle)) * (screwDist);
     var screwDistY = Math.sin(rad(panel.angle)) * (screwDist);
     var screwDistDepthX = Math.sin(rad(panel.angle)) * (actualRailDepth);
@@ -228,7 +270,7 @@ function drawPanelRail(panel) {
 
     var screwX = panel.coords[0] + screwDistX + screwDistDepthX;
     var screwY = panel.coords[1] + screwDistY + screwDistDepthY;
-    var plot = getPlot(screwX, screwY);
+    var plot = getPlot(screwX, screwY, panel.u);
 
 
     ctx.beginPath();
@@ -243,7 +285,7 @@ function drawPanelRail(panel) {
 
     screwX = panel.coords[2] - screwDistX + screwDistDepthX;
     screwY = panel.coords[3] - screwDistY + screwDistDepthY;
-    plot = getPlot(screwX, screwY);
+    plot = getPlot(screwX, screwY, panel.u);
 
     ctx.beginPath();
     ctx.arc(plot.x, plot.y, circR, 0, 2 * Math.PI);
@@ -293,10 +335,10 @@ function drawPath(pts) {
     ctx.closePath();
 }
 
-function writeCoords(x, y, showBelow) {
+function writeCoords(x, y, showBelow, racku) {
     var yFactor = showBelow ? -1 : 1;
     ctx.font = "10px sans-serif";
-    var plot = getPlot(x, y);
+    var plot = getPlot(x, y, racku);
     ctx.fillText(actualDistance(x) + ", " + actualDistance(y),
                  plot.x + 5,
                  plot.y - (10 * yFactor));
@@ -305,6 +347,10 @@ function writeCoords(x, y, showBelow) {
 function init() {
     input1 = document.getElementById('the-input-one');
     input2 = document.getElementById('the-input-two');
+    input3 = document.getElementById('the-input-three');
+    angle1u = document.getElementById('angle1u');
+    angle2u = document.getElementById('angle2u');
+    angle3u = document.getElementById('angle3u');
 
     inputDepth = document.getElementById('the-input-depth');
     calcRiseCb = document.getElementById('calc-rise');
@@ -312,7 +358,7 @@ function init() {
     matThickness = document.getElementById('material-thickness');
     matThickness.value = caseMaterialThickness;
     pxPerCmInput = document.getElementById('px-per-cm');
-    pxPerCmInput.value = pxPerCm;
+    pxPerCmInput.value = pxPerCm(3);
 
     canvasDiv = document.getElementById('canvas-div');
     canvas = document.getElementById('the-canvas');
@@ -327,6 +373,7 @@ function init() {
     inputDepth.value = actualPanelDepth;
     input1.value = angle1;
     input2.value = angle2;
+    input3.value = angle3;
 
     drawSide();
 
@@ -342,7 +389,7 @@ function init() {
 }
 
 function changeValue(event) {
-    // console.info(event.target);
+    console.info(event.target);
     switch (event.target) {
         case inputDepth: {
             actualPanelDepth = parseFloat(event.target.value);
@@ -356,6 +403,10 @@ function changeValue(event) {
             angle2 = parseFloat(event.target.value);
             break;
         }
+        case input3: {
+            angle3 = parseFloat(event.target.value);
+            break;
+        }
         case calcRiseCb: {
             useStaticRise = !event.target.checked;
             break;
@@ -364,10 +415,11 @@ function changeValue(event) {
             caseMaterialThickness = parseFloat(event.target.value);
             break;
         }
+        // this is custom pxPerCm via input
         case pxPerCmInput: {
             pxPerCm = parseFloat(event.target.value);
-            panelHeight = actualPanelHeight * pxPerCm;
-            heightRatio = actualPanelHeight / panelHeight;
+            panelHeight = actualPanelHeight(3) * pxPerCm;
+            heightRatio = actualPanelHeight(3) / panelHeight;
             break;
         }
     }
