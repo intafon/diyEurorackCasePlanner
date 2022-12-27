@@ -148,7 +148,11 @@ function drawSide() {
         panels[i].coords.push(x, y);
         add(
             x + Math.cos(rad(getActualRowAngle(i))) * actualPanelHeight,
-            y + Math.sin(rad(getActualRowAngle(i))) * actualPanelHeight
+            y + Math.sin(rad(getActualRowAngle(i))) * actualPanelHeight,
+            // If it is the last row, then the outline will continue for the width of
+            // the material, so we'll just write the coord marker at the end of that
+            // instead of the end of the row outline.
+            i === rowAngles.length - 1
         );
         panels[i].coords.push(x, y);
     });
@@ -564,23 +568,4 @@ function init() {
         ctx.clearRect(0, 0, w, h);
         drawSide();
     };
-}
-
-/**
- * Triggered when some of the input values are changed.
- *
- * @param {event} event The value change event.
- */
-function changeValue(event) {
-    // console.info(event.target);
-    switch (
-        event.target
-        // case calcRiseCb: {
-        //     useStaticRise = !event.target.checked;
-        //     break;
-        // }
-    ) {
-    }
-
-    drawSide();
 }
