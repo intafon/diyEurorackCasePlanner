@@ -1,45 +1,57 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>DIY Eurorack Case Planner Tool</title>
-    <link rel="stylesheet" href="planner.css">
-    <script src="planner.js" type="text/javascript" charset="utf-8"></script>
-</head>
-<body onload="init();">
-    <div id="container">
-        <div id="input-div">
-            <span class="input-span">Module Depth Max:&nbsp;
-                <input id="the-input-depth" onchange="changeValue(event);" value="0" />
-                <span class="input-span unit">mm</span>&nbsp;<span class="input-span">
-                    Calculate needed rise:
-                    <input type="checkbox" id="calc-rise" onchange="changeValue(event)">
+    <head>
+        <title>DIY Eurorack Case Planner Tool</title>
+        <link rel="stylesheet" href="planner.css" />
+        <script src="planner.js" type="text/javascript" charset="utf-8"></script>
+    </head>
+    <body onload="init();">
+        <div id="container">
+            <div id="input-div">
+                <span class="input-span"
+                    >Module Depth Max:&nbsp;
+                    <input
+                        id="the-input-depth"
+                        onchange="changeValue(event);"
+                        value="0"
+                    />
+                    <span class="input-span unit">mm</span>&nbsp;<span class="input-span">
+                        Calculate needed rise:
+                        <input
+                            type="checkbox"
+                            id="calc-rise"
+                            onchange="changeValue(event)"
+                        />
+                    </span>
                 </span>
-            </span>
-            <span class="input-span">
-                Row 1 Angle:&nbsp;
-                <input id="the-input-one" onchange="changeValue(event);" value="0" />
-                <span class="input-span unit">degrees</span>
-            </span>
-            <span class="input-span">
-                Row 2 Angle:&nbsp;
-                <input id="the-input-two" onchange="changeValue(event);" value="0" />
-                <span class="input-span unit">degrees</span>
-            </span>
-            <span class="input-span">
-                Material thickness:&nbsp;
-                <input id="material-thickness" onchange="changeValue(event);" value="0" />
-                <span class="input-span unit">mm</span>
-            </span>
-            <span class="input-span">
-                Pixels per cm:&nbsp;
-                <input id="px-per-cm" onchange="changeValue(event);" value="0" />
-            </span>
+                <span class="input-span">
+                    Row 1 Angle:&nbsp;
+                    <input id="the-input-one" onchange="changeValue(event);" value="0" />
+                    <span class="input-span unit">degrees</span>
+                </span>
+                <span class="input-span">
+                    Row 2 Angle:&nbsp;
+                    <input id="the-input-two" onchange="changeValue(event);" value="0" />
+                    <span class="input-span unit">degrees</span>
+                </span>
+                <span class="input-span">
+                    Material thickness:&nbsp;
+                    <input
+                        id="material-thickness"
+                        onchange="changeValue(event);"
+                        value="0"
+                    />
+                    <span class="input-span unit">mm</span>
+                </span>
+                <span class="input-span">
+                    Pixels per cm:&nbsp;
+                    <input id="px-per-cm" onchange="changeValue(event);" value="0" />
+                </span>
+            </div>
+            <div id="canvas-div">
+                <canvas id="the-canvas" width="150" height="150"></canvas>
+            </div>
+            <div id="summary-div"></div>
         </div>
-        <div id="canvas-div">
-            <canvas id="the-canvas" width="150" height="150"></canvas>
-        </div>
-        <div id="summary-div">
-        </div>
-    </div>
-</body>
+    </body>
 </html>

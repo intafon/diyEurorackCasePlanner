@@ -1,10 +1,6 @@
-'use strict';
+"use strict";
 
-var input,
-    canvasDiv,
-    canvas,
-    calcRiseCb,
-    ctx, w, h;
+var input, canvasDiv, canvas, calcRiseCb, ctx, w, h;
 
 var inputDepth, input1, input2, matThickness, pxPerCmInput;
 
@@ -23,15 +19,15 @@ var angle2 = 15;
 var panel1 = [];
 var panel2 = [];
 var panels = [];
-var startX = function() {
+var startX = function () {
     return 70;
 };
-var startY = function() {
+var startY = function () {
     return canvas.height - 70;
 };
 
 function rad(d) {
-    return d / 180 * Math.PI;
+    return (d / 180) * Math.PI;
 }
 
 function actualDistance(d, showInches) {
@@ -44,11 +40,12 @@ function actualDistance(d, showInches) {
 
 function drawSide() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = 'rgb(0, 0, 0)';
-    ctx.strokeStyle = '#999999';
-    ctx.setLineDash([]);//([1, 5]);
+    ctx.fillStyle = "rgb(0, 0, 0)";
+    ctx.strokeStyle = "#999999";
+    ctx.setLineDash([]); //([1, 5]);
 
-    var maxX = 0, maxY = 0;
+    var maxX = 0,
+        maxY = 0;
     var x, y;
     var p = [];
 
@@ -66,12 +63,12 @@ function drawSide() {
     panels = [
         {
             angle: angle1,
-            coords: []
+            coords: [],
         },
         {
             angle: angle1 + angle2,
-            coords: []
-        }
+            coords: [],
+        },
     ];
 
     var frontPieceOutline = [];
@@ -81,9 +78,9 @@ function drawSide() {
 
     // bottom panel goes underneath the sides, front, and back
 
-    var bottomPanelDepth = useStaticRise ?
-        actualPanelDepth :
-        Math.abs(actualPanelDepth * Math.sin(Math.PI / 2 - rad(angle1)));
+    var bottomPanelDepth = useStaticRise
+        ? actualPanelDepth
+        : Math.abs(actualPanelDepth * Math.sin(Math.PI / 2 - rad(angle1)));
     add(x, y + bottomPanelDepth);
 
     // Add the points for drawing the dotted line representing the cardboard
@@ -122,10 +119,7 @@ function drawSide() {
         x + Math.sin(rad(angle1 + angle2)) * actualPanelDepth,
         y - Math.cos(rad(angle1 + angle2)) * actualPanelDepth
     );
-    backPieceOutline.push(
-        x + Math.sin(rad(angle1 + angle2)) * actualPanelDepth,
-        0
-    );
+    backPieceOutline.push(x + Math.sin(rad(angle1 + angle2)) * actualPanelDepth, 0);
 
     add(
         x + Math.cos(rad(angle1 + angle2)) * caseMaterialThickness,
@@ -136,19 +130,24 @@ function drawSide() {
         x + Math.sin(rad(angle1 + angle2)) * actualPanelDepth,
         y - Math.cos(rad(angle1 + angle2)) * actualPanelDepth
     );
-    add(
-        x,
-        0
-    );
+    add(x, 0);
     add(0, 0);
 
     ctx.setLineDash([1, 5]);
     ctx.beginPath();
-    drawPath(false, 0, 0,
-             maxX, 0,
-             maxX, -caseMaterialThickness,
-             0, -caseMaterialThickness,
-             0, 0);
+    drawPath(
+        false,
+        0,
+        0,
+        maxX,
+        0,
+        maxX,
+        -caseMaterialThickness,
+        0,
+        -caseMaterialThickness,
+        0,
+        0
+    );
     ctx.closePath();
 
     frontPieceOutline.unshift("false");
@@ -169,38 +168,49 @@ function drawSide() {
 }
 
 function writeSummary(width, height) {
-    var cabinetInfo = ["Cabinet depth and height: ",
-                      actualDistance(width, true) + " x " +
-                      actualDistance(height, true)];
-    var panelHeightInfo = ["Panel height used: ", actualDistance(actualPanelHeight, true)];
+    var cabinetInfo = [
+        "Cabinet depth and height: ",
+        actualDistance(width, true) + " x " + actualDistance(height, true),
+    ];
+    var panelHeightInfo = [
+        "Panel height used: ",
+        actualDistance(actualPanelHeight, true),
+    ];
     var panelDepthInfo = ["Panel depth used: ", actualDistance(actualPanelDepth, true)];
     var railDepthInfo = ["Rails depth inset: ", actualDistance(actualRailDepth, true)];
-    var railSpacingInfo = ["Rail screw spacing*: ", actualDistance(actualRailSeparation, true)];
-    var footnote = ["*Note: rail spacing based on the measurements provided by " +
-        '<a href="http://www.musicradar.com/tuition/tech/how-to-build-your-own-cardboard-' +
-        'eurorack-modular-case-625196">Future Music\'s cardboard DIY</a> ' +
-        'case using TipTop Audio Z-Rails.', ""];
+    var railSpacingInfo = [
+        "Rail screw spacing*: ",
+        actualDistance(actualRailSeparation, true),
+    ];
+    var footnote = [
+        "*Note: rail spacing based on the measurements provided by " +
+            '<a href="http://www.musicradar.com/tuition/tech/how-to-build-your-own-cardboard-' +
+            "eurorack-modular-case-625196\">Future Music's cardboard DIY</a> " +
+            "case using TipTop Audio Z-Rails.",
+        "",
+    ];
     var info = [
         cabinetInfo,
         panelHeightInfo,
         panelDepthInfo,
         railDepthInfo,
         railSpacingInfo,
-        footnote
+        footnote,
     ];
     // console.info(info.map(function(a) {
     //     return a.join("\t");
     // }).join("\n"));
-    document.getElementById('summary-div').innerHTML =
-        info.map(function(a) {
+    document.getElementById("summary-div").innerHTML = info
+        .map(function (a) {
             return a[0] + "<b>" + a[1] + "</b>";
-        }).join("<br/>");
+        })
+        .join("<br/>");
 }
 
 function getPlot(x, y) {
     return {
         x: startX() + x / heightRatio,
-        y: startY() - y / heightRatio
+        y: startY() - y / heightRatio,
     };
 }
 
@@ -221,15 +231,14 @@ function roundToPlace(v, p) {
 function drawPanelRail(panel) {
     var circR = 3;
     var screwDist = (actualPanelHeight - actualRailSeparation) / 2;
-    var screwDistX = Math.cos(rad(panel.angle)) * (screwDist);
-    var screwDistY = Math.sin(rad(panel.angle)) * (screwDist);
-    var screwDistDepthX = Math.sin(rad(panel.angle)) * (actualRailDepth);
-    var screwDistDepthY = -Math.cos(rad(panel.angle)) * (actualRailDepth);
+    var screwDistX = Math.cos(rad(panel.angle)) * screwDist;
+    var screwDistY = Math.sin(rad(panel.angle)) * screwDist;
+    var screwDistDepthX = Math.sin(rad(panel.angle)) * actualRailDepth;
+    var screwDistDepthY = -Math.cos(rad(panel.angle)) * actualRailDepth;
 
     var screwX = panel.coords[0] + screwDistX + screwDistDepthX;
     var screwY = panel.coords[1] + screwDistY + screwDistDepthY;
     var plot = getPlot(screwX, screwY);
-
 
     ctx.beginPath();
     ctx.arc(plot.x, plot.y, circR, 0, 2 * Math.PI);
@@ -270,7 +279,7 @@ function drawPath(pts) {
         return;
     }
     var shouldWriteCoords = true;
-    if (typeof(pts[0]) !== 'number') {
+    if (typeof pts[0] !== "number") {
         pts.shift();
         shouldWriteCoords = false;
     }
@@ -281,7 +290,7 @@ function drawPath(pts) {
         var y = pts.shift();
         // console.info(x, y, pts[0]);
         lineTo(x, y);
-        if (typeof(pts[0]) === 'number') {
+        if (typeof pts[0] === "number") {
             if (shouldWriteCoords) {
                 writeCoords(x, y);
             }
@@ -297,32 +306,34 @@ function writeCoords(x, y, showBelow) {
     var yFactor = showBelow ? -1 : 1;
     ctx.font = "10px sans-serif";
     var plot = getPlot(x, y);
-    ctx.fillText(actualDistance(x) + ", " + actualDistance(y),
-                 plot.x + 5,
-                 plot.y - (10 * yFactor));
+    ctx.fillText(
+        actualDistance(x) + ", " + actualDistance(y),
+        plot.x + 5,
+        plot.y - 10 * yFactor
+    );
 }
 
 function init() {
-    input1 = document.getElementById('the-input-one');
-    input2 = document.getElementById('the-input-two');
+    input1 = document.getElementById("the-input-one");
+    input2 = document.getElementById("the-input-two");
 
-    inputDepth = document.getElementById('the-input-depth');
-    calcRiseCb = document.getElementById('calc-rise');
+    inputDepth = document.getElementById("the-input-depth");
+    calcRiseCb = document.getElementById("calc-rise");
     calcRiseCb.checked = !useStaticRise;
-    matThickness = document.getElementById('material-thickness');
+    matThickness = document.getElementById("material-thickness");
     matThickness.value = caseMaterialThickness;
-    pxPerCmInput = document.getElementById('px-per-cm');
+    pxPerCmInput = document.getElementById("px-per-cm");
     pxPerCmInput.value = pxPerCm;
 
-    canvasDiv = document.getElementById('canvas-div');
-    canvas = document.getElementById('the-canvas');
-    ctx = canvas.getContext('2d');
+    canvasDiv = document.getElementById("canvas-div");
+    canvas = document.getElementById("the-canvas");
+    ctx = canvas.getContext("2d");
     w = canvasDiv.clientWidth;
     h = canvasDiv.clientHeight;
     canvas.width = w;
     canvas.height = h;
-    ctx.fillStyle = 'rgb(0, 0, 0)';
-    ctx.strokeStyle = '#999999';
+    ctx.fillStyle = "rgb(0, 0, 0)";
+    ctx.strokeStyle = "#999999";
 
     inputDepth.value = actualPanelDepth;
     input1.value = angle1;
@@ -330,7 +341,7 @@ function init() {
 
     drawSide();
 
-    window.onresize = function() {
+    window.onresize = function () {
         w = canvasDiv.clientWidth;
         h = canvasDiv.clientHeight;
         // console.info(w,h);
