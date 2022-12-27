@@ -1,8 +1,16 @@
 "use strict";
 
-var input, canvasDiv, canvas, calcRiseCb, ctx, w, h;
+document.addEventListener("DOMContentLoaded", function () {
+    init();
+});
 
-var inputDepth, input1, input2, matThickness, pxPerCmInput;
+var input, canvasDiv, canvas, calcRiseCb, ctx, w, h;
+let rowCounts = [2, 3, 4, 5];
+let rowCount = rowCounts[0];
+let rowAngles = [10, 15];
+let rowInputs = [];
+
+var inputDepth, matThickness, pxPerCmInput;
 
 var actualPanelHeight = 133.4;
 var actualRailSeparation = 123;
@@ -38,6 +46,19 @@ function actualDistance(d, showInches) {
     return t;
 }
 
+function onRowCountChanged() {
+    console.info(arguments);
+}
+
+function getActualRowAngle(r) {
+    return rowAngles.reduce((sum, cur, i) => {
+        if (i <= r) {
+            sum += cur;
+        }
+        return sum;
+    }, 0);
+}
+
 function drawSide() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "rgb(0, 0, 0)";
@@ -60,16 +81,13 @@ function drawSide() {
         }
     }
 
-    panels = [
-        {
-            angle: angle1,
+    panels = rowAngles.map((r, i) => {
+        return {
+            angle: getActualRowAngle(i),
             coords: [],
-        },
-        {
-            angle: angle1 + angle2,
-            coords: [],
-        },
-    ];
+        };
+    });
+    console.info("panels", panels, "rowAngles", rowAngles);
 
     var frontPieceOutline = [];
     var backPieceOutline = [];
@@ -80,34 +98,34 @@ function drawSide() {
 
     var bottomPanelDepth = useStaticRise
         ? actualPanelDepth
-        : Math.abs(actualPanelDepth * Math.sin(Math.PI / 2 - rad(angle1)));
+        : Math.abs(actualPanelDepth * Math.sin(Math.PI / 2 - rad(rowAngles[0])));
     add(x, y + bottomPanelDepth);
 
     // Add the points for drawing the dotted line representing the cardboard
     // piece for the case front on the other side of the side panel.
     frontPieceOutline.push(
-        x + Math.cos(rad(angle1)) * caseMaterialThickness,
-        y + Math.sin(rad(angle1)) * caseMaterialThickness
+        x + Math.cos(rad(rowAngles[0])) * caseMaterialThickness,
+        y + Math.sin(rad(rowAngles[0])) * caseMaterialThickness
     );
-    frontPieceOutline.push(x + Math.cos(rad(angle1)) * caseMaterialThickness, 0);
+    frontPieceOutline.push(x + Math.cos(rad(rowAngles[0])) * caseMaterialThickness, 0);
     frontPieceOutline.push(0, 0);
     add(
-        x + Math.cos(rad(angle1)) * caseMaterialThickness,
-        y + Math.sin(rad(angle1)) * caseMaterialThickness,
+        x + Math.cos(rad(rowAngles[0])) * caseMaterialThickness,
+        y + Math.sin(rad(rowAngles[0])) * caseMaterialThickness,
         "nowrite"
     );
 
     panels[0].coords.push(x, y);
     add(
-        x + Math.cos(rad(angle1)) * actualPanelHeight,
-        y + Math.sin(rad(angle1)) * actualPanelHeight
+        x + Math.cos(rad(rowAngles[0])) * actualPanelHeight,
+        y + Math.sin(rad(rowAngles[0])) * actualPanelHeight
     );
     panels[0].coords.push(x, y);
 
     panels[1].coords.push(x, y);
     add(
-        x + Math.cos(rad(angle1 + angle2)) * actualPanelHeight,
-        y + Math.sin(rad(angle1 + angle2)) * actualPanelHeight,
+        x + Math.cos(rad(rowAngles[0] + rowAngles[1])) * actualPanelHeight,
+        y + Math.sin(rad(rowAngles[0] + rowAngles[1])) * actualPanelHeight,
         "nowrite"
     );
     panels[1].coords.push(x, y);
@@ -116,19 +134,22 @@ function drawSide() {
     // piece for the case back on the other side of the side panel.
     backPieceOutline.push(x, y);
     backPieceOutline.push(
-        x + Math.sin(rad(angle1 + angle2)) * actualPanelDepth,
-        y - Math.cos(rad(angle1 + angle2)) * actualPanelDepth
+        x + Math.sin(rad(rowAngles[0] + rowAngles[1])) * actualPanelDepth,
+        y - Math.cos(rad(rowAngles[0] + rowAngles[1])) * actualPanelDepth
     );
-    backPieceOutline.push(x + Math.sin(rad(angle1 + angle2)) * actualPanelDepth, 0);
-
-    add(
-        x + Math.cos(rad(angle1 + angle2)) * caseMaterialThickness,
-        y + Math.sin(rad(angle1 + angle2)) * caseMaterialThickness
+    backPieceOutline.push(
+        x + Math.sin(rad(rowAngles[0] + rowAngles[1])) * actualPanelDepth,
+        0
     );
 
     add(
-        x + Math.sin(rad(angle1 + angle2)) * actualPanelDepth,
-        y - Math.cos(rad(angle1 + angle2)) * actualPanelDepth
+        x + Math.cos(rad(rowAngles[0] + rowAngles[1])) * caseMaterialThickness,
+        y + Math.sin(rad(rowAngles[0] + rowAngles[1])) * caseMaterialThickness
+    );
+
+    add(
+        x + Math.sin(rad(rowAngles[0] + rowAngles[1])) * actualPanelDepth,
+        y - Math.cos(rad(rowAngles[0] + rowAngles[1])) * actualPanelDepth
     );
     add(x, 0);
     add(0, 0);
@@ -313,9 +334,77 @@ function writeCoords(x, y, showBelow) {
     );
 }
 
+function createRowInput(i, value) {
+    const inputIdPrefix = "angle-";
+    const rowInputs = document.getElementById("row-inputs");
+    const el = document.createElement("span");
+    el.className = "input-span";
+    el.innerHTML = `Row ${i + 1} angle:&nbsp;`;
+
+    const inp = document.createElement("input");
+    inp.value = value;
+    inp.id = `${inputIdPrefix}${i}`;
+    const onChange = (event) => {
+        // console.info("input change event", event.target.value, event);
+        setTimeout(() => {
+            const inputIndex = parseInt(event.target.id.split(inputIdPrefix)[1], 10);
+            rowAngles[inputIndex] = parseFloat(event.target.value, 10);
+
+            console.info(
+                "input change event",
+                event.target.value,
+                event.target.id,
+                inputIndex,
+                rowAngles
+            );
+            drawSide();
+        }, 0);
+    };
+    inp.addEventListener("input", onChange);
+    inp.addEventListener("change", onChange);
+    inp.addEventListener("keypress", onChange);
+
+    el.appendChild(inp);
+
+    const deg = document.createElement("span");
+    deg.className = "input-span unit";
+    deg.innerHTML = "degrees";
+    el.appendChild(deg);
+
+    rowInputs.appendChild(el);
+
+    return inp;
+}
+
+function resetRowInputs(c) {
+    const rowInputs = document.getElementById("row-inputs");
+    while (rowInputs.firstChild) {
+        rowInputs.removeChild(rowInputs.firstChild);
+    }
+    rowAngles = rowAngles.slice(0, c);
+    while (rowAngles.length < c) {
+        rowAngles.push(0);
+    }
+    for (let i = 0; i < rowCount; i++) {
+        rowInputs[i] = createRowInput(i, rowAngles[i]);
+    }
+}
+
 function init() {
-    input1 = document.getElementById("the-input-one");
-    input2 = document.getElementById("the-input-two");
+    // Handle rows
+    const rowCountSelector = document.getElementById("rowCount");
+    rowCounts.forEach((c, i) => {
+        const newOpt = document.createElement("option");
+        newOpt.value = c;
+        newOpt.innerHTML = c;
+        rowCountSelector.appendChild(newOpt);
+    });
+    rowCountSelector.addEventListener("change", (event) => {
+        console.info("event", event.target.value);
+        rowCount = event.target.value;
+        resetRowInputs(rowCount);
+    });
+    resetRowInputs(rowCount);
 
     inputDepth = document.getElementById("the-input-depth");
     calcRiseCb = document.getElementById("calc-rise");
@@ -336,8 +425,6 @@ function init() {
     ctx.strokeStyle = "#999999";
 
     inputDepth.value = actualPanelDepth;
-    input1.value = angle1;
-    input2.value = angle2;
 
     drawSide();
 
@@ -357,14 +444,6 @@ function changeValue(event) {
     switch (event.target) {
         case inputDepth: {
             actualPanelDepth = parseFloat(event.target.value);
-            break;
-        }
-        case input1: {
-            angle1 = parseFloat(event.target.value);
-            break;
-        }
-        case input2: {
-            angle2 = parseFloat(event.target.value);
             break;
         }
         case calcRiseCb: {

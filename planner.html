@@ -5,11 +5,11 @@
         <link rel="stylesheet" href="planner.css" />
         <script src="planner.js" type="text/javascript" charset="utf-8"></script>
     </head>
-    <body onload="init();">
+    <body>
         <div id="container">
             <div id="input-div">
-                <span class="input-span"
-                    >Module Depth Max:&nbsp;
+                <span class="input-span">
+                    Module Depth Max:&nbsp;
                     <input
                         id="the-input-depth"
                         onchange="changeValue(event);"
@@ -25,15 +25,14 @@
                     </span>
                 </span>
                 <span class="input-span">
-                    Row 1 Angle:&nbsp;
-                    <input id="the-input-one" onchange="changeValue(event);" value="0" />
-                    <span class="input-span unit">degrees</span>
+                    Row count:&nbsp;
+                    <select
+                        name="rowCount"
+                        id="rowCount"
+                        onChange="onRowCountChanged"
+                    ></select>
                 </span>
-                <span class="input-span">
-                    Row 2 Angle:&nbsp;
-                    <input id="the-input-two" onchange="changeValue(event);" value="0" />
-                    <span class="input-span unit">degrees</span>
-                </span>
+                <span id="row-inputs"> </span>
                 <span class="input-span">
                     Material thickness:&nbsp;
                     <input
