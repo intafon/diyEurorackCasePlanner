@@ -143,7 +143,6 @@ function drawSide() {
         "nowrite"
     );
 
-    //getActualRowAngle(i),
     rowAngles.forEach((angle, i) => {
         panels[i].coords.push(x, y);
         add(
@@ -160,11 +159,14 @@ function drawSide() {
     // Add the points for drawing the dotted line representing the cardboard
     // piece for the case back on the other side of the side panel.
     backPieceOutline.push(x, y);
+    // Now get the *inside* x position of the back of the case. We will add the material
+    // thickness to this below.
+    const backWallInside = x + Math.sin(rad(getActualRowAngle())) * actualPanelDepth;
     backPieceOutline.push(
-        x + Math.sin(rad(getActualRowAngle())) * actualPanelDepth,
+        backWallInside,
         y - Math.cos(rad(getActualRowAngle())) * actualPanelDepth
     );
-    backPieceOutline.push(x + Math.sin(rad(getActualRowAngle())) * actualPanelDepth, 0);
+    backPieceOutline.push(backWallInside, 0);
 
     add(
         x + Math.cos(rad(getActualRowAngle())) * caseMaterialThickness,
@@ -172,7 +174,7 @@ function drawSide() {
     );
 
     add(
-        x + Math.sin(rad(getActualRowAngle())) * actualPanelDepth,
+        backWallInside + caseMaterialThickness,
         y - Math.cos(rad(getActualRowAngle())) * actualPanelDepth
     );
     add(x, 0);
@@ -180,6 +182,7 @@ function drawSide() {
 
     ctx.setLineDash([1, 5]);
     ctx.beginPath();
+    // Draw the base board outline
     drawPath(
         false,
         0,
@@ -195,6 +198,7 @@ function drawSide() {
     );
     ctx.closePath();
 
+    // draw the front and back side outlines
     frontPieceOutline.unshift("false");
     backPieceOutline.unshift("false");
     ctx.beginPath();
@@ -205,11 +209,11 @@ function drawSide() {
     ctx.closePath();
 
     ctx.setLineDash([]);
+    const railScrewCoords = drawPanelRails(panels);
+    const pathCoords = p.slice(0);
     drawPath(p);
 
-    drawPanelRails(panels);
-
-    writeSummary(maxX, maxY);
+    writeSummary(maxX, maxY, pathCoords, railScrewCoords);
 }
 
 /**
@@ -217,8 +221,10 @@ function drawSide() {
  *
  * @param {number} width
  * @param {number} height
+ * @param {array} outlinePoints
+ * @param {array} railScrewCoords
  */
-function writeSummary(width, height) {
+function writeSummary(width, height, outlinePoints, railScrewCoords) {
     var cabinetInfo = [
         "Cabinet depth and height: ",
         actualDistance(width, true) + " x " + actualDistance(height, true),
@@ -233,6 +239,7 @@ function writeSummary(width, height) {
         "Rail screw spacing*: ",
         actualDistance(actualRailSeparation, true),
     ];
+    let totalRowtation = [`Top row absolute rotation: `, `${getActualRowAngle()}`];
     var footnote = [
         "*Note: rail spacing based on the measurements provided by " +
             '<a href="http://www.musicradar.com/tuition/tech/how-to-build-your-own-cardboard-' +
@@ -246,12 +253,49 @@ function writeSummary(width, height) {
         panelDepthInfo,
         railDepthInfo,
         railSpacingInfo,
+        totalRowtation,
         footnote,
     ];
     // console.info(info.map(function(a) {
     //     return a.join("\t");
     // }).join("\n"));
     document.getElementById("summary-div").innerHTML = info
+        .map(function (a) {
+            return a[0] + "<b>" + a[1] + "</b>";
+        })
+        .join("<br/>");
+
+    function processCoords(outlinePoints) {
+        const ops = outlinePoints.slice(0);
+        const s = [];
+        while (ops.length > 0) {
+            const x = `${roundToPlace(ops.shift(), 1)}mm`;
+            const y = `${roundToPlace(ops.shift(), 1)}mm`;
+            if (typeof ops[0] !== "number") {
+                ops.shift();
+            } else {
+                s.push(`(${x}, ${y})`);
+            }
+        }
+        return s.join(", ");
+    }
+
+    function processRailScrewCoords(railScrewCoords) {
+        const rcs = railScrewCoords.slice(0);
+        const s = [];
+        while (rcs.length > 0) {
+            s.push(
+                `(${roundToPlace(rcs.shift(), 1)}mm, ${roundToPlace(rcs.shift(), 1)}mm)`
+            );
+        }
+        return s.join(", ");
+    }
+
+    const info2 = [
+        ["Coordinates for outline: ", processCoords(outlinePoints)],
+        ["Coordinates for rail screws: ", processRailScrewCoords(railScrewCoords)],
+    ];
+    document.getElementById("summary-div-2").innerHTML = info2
         .map(function (a) {
             return a[0] + "<b>" + a[1] + "</b>";
         })
@@ -312,6 +356,7 @@ function roundToPlace(v, p) {
  * @param {number} panel The panel object for which to draw the rail locations.
  */
 function drawPanelRail(panel) {
+    let p = [];
     var circR = 3;
     var screwDist = (actualPanelHeight - actualRailSeparation) / 2;
     var screwDistX = Math.cos(rad(panel.angle)) * screwDist;
@@ -332,6 +377,7 @@ function drawPanelRail(panel) {
     ctx.fill();
     ctx.closePath();
     writeCoords(screwX, screwY, true);
+    p = p.concat(screwX, screwY);
 
     screwX = panel.coords[2] - screwDistX + screwDistDepthX;
     screwY = panel.coords[3] - screwDistY + screwDistDepthY;
@@ -346,6 +392,9 @@ function drawPanelRail(panel) {
     ctx.fill();
     ctx.closePath();
     writeCoords(screwX, screwY, true);
+    p = p.concat(screwX, screwY);
+
+    return p;
 }
 
 /**
@@ -354,9 +403,11 @@ function drawPanelRail(panel) {
  * @param {array} panels
  */
 function drawPanelRails(panels) {
+    let p = [];
     for (var i = 0; i < panels.length; i++) {
-        drawPanelRail(panels[i]);
+        p = p.concat(drawPanelRail(panels[i]));
     }
+    return p;
 }
 
 /**
