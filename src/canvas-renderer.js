@@ -132,7 +132,7 @@ function drawArrowHead(toX, toY, angle, headLength) {
   ctx.closePath();
 }
 
-function drawDistanceIndicator(startX, startY, endX, endY, distance, labelOffsetX, labelOffsetY) {
+function drawDistanceIndicator(startX, startY, endX, endY, distance, labelOffsetX, labelOffsetY, labelPosition) {
   const plotStart = getPlot(startX, startY);
   const plotEnd = getPlot(endX, endY);
   const angle = Math.atan2(plotEnd.y - plotStart.y, plotEnd.x - plotStart.x);
@@ -145,30 +145,56 @@ function drawDistanceIndicator(startX, startY, endX, endY, distance, labelOffset
 
   drawArrowHead(plotEnd.x, plotEnd.y, angle, 6);
 
-  const midX = (plotStart.x + plotEnd.x) / 2 + labelOffsetX;
-  const midY = (plotStart.y + plotEnd.y) / 2 + labelOffsetY;
+  let labelX, labelY;
+  if (labelPosition === "end") {
+    labelX = plotEnd.x + labelOffsetX;
+    labelY = plotEnd.y + labelOffsetY;
+  } else {
+    labelX = (plotStart.x + plotEnd.x) / 2 + labelOffsetX;
+    labelY = (plotStart.y + plotEnd.y) / 2 + labelOffsetY;
+  }
 
   ctx.font = "9px sans-serif";
-  ctx.fillText(actualDistance(distance, false), midX, midY);
+  ctx.fillText(actualDistance(distance, false), labelX, labelY);
 }
 
-function drawScrewPerpIndicator(screw, angle, backWallX, labelOffsetX, labelOffsetY) {
+function calculatePerpEndpoint(screw, angle, backWallX) {
   const perpDirX = Math.sin(rad(angle));
   const perpDirY = -Math.cos(rad(angle));
 
-  const startX = screw.x - perpDirX * state.actualRailDepth;
-  const startY = screw.y - perpDirY * state.actualRailDepth;
+  const cosAngle = Math.cos(rad(angle));
+  const sinAngle = Math.sin(rad(angle));
 
-  const tBottom = screw.y / Math.cos(rad(angle));
-  const tBack = (backWallX - screw.x) / Math.sin(rad(angle));
-  const t = tBottom > 0 && tBack > 0 ? Math.min(tBottom, tBack) : Math.max(tBottom, tBack);
-  const perpDist = Math.abs(t) + state.actualRailDepth;
+  let tBottom = Infinity;
+  let tBack = Infinity;
 
-  const endX = screw.x + perpDirX * t;
-  const endY = screw.y + perpDirY * t;
+  if (Math.abs(cosAngle) > 0.0001) {
+    tBottom = screw.y / cosAngle;
+  }
+  if (Math.abs(sinAngle) > 0.0001) {
+    tBack = (backWallX - screw.x) / sinAngle;
+  }
 
-  drawDistanceIndicator(startX, startY, endX, endY, perpDist, labelOffsetX, labelOffsetY);
+  let t;
+  if (tBottom > 0 && tBack > 0) {
+    t = Math.min(tBottom, tBack);
+  } else if (tBottom > 0) {
+    t = tBottom;
+  } else if (tBack > 0) {
+    t = tBack;
+  } else {
+    t = Math.max(tBottom, tBack);
+  }
+
+  return {
+    perpDirX,
+    perpDirY,
+    t,
+    endX: screw.x + perpDirX * t,
+    endY: screw.y + perpDirY * t,
+  };
 }
+
 
 export function drawJointDistanceIndicators(panels, backWallX) {
   const savedStrokeStyle = ctx.strokeStyle;
@@ -179,14 +205,61 @@ export function drawJointDistanceIndicators(panels, backWallX) {
   ctx.fillStyle = COLORS.indicator;
   ctx.setLineDash([3, 3]);
 
+  const drawnLabels = [];
+
+  function getLabelInfo(screw, angle, screwIndex) {
+    const { endX, endY } = calculatePerpEndpoint(screw, angle, backWallX);
+    const hitsBottom = Math.abs(endY) < 0.1;
+    const isVertical = Math.abs(screw.x - endX) < 0.1;
+
+    let offsetX, offsetY;
+    let position = "mid";
+
+    if (isVertical && hitsBottom) {
+      position = "end";
+      offsetX = 5;
+      offsetY = -5;
+
+      for (const prev of drawnLabels) {
+        const dist = Math.abs(endX - prev.x);
+        if (dist < 50 && Math.abs(endY - prev.y) < 5) {
+          offsetY = prev.offsetY - 12;
+        }
+      }
+    } else if (hitsBottom) {
+      position = "end";
+      offsetX = 5;
+      offsetY = -5;
+    } else {
+      offsetX = -40;
+      offsetY = 5;
+    }
+
+    const labelX = position === "end" ? endX : (screw.x + endX) / 2;
+    const labelY = position === "end" ? endY : (screw.y + endY) / 2;
+    drawnLabels.push({ x: labelX, y: labelY, offsetX, offsetY });
+
+    return { labelOffsetX: offsetX, labelOffsetY: offsetY, labelPosition: position };
+  }
+
+  function drawIndicatorForScrew(screw, angle, screwIndex) {
+    const { perpDirX, perpDirY, t, endX, endY } = calculatePerpEndpoint(screw, angle, backWallX);
+    const startX = screw.x - perpDirX * state.actualRailDepth;
+    const startY = screw.y - perpDirY * state.actualRailDepth;
+    const perpDist = Math.abs(t) + state.actualRailDepth;
+
+    const labelInfo = getLabelInfo(screw, angle, screwIndex);
+    drawDistanceIndicator(startX, startY, endX, endY, perpDist, labelInfo.labelOffsetX, labelInfo.labelOffsetY, labelInfo.labelPosition);
+  }
+
   const firstRowAngle = state.getActualRowAngle(0);
   const firstScrews = getScrewHoleCoords(panels[0], 0);
-  drawScrewPerpIndicator(firstScrews.bottomScrew, firstRowAngle, backWallX, 5, -5);
+  drawIndicatorForScrew(firstScrews.bottomScrew, firstRowAngle, 0);
 
   const lastRowIndex = panels.length - 1;
   const lastRowAngle = state.getActualRowAngle(lastRowIndex);
   const lastScrews = getScrewHoleCoords(panels[lastRowIndex], lastRowIndex);
-  drawScrewPerpIndicator(lastScrews.topScrew, lastRowAngle, backWallX, -30, -3);
+  drawIndicatorForScrew(lastScrews.topScrew, lastRowAngle, panels.length * 2 - 1);
 
   for (let i = 1; i < panels.length; i++) {
     const prevRowAngle = state.getActualRowAngle(i - 1);
@@ -200,56 +273,10 @@ export function drawJointDistanceIndicators(panels, backWallX) {
     const screw2 = currentScrews.bottomScrew;
 
     if (relativeAngle === 0) {
-      const angle = currentRowAngle;
-      const perpDirX = Math.sin(rad(angle));
-      const perpDirY = -Math.cos(rad(angle));
-
-      const startX = screw2.x - perpDirX * state.actualRailDepth;
-      const startY = screw2.y - perpDirY * state.actualRailDepth;
-
-      const tBottom = screw2.y / Math.cos(rad(angle));
-      const tBack = (backWallX - screw2.x) / Math.sin(rad(angle));
-      const t = tBottom > 0 && tBack > 0 ? Math.min(tBottom, tBack) : Math.max(tBottom, tBack);
-      const perpDist = Math.abs(t) + state.actualRailDepth;
-
-      const endX = screw2.x + perpDirX * t;
-      const endY = screw2.y + perpDirY * t;
-
-      drawDistanceIndicator(startX, startY, endX, endY, perpDist, 5, -5);
+      drawIndicatorForScrew(screw2, currentRowAngle, i * 2);
     } else {
-      const angle1 = prevRowAngle;
-      const perpDirX1 = Math.sin(rad(angle1));
-      const perpDirY1 = -Math.cos(rad(angle1));
-
-      const startX1 = screw1.x - perpDirX1 * state.actualRailDepth;
-      const startY1 = screw1.y - perpDirY1 * state.actualRailDepth;
-
-      const tBottom1 = screw1.y / Math.cos(rad(angle1));
-      const tBack1 = (backWallX - screw1.x) / Math.sin(rad(angle1));
-      const t1 = tBottom1 > 0 && tBack1 > 0 ? Math.min(tBottom1, tBack1) : Math.max(tBottom1, tBack1);
-      const perpDist1 = Math.abs(t1) + state.actualRailDepth;
-
-      const endX1 = screw1.x + perpDirX1 * t1;
-      const endY1 = screw1.y + perpDirY1 * t1;
-
-      drawDistanceIndicator(startX1, startY1, endX1, endY1, perpDist1, -30, -3);
-
-      const angle2 = currentRowAngle;
-      const perpDirX2 = Math.sin(rad(angle2));
-      const perpDirY2 = -Math.cos(rad(angle2));
-
-      const startX2 = screw2.x - perpDirX2 * state.actualRailDepth;
-      const startY2 = screw2.y - perpDirY2 * state.actualRailDepth;
-
-      const tBottom2 = screw2.y / Math.cos(rad(angle2));
-      const tBack2 = (backWallX - screw2.x) / Math.sin(rad(angle2));
-      const t2 = tBottom2 > 0 && tBack2 > 0 ? Math.min(tBottom2, tBack2) : Math.max(tBottom2, tBack2);
-      const perpDist2 = Math.abs(t2) + state.actualRailDepth;
-
-      const endX2 = screw2.x + perpDirX2 * t2;
-      const endY2 = screw2.y + perpDirY2 * t2;
-
-      drawDistanceIndicator(startX2, startY2, endX2, endY2, perpDist2, 5, -3);
+      drawIndicatorForScrew(screw1, prevRowAngle, i * 2 - 1);
+      drawIndicatorForScrew(screw2, currentRowAngle, i * 2);
     }
   }
 
@@ -274,6 +301,7 @@ export function drawPanelRail(panel, panelIndex) {
   ctx.strokeStyle = COLORS.drillHole;
   ctx.fillStyle = COLORS.drillHole;
 
+  // Bottom screw - label below
   let screwX = panel.coords[0] + screwDistX + screwDistDepthX;
   let screwY = panel.coords[1] + screwDistY + screwDistDepthY;
   let plot = getPlot(screwX, screwY);
@@ -289,6 +317,7 @@ export function drawPanelRail(panel, panelIndex) {
   writeCoords(screwX, screwY, true, "right", COLORS.drillHole);
   p.push(screwX, screwY);
 
+  // Top screw - label above
   screwX = panel.coords[2] - screwDistX + screwDistDepthX;
   screwY = panel.coords[3] - screwDistY + screwDistDepthY;
   plot = getPlot(screwX, screwY);
@@ -301,7 +330,7 @@ export function drawPanelRail(panel, panelIndex) {
   ctx.arc(plot.x, plot.y, circR / 5, 0, 2 * Math.PI);
   ctx.fill();
   ctx.closePath();
-  writeCoords(screwX, screwY, true, "left", COLORS.drillHole);
+  writeCoords(screwX, screwY, false, "left", COLORS.drillHole);
   p.push(screwX, screwY);
 
   ctx.strokeStyle = savedStrokeStyle;
