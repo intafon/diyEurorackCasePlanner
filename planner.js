@@ -315,7 +315,35 @@ function getScrewHoleCoords(panel, panelIndex) {
 }
 
 /**
- * Draws perpendicular distance indicators at each joint between rows.
+ * Draws a single perpendicular distance indicator line from a screw hole.
+ * 
+ * @param {object} screw The screw hole coordinates {x, y}
+ * @param {number} angle The row angle
+ * @param {number} maxX The maximum x coordinate (back of case)
+ * @param {number} labelOffsetX Label x offset
+ * @param {number} labelOffsetY Label y offset
+ */
+function drawScrewPerpIndicator(screw, angle, maxX, labelOffsetX, labelOffsetY) {
+    const perpDirX = Math.sin(rad(angle));
+    const perpDirY = -Math.cos(rad(angle));
+    
+    const startX = screw.x - perpDirX * actualRailDepth;
+    const startY = screw.y - perpDirY * actualRailDepth;
+    
+    const tBottom = screw.y / Math.cos(rad(angle));
+    const tBack = (maxX - screw.x) / Math.sin(rad(angle));
+    const t = (tBottom > 0 && tBack > 0) ? Math.min(tBottom, tBack) : Math.max(tBottom, tBack);
+    const perpDist = Math.abs(t) + actualRailDepth;
+    
+    const endX = screw.x + perpDirX * t;
+    const endY = screw.y + perpDirY * t;
+    
+    drawDistanceIndicator(startX, startY, endX, endY, perpDist, labelOffsetX, labelOffsetY);
+}
+
+/**
+ * Draws perpendicular distance indicators at each joint between rows,
+ * plus the first and last screw holes.
  * Lines originate from the row surface, pass through the screw hole,
  * and extend perpendicular to that row until hitting the bottom or back of the case.
  *
@@ -332,6 +360,18 @@ function drawJointDistanceIndicators(panels, maxX) {
     ctx.fillStyle = indicatorColor;
     ctx.setLineDash([3, 3]);
     
+    // Draw indicator for the first screw hole (bottom screw of first row)
+    const firstRowAngle = getActualRowAngle(0);
+    const firstScrews = getScrewHoleCoords(panels[0], 0);
+    drawScrewPerpIndicator(firstScrews.bottomScrew, firstRowAngle, maxX, 5, -5);
+    
+    // Draw indicator for the last screw hole (top screw of last row)
+    const lastRowIndex = panels.length - 1;
+    const lastRowAngle = getActualRowAngle(lastRowIndex);
+    const lastScrews = getScrewHoleCoords(panels[lastRowIndex], lastRowIndex);
+    drawScrewPerpIndicator(lastScrews.topScrew, lastRowAngle, maxX, -30, -3);
+    
+    // Draw indicators at joints between rows
     for (let i = 1; i < panels.length; i++) {
         const prevRowAngle = getActualRowAngle(i - 1);
         const currentRowAngle = getActualRowAngle(i);
