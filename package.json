@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "format": "prettier --write \"src/**/*.{js,css,html}\" \"*.{js,html,json,md}\"",
+    "format:check": "prettier --check \"src/**/*.{js,css,html}\" \"*.{js,html,json,md}\""
   },
   "repository": {
     "type": "git",
@@ -23,6 +25,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "prettier": "^3.8.1",
     "vite": "^5.0.0"
   },
   "dependencies": {
