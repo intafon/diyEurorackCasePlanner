@@ -18,7 +18,10 @@ const oneUFormats = {
 };
 let selected1UFormat = "intellijel";
 
-var inputDepth, matThickness, pxPerCmInput;
+var inputDepth, matThickness, pxPerCmInput, hpWidthInput, hpWidthMmDisplay;
+
+const HP_TO_MM = 5.08;
+let caseWidthHP = 84;
 
 var actualPanelHeight = 133.4;
 var actual1UPanelHeight = 39.65;
@@ -268,27 +271,27 @@ function drawArrowHead(toX, toY, angle, headLength) {
 function drawDistanceIndicator(startX, startY, endX, endY, distance, labelOffsetX, labelOffsetY) {
     const plotStart = getPlot(startX, startY);
     const plotEnd = getPlot(endX, endY);
-    
+
     const angle = Math.atan2(plotEnd.y - plotStart.y, plotEnd.x - plotStart.x);
-    
+
     ctx.beginPath();
     ctx.moveTo(plotStart.x, plotStart.y);
     ctx.lineTo(plotEnd.x, plotEnd.y);
     ctx.stroke();
     ctx.closePath();
-    
+
     drawArrowHead(plotEnd.x, plotEnd.y, angle, 6);
-    
+
     const midX = (plotStart.x + plotEnd.x) / 2 + labelOffsetX;
     const midY = (plotStart.y + plotEnd.y) / 2 + labelOffsetY;
-    
+
     ctx.font = "9px sans-serif";
     ctx.fillText(actualDistance(distance, false), midX, midY);
 }
 
 /**
  * Gets the screw hole coordinates for a panel.
- * 
+ *
  * @param {object} panel The panel object
  * @param {number} panelIndex The index of the panel
  * @returns {object} Object with bottomScrew and topScrew coordinates
@@ -301,7 +304,7 @@ function getScrewHoleCoords(panel, panelIndex) {
     const screwDistY = Math.sin(rad(panel.angle)) * screwDist;
     const screwDistDepthX = Math.sin(rad(panel.angle)) * actualRailDepth;
     const screwDistDepthY = -Math.cos(rad(panel.angle)) * actualRailDepth;
-    
+
     return {
         bottomScrew: {
             x: panel.coords[0] + screwDistX + screwDistDepthX,
@@ -316,7 +319,7 @@ function getScrewHoleCoords(panel, panelIndex) {
 
 /**
  * Draws a single perpendicular distance indicator line from a screw hole.
- * 
+ *
  * @param {object} screw The screw hole coordinates {x, y}
  * @param {number} angle The row angle
  * @param {number} maxX The maximum x coordinate (back of case)
@@ -326,18 +329,18 @@ function getScrewHoleCoords(panel, panelIndex) {
 function drawScrewPerpIndicator(screw, angle, maxX, labelOffsetX, labelOffsetY) {
     const perpDirX = Math.sin(rad(angle));
     const perpDirY = -Math.cos(rad(angle));
-    
+
     const startX = screw.x - perpDirX * actualRailDepth;
     const startY = screw.y - perpDirY * actualRailDepth;
-    
+
     const tBottom = screw.y / Math.cos(rad(angle));
     const tBack = (maxX - screw.x) / Math.sin(rad(angle));
     const t = (tBottom > 0 && tBack > 0) ? Math.min(tBottom, tBack) : Math.max(tBottom, tBack);
     const perpDist = Math.abs(t) + actualRailDepth;
-    
+
     const endX = screw.x + perpDirX * t;
     const endY = screw.y + perpDirY * t;
-    
+
     drawDistanceIndicator(startX, startY, endX, endY, perpDist, labelOffsetX, labelOffsetY);
 }
 
@@ -354,103 +357,103 @@ function drawJointDistanceIndicators(panels, maxX) {
     const savedStrokeStyle = ctx.strokeStyle;
     const savedFillStyle = ctx.fillStyle;
     const savedLineDash = ctx.getLineDash();
-    
+
     const indicatorColor = "#888888";
     ctx.strokeStyle = indicatorColor;
     ctx.fillStyle = indicatorColor;
     ctx.setLineDash([3, 3]);
-    
+
     // Draw indicator for the first screw hole (bottom screw of first row)
     const firstRowAngle = getActualRowAngle(0);
     const firstScrews = getScrewHoleCoords(panels[0], 0);
     drawScrewPerpIndicator(firstScrews.bottomScrew, firstRowAngle, maxX, 5, -5);
-    
+
     // Draw indicator for the last screw hole (top screw of last row)
     const lastRowIndex = panels.length - 1;
     const lastRowAngle = getActualRowAngle(lastRowIndex);
     const lastScrews = getScrewHoleCoords(panels[lastRowIndex], lastRowIndex);
     drawScrewPerpIndicator(lastScrews.topScrew, lastRowAngle, maxX, -30, -3);
-    
+
     // Draw indicators at joints between rows
     for (let i = 1; i < panels.length; i++) {
         const prevRowAngle = getActualRowAngle(i - 1);
         const currentRowAngle = getActualRowAngle(i);
         const relativeAngle = rowAngles[i];
-        
+
         // Get screw hole positions
         const prevScrews = getScrewHoleCoords(panels[i - 1], i - 1);
         const currentScrews = getScrewHoleCoords(panels[i], i);
-        
+
         // Top screw of previous row (near the joint)
         const screw1 = prevScrews.topScrew;
         // Bottom screw of current row (near the joint)
         const screw2 = currentScrews.bottomScrew;
-        
+
         if (relativeAngle === 0) {
             // Same angle - draw only one line through the current row's bottom screw
             const angle = currentRowAngle;
             const perpDirX = Math.sin(rad(angle));
             const perpDirY = -Math.cos(rad(angle));
-            
+
             // Start point: go backwards from screw hole to the row surface (by actualRailDepth)
             const startX = screw2.x - perpDirX * actualRailDepth;
             const startY = screw2.y - perpDirY * actualRailDepth;
-            
+
             // Calculate where perpendicular hits bottom (y=0) and back (x=maxX) from screw position
             const tBottom = screw2.y / Math.cos(rad(angle));
             const tBack = (maxX - screw2.x) / Math.sin(rad(angle));
-            
+
             // Use whichever is hit first (smaller positive t)
             const t = (tBottom > 0 && tBack > 0) ? Math.min(tBottom, tBack) : Math.max(tBottom, tBack);
             const perpDist = Math.abs(t) + actualRailDepth;
-            
+
             const endX = screw2.x + perpDirX * t;
             const endY = screw2.y + perpDirY * t;
-            
+
             drawDistanceIndicator(startX, startY, endX, endY, perpDist, 5, -5);
         } else {
             // Different angles - draw two lines through respective screw holes
-            
+
             // Line through top screw of previous row
             const angle1 = prevRowAngle;
             const perpDirX1 = Math.sin(rad(angle1));
             const perpDirY1 = -Math.cos(rad(angle1));
-            
+
             // Start point: go backwards from screw hole to the row surface
             const startX1 = screw1.x - perpDirX1 * actualRailDepth;
             const startY1 = screw1.y - perpDirY1 * actualRailDepth;
-            
+
             const tBottom1 = screw1.y / Math.cos(rad(angle1));
             const tBack1 = (maxX - screw1.x) / Math.sin(rad(angle1));
             const t1 = (tBottom1 > 0 && tBack1 > 0) ? Math.min(tBottom1, tBack1) : Math.max(tBottom1, tBack1);
             const perpDist1 = Math.abs(t1) + actualRailDepth;
-            
+
             const endX1 = screw1.x + perpDirX1 * t1;
             const endY1 = screw1.y + perpDirY1 * t1;
-            
+
             drawDistanceIndicator(startX1, startY1, endX1, endY1, perpDist1, -30, -3);
-            
+
             // Line through bottom screw of current row
             const angle2 = currentRowAngle;
             const perpDirX2 = Math.sin(rad(angle2));
             const perpDirY2 = -Math.cos(rad(angle2));
-            
+
             // Start point: go backwards from screw hole to the row surface
             const startX2 = screw2.x - perpDirX2 * actualRailDepth;
             const startY2 = screw2.y - perpDirY2 * actualRailDepth;
-            
+
             const tBottom2 = screw2.y / Math.cos(rad(angle2));
             const tBack2 = (maxX - screw2.x) / Math.sin(rad(angle2));
             const t2 = (tBottom2 > 0 && tBack2 > 0) ? Math.min(tBottom2, tBack2) : Math.max(tBottom2, tBack2);
             const perpDist2 = Math.abs(t2) + actualRailDepth;
-            
+
             const endX2 = screw2.x + perpDirX2 * t2;
             const endY2 = screw2.y + perpDirY2 * t2;
-            
+
             drawDistanceIndicator(startX2, startY2, endX2, endY2, perpDist2, 5, -3);
         }
     }
-    
+
     ctx.strokeStyle = savedStrokeStyle;
     ctx.fillStyle = savedFillStyle;
     ctx.setLineDash(savedLineDash);
@@ -465,91 +468,134 @@ function drawJointDistanceIndicators(panels, maxX) {
  * @param {array} railScrewCoords
  */
 function writeSummary(width, height, outlinePoints, railScrewCoords) {
-    var cabinetInfo = [
-        "Cabinet depth and height: ",
-        actualDistance(width, true) + " x " + actualDistance(height, true),
+  var cabinetInfo = [
+    "Cabinet depth and height: ",
+    actualDistance(width, true) + " x " + actualDistance(height, true),
+  ];
+  const has1URows = rowIs1U.some((is1U) => is1U);
+  const oneUHeight = oneUFormats[selected1UFormat].height;
+  let panelHeightInfo;
+  if (has1URows) {
+    panelHeightInfo = [
+      "Panel heights: ",
+      `3U: ${actualDistance(actualPanelHeight, true)}, 1U (${oneUFormats[selected1UFormat].name}): ${actualDistance(oneUHeight, true)}`,
     ];
-    const has1URows = rowIs1U.some(is1U => is1U);
-    const oneUHeight = oneUFormats[selected1UFormat].height;
-    let panelHeightInfo;
-    if (has1URows) {
-        panelHeightInfo = [
-            "Panel heights: ",
-            `3U: ${actualDistance(actualPanelHeight, true)}, 1U (${oneUFormats[selected1UFormat].name}): ${actualDistance(oneUHeight, true)}`,
-        ];
-    } else {
-        panelHeightInfo = [
-            "Panel height used: ",
-            actualDistance(actualPanelHeight, true),
-        ];
-    }
-    var panelDepthInfo = ["Panel depth used: ", actualDistance(actualPanelDepth, true)];
-    var railDepthInfo = ["Rails depth inset: ", actualDistance(actualRailDepth, true)];
-    var railSpacingInfo = [
-        "Rail screw spacing*: ",
-        actualDistance(actualRailSeparation, true),
+  } else {
+    panelHeightInfo = [
+      "Panel height used: ",
+      actualDistance(actualPanelHeight, true),
     ];
-    let totalRowtation = [`Top row absolute rotation: `, `${getActualRowAngle()}`];
-    var footnote = [
-        "*Note: rail spacing based on the measurements provided by " +
-            '<a href="http://www.musicradar.com/tuition/tech/how-to-build-your-own-cardboard-' +
-            "eurorack-modular-case-625196\">Future Music's cardboard DIY</a> " +
-            "case using TipTop Audio Z-Rails.",
-        "",
-    ];
-    var info = [
-        cabinetInfo,
-        panelHeightInfo,
-        panelDepthInfo,
-        railDepthInfo,
-        railSpacingInfo,
-        totalRowtation,
-        footnote,
-    ];
-    // console.info(info.map(function(a) {
-    //     return a.join("\t");
-    // }).join("\n"));
-    document.getElementById("summary-div").innerHTML = info
-        .map(function (a) {
-            return a[0] + "<b>" + a[1] + "</b>";
-        })
-        .join("<br/>");
+  }
+  var panelDepthInfo = [
+    "Panel depth used: ",
+    actualDistance(actualPanelDepth, true),
+  ];
+  var railDepthInfo = [
+    "Rails depth inset: ",
+    actualDistance(actualRailDepth, true),
+  ];
+  var railSpacingInfo = [
+    "Rail screw spacing*: ",
+    actualDistance(actualRailSeparation, true),
+  ];
+  let totalRowtation = [
+    `Top row absolute rotation: `,
+    `${getActualRowAngle()}`,
+  ];
+  var footnote = [
+    "*Note: rail spacing based on the measurements provided by " +
+      '<a href="http://www.musicradar.com/tuition/tech/how-to-build-your-own-cardboard-' +
+      "eurorack-modular-case-625196\">Future Music's cardboard DIY</a> " +
+      "case using TipTop Audio Z-Rails.",
+    "",
+  ];
+  var info = [
+    cabinetInfo,
+    panelHeightInfo,
+    panelDepthInfo,
+    railDepthInfo,
+    railSpacingInfo,
+    totalRowtation,
+    footnote,
+  ];
+  // console.info(info.map(function(a) {
+  //     return a.join("\t");
+  // }).join("\n"));
+  document.getElementById("summary-div").innerHTML = info
+    .map(function (a) {
+      return a[0] + "<b>" + a[1] + "</b>";
+    })
+    .join("<br/>");
 
-    function processCoords(outlinePoints) {
-        const ops = outlinePoints.slice(0);
-        const s = [];
-        while (ops.length > 0) {
-            const x = `${roundToPlace(ops.shift(), 1)}mm`;
-            const y = `${roundToPlace(ops.shift(), 1)}mm`;
-            if (typeof ops[0] !== "number") {
-                ops.shift();
-            } else {
-                s.push(`(${x}, ${y})`);
-            }
-        }
-        return s.join(", ");
+  function processCoords(outlinePoints) {
+    const ops = outlinePoints.slice(0);
+    const s = [];
+    while (ops.length > 0) {
+      const x = `${roundToPlace(ops.shift(), 1)}mm`;
+      const y = `${roundToPlace(ops.shift(), 1)}mm`;
+      if (typeof ops[0] !== "number") {
+        ops.shift();
+      } else {
+        s.push(`(${x}, ${y})`);
+      }
     }
+    return s.join(", ");
+  }
 
-    function processRailScrewCoords(railScrewCoords) {
-        const rcs = railScrewCoords.slice(0);
-        const s = [];
-        while (rcs.length > 0) {
-            s.push(
-                `(${roundToPlace(rcs.shift(), 1)}mm, ${roundToPlace(rcs.shift(), 1)}mm)`
-            );
-        }
-        return s.join(", ");
+  function processRailScrewCoords(railScrewCoords) {
+    const rcs = railScrewCoords.slice(0);
+    const s = [];
+    while (rcs.length > 0) {
+      s.push(
+        `(${roundToPlace(rcs.shift(), 1)}mm, ${roundToPlace(rcs.shift(), 1)}mm)`,
+      );
     }
+    return s.join(", ");
+  }
 
-    const info2 = [
-        ["Coordinates for outline: ", processCoords(outlinePoints)],
-        ["Coordinates for rail screws: ", processRailScrewCoords(railScrewCoords)],
-    ];
-    document.getElementById("summary-div-2").innerHTML = info2
-        .map(function (a) {
-            return a[0] + "<b>" + a[1] + "</b>";
-        })
-        .join("<br/>");
+  const info2 = [
+    ["Coordinates for outline: ", processCoords(outlinePoints)],
+    ["Coordinates for rail screws: ", processRailScrewCoords(railScrewCoords)],
+  ];
+
+  let summaryHtml = info2
+    .map(function (a) {
+      return a[0] + "<b>" + a[1] + "</b>";
+    })
+    .join("<br/>");
+
+  summaryHtml +=
+    "<br/><br/>How wide should the front, bottom, and back panels be based on my HP requirement?&nbsp;";
+  summaryHtml +=
+    '<input type="number" id="hp-width-input" value="' +
+    caseWidthHP +
+    '" style="width: 60px;" />';
+  summaryHtml += '&nbsp;<span class="input-span unit">hp</span>';
+  summaryHtml +=
+    '&nbsp;&nbsp;<input type="text" id="hp-width-mm" value="' +
+    roundToPlace(caseWidthHP * HP_TO_MM, 2) +
+    '" readonly style="width: 80px; background-color: #eee;" />';
+  summaryHtml += '&nbsp;<span class="input-span unit">mm</span>';
+
+  document.getElementById("summary-div-2").innerHTML = summaryHtml;
+
+  setupHpWidthInput();
+}
+
+/**
+ * Sets up the HP width input event listener.
+ */
+function setupHpWidthInput() {
+  hpWidthInput = document.getElementById("hp-width-input");
+  hpWidthMmDisplay = document.getElementById("hp-width-mm");
+
+  if (hpWidthInput && !hpWidthInput.hasAttribute("data-listener-added")) {
+    hpWidthInput.setAttribute("data-listener-added", "true");
+    hpWidthInput.addEventListener("input", (event) => {
+      caseWidthHP = parseFloat(event.target.value) || 0;
+      hpWidthMmDisplay.value = roundToPlace(caseWidthHP * HP_TO_MM, 2);
+    });
+  }
 }
 
 /**
@@ -712,14 +758,14 @@ function writeCoords(x, y, showBelow, side) {
     var plot = getPlot(x, y);
     var text = actualDistance(x) + ", " + actualDistance(y);
     var textWidth = ctx.measureText(text).width;
-    
+
     var xOffset;
     if (side === 'left') {
         xOffset = -textWidth - 5;
     } else {
         xOffset = 5;
     }
-    
+
     ctx.fillText(
         text,
         plot.x + xOffset,
@@ -812,16 +858,16 @@ function reset1UCheckboxes(c) {
     while (container.firstChild) {
         container.removeChild(container.firstChild);
     }
-    
+
     rowIs1U = rowIs1U.slice(0, c);
     while (rowIs1U.length < c) {
         rowIs1U.push(false);
     }
-    
+
     for (let i = 0; i < c; i++) {
         const label = document.createElement("label");
         label.className = "row-1u-label";
-        
+
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
         checkbox.id = `row-1u-${i}`;
@@ -831,12 +877,12 @@ function reset1UCheckboxes(c) {
             update1UFormatVisibility();
             drawSide();
         });
-        
+
         label.appendChild(checkbox);
         label.appendChild(document.createTextNode(`${i + 1}`));
         container.appendChild(label);
     }
-    
+
     update1UFormatVisibility();
 }
 
@@ -866,7 +912,7 @@ function resetRowInputs(c) {
     for (let i = 0; i < rowCount; i++) {
         rowInputs[i] = createRowInput(i, rowAngles[i]);
     }
-    
+
     reset1UCheckboxes(c);
 }
 
