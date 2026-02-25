@@ -64,3 +64,21 @@ input {
     margin: 5px;
     min-height: 100px;
 }
+
+.row-1u-label {
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+.row-1u-label input[type="checkbox"] {
+    margin-right: 2px;
+}
+
+#oneU-format-container label {
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+#oneU-format-container input[type="radio"] {
+    margin-right: 3px;
+}

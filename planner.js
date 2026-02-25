@@ -8,13 +8,22 @@ var input, canvasDiv, canvas, calcRiseCb, ctx, w, h;
 let rowCounts = [1, 2, 3, 4, 5];
 let rowCount = rowCounts[2];
 let rowAngles = [5, 10, 10];
+let rowIs1U = [false, false, false];
 let rowInputs = [];
 let defaultAngle = 5;
+
+const oneUFormats = {
+    intellijel: { name: "Intellijel", height: 39.65, railSeparation: 29.5 },
+    pulplogic: { name: "Pulp Logic", height: 43.18, railSeparation: 33 }
+};
+let selected1UFormat = "intellijel";
 
 var inputDepth, matThickness, pxPerCmInput;
 
 var actualPanelHeight = 133.4;
+var actual1UPanelHeight = 39.65;
 var actualRailSeparation = 123;
+var actual1URailSeparation = 29.5;
 var actualRailDepth = 14;
 var actualPanelDepth = 60;
 var useStaticRise = false;
@@ -144,10 +153,12 @@ function drawSide() {
     );
 
     rowAngles.forEach((angle, i) => {
+        const rowHeight = getPanelHeightForRow(i);
         panels[i].coords.push(x, y);
+        panels[i].is1U = rowIs1U[i];
         add(
-            x + Math.cos(rad(getActualRowAngle(i))) * actualPanelHeight,
-            y + Math.sin(rad(getActualRowAngle(i))) * actualPanelHeight,
+            x + Math.cos(rad(getActualRowAngle(i))) * rowHeight,
+            y + Math.sin(rad(getActualRowAngle(i))) * rowHeight,
             // If it is the last row, then the outline will continue for the width of
             // the material, so we'll just write the coord marker at the end of that
             // instead of the end of the row outline.
@@ -229,10 +240,20 @@ function writeSummary(width, height, outlinePoints, railScrewCoords) {
         "Cabinet depth and height: ",
         actualDistance(width, true) + " x " + actualDistance(height, true),
     ];
-    var panelHeightInfo = [
-        "Panel height used: ",
-        actualDistance(actualPanelHeight, true),
-    ];
+    const has1URows = rowIs1U.some(is1U => is1U);
+    const oneUHeight = oneUFormats[selected1UFormat].height;
+    let panelHeightInfo;
+    if (has1URows) {
+        panelHeightInfo = [
+            "Panel heights: ",
+            `3U: ${actualDistance(actualPanelHeight, true)}, 1U (${oneUFormats[selected1UFormat].name}): ${actualDistance(oneUHeight, true)}`,
+        ];
+    } else {
+        panelHeightInfo = [
+            "Panel height used: ",
+            actualDistance(actualPanelHeight, true),
+        ];
+    }
     var panelDepthInfo = ["Panel depth used: ", actualDistance(actualPanelDepth, true)];
     var railDepthInfo = ["Rails depth inset: ", actualDistance(actualRailDepth, true)];
     var railSpacingInfo = [
@@ -354,11 +375,14 @@ function roundToPlace(v, p) {
  * Draws the screw locations for the rails for a eurorack row.
  *
  * @param {number} panel The panel object for which to draw the rail locations.
+ * @param {number} panelIndex The index of the panel.
  */
-function drawPanelRail(panel) {
+function drawPanelRail(panel, panelIndex) {
     let p = [];
     var circR = 3;
-    var screwDist = (actualPanelHeight - actualRailSeparation) / 2;
+    const panelHeight = getPanelHeightForRow(panelIndex);
+    const railSeparation = getRailSeparationForRow(panelIndex);
+    var screwDist = (panelHeight - railSeparation) / 2;
     var screwDistX = Math.cos(rad(panel.angle)) * screwDist;
     var screwDistY = Math.sin(rad(panel.angle)) * screwDist;
     var screwDistDepthX = Math.sin(rad(panel.angle)) * actualRailDepth;
@@ -405,7 +429,7 @@ function drawPanelRail(panel) {
 function drawPanelRails(panels) {
     let p = [];
     for (var i = 0; i < panels.length; i++) {
-        p = p.concat(drawPanelRail(panels[i]));
+        p = p.concat(drawPanelRail(panels[i], i));
     }
     return p;
 }
@@ -513,6 +537,79 @@ function createRowInput(i, value) {
 }
 
 /**
+ * Gets the panel height for a given row index based on whether it's 1U or 3U.
+ *
+ * @param {number} rowIndex The row index.
+ * @returns The panel height in mm.
+ */
+function getPanelHeightForRow(rowIndex) {
+    if (rowIs1U[rowIndex]) {
+        return oneUFormats[selected1UFormat].height;
+    }
+    return actualPanelHeight;
+}
+
+/**
+ * Gets the rail separation for a given row index based on whether it's 1U or 3U.
+ *
+ * @param {number} rowIndex The row index.
+ * @returns The rail separation in mm.
+ */
+function getRailSeparationForRow(rowIndex) {
+    if (rowIs1U[rowIndex]) {
+        return oneUFormats[selected1UFormat].railSeparation;
+    }
+    return actualRailSeparation;
+}
+
+/**
+ * Creates the 1U checkboxes for each row.
+ *
+ * @param {number} c The row count.
+ */
+function reset1UCheckboxes(c) {
+    const container = document.getElementById("row-1u-checkboxes");
+    while (container.firstChild) {
+        container.removeChild(container.firstChild);
+    }
+    
+    rowIs1U = rowIs1U.slice(0, c);
+    while (rowIs1U.length < c) {
+        rowIs1U.push(false);
+    }
+    
+    for (let i = 0; i < c; i++) {
+        const label = document.createElement("label");
+        label.className = "row-1u-label";
+        
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.id = `row-1u-${i}`;
+        checkbox.checked = rowIs1U[i];
+        checkbox.addEventListener("change", (event) => {
+            rowIs1U[i] = event.target.checked;
+            update1UFormatVisibility();
+            drawSide();
+        });
+        
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(`${i + 1}`));
+        container.appendChild(label);
+    }
+    
+    update1UFormatVisibility();
+}
+
+/**
+ * Shows or hides the 1U format selector based on whether any rows are 1U.
+ */
+function update1UFormatVisibility() {
+    const formatContainer = document.getElementById("oneU-format-container");
+    const hasAny1U = rowIs1U.some(is1U => is1U);
+    formatContainer.style.display = hasAny1U ? "inline" : "none";
+}
+
+/**
  * Redraws the row input elements.
  *
  * @param {number} c The row count.
@@ -529,6 +626,8 @@ function resetRowInputs(c) {
     for (let i = 0; i < rowCount; i++) {
         rowInputs[i] = createRowInput(i, rowAngles[i]);
     }
+    
+    reset1UCheckboxes(c);
 }
 
 /**
@@ -554,6 +653,16 @@ function init() {
         drawSide();
     });
     resetRowInputs(rowCount);
+
+    const oneUFormatRadios = document.querySelectorAll('input[name="oneUFormat"]');
+    oneUFormatRadios.forEach(radio => {
+        radio.addEventListener("change", (event) => {
+            selected1UFormat = event.target.value;
+            actual1UPanelHeight = oneUFormats[selected1UFormat].height;
+            actual1URailSeparation = oneUFormats[selected1UFormat].railSeparation;
+            drawSide();
+        });
+    });
 
     inputDepth = document.getElementById("the-input-depth");
     const onModuleDepthChange = (event) => {
