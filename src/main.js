@@ -8,6 +8,7 @@ import {
   drawPath,
   drawPanelRails,
   drawJointDistanceIndicators,
+  calculateViewScale,
 } from "./canvas-renderer.js";
 import {
   setDrawCallback,
@@ -18,7 +19,50 @@ import "./style.css";
 
 let canvasDiv, canvas, ctx;
 
+function calculateCaseBounds() {
+  let maxX = 0, maxY = 0;
+  let x = 0, y = 0;
+
+  const firstAngle = state.rowAngles[0];
+
+  const bottomPanelDepth = state.useStaticRise
+    ? state.actualPanelDepth
+    : Math.abs(state.actualPanelDepth * Math.sin(Math.PI / 2 - rad(firstAngle)));
+  
+  y += bottomPanelDepth;
+  x += Math.cos(rad(firstAngle)) * state.caseMaterialThickness;
+  y = Math.sin(rad(firstAngle)) * state.caseMaterialThickness + bottomPanelDepth;
+
+  state.rowAngles.forEach((angle, i) => {
+    const rowHeight = state.getPanelHeightForRow(i);
+    x += Math.cos(rad(state.getActualRowAngle(i))) * rowHeight;
+    y += Math.sin(rad(state.getActualRowAngle(i))) * rowHeight;
+    maxX = Math.max(maxX, x);
+    maxY = Math.max(maxY, y);
+  });
+
+  const lastRowAngle = state.getActualRowAngle();
+
+  if (state.flattenTopShelf) {
+    const shelfStartY = y + Math.sin(rad(lastRowAngle)) * state.caseMaterialThickness;
+    const normalBackWallInside = x + Math.sin(rad(lastRowAngle)) * state.actualPanelDepth;
+    const normalBackWallOutside = normalBackWallInside + state.caseMaterialThickness;
+    maxX = Math.max(maxX, normalBackWallOutside);
+    maxY = Math.max(maxY, shelfStartY);
+  } else {
+    const backWallOutside = x + Math.sin(rad(lastRowAngle)) * state.actualPanelDepth + state.caseMaterialThickness;
+    const topY = y + Math.sin(rad(lastRowAngle)) * state.caseMaterialThickness;
+    maxX = Math.max(maxX, backWallOutside);
+    maxY = Math.max(maxY, topY);
+  }
+
+  return { maxX, maxY };
+}
+
 function drawSide() {
+  const bounds = calculateCaseBounds();
+  calculateViewScale(bounds.maxX, bounds.maxY);
+
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = "rgb(0, 0, 0)";
   ctx.strokeStyle = "#999999";
@@ -244,16 +288,6 @@ function init() {
     }, 0);
   };
   matThickness.addEventListener("input", onMaterialThicknessChange);
-
-  const pxPerCmInput = document.getElementById("px-per-cm");
-  pxPerCmInput.value = state.pxPerCm;
-  const onPxPerCmChange = (event) => {
-    setTimeout(() => {
-      state.pxPerCm = parseFloat(event.target.value);
-      drawSide();
-    }, 0);
-  };
-  pxPerCmInput.addEventListener("input", onPxPerCmChange);
 
   const flattenTopShelfCb = document.getElementById("flatten-top-shelf");
   flattenTopShelfCb.checked = state.flattenTopShelf;

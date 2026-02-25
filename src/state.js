@@ -26,6 +26,7 @@ class AppState {
 
     this.pxPerCm = 400 / this.actualPanelHeight;
     this.panels = [];
+    this.viewScale = 1; // Auto-calculated scale to fit canvas
   }
 
   get panelHeight() {

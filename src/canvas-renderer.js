@@ -4,6 +4,8 @@ import { COLORS } from "./constants.js";
 
 let canvas, ctx;
 
+const PADDING = 70;
+
 export function initCanvas(canvasElement) {
   canvas = canvasElement;
   ctx = canvas.getContext("2d");
@@ -19,18 +21,33 @@ export function getContext() {
 }
 
 function startX() {
-  return 70;
+  return PADDING * state.viewScale;
 }
 
 function startY() {
-  return canvas.height - 70;
+  return canvas.height - PADDING * state.viewScale;
 }
 
 export function getPlot(x, y) {
   return {
-    x: startX() + x / state.heightRatio,
-    y: startY() - y / state.heightRatio,
+    x: startX() + (x / state.heightRatio) * state.viewScale,
+    y: startY() - (y / state.heightRatio) * state.viewScale,
   };
+}
+
+export function calculateViewScale(maxX, maxY) {
+  const baseScale = 1 / state.heightRatio;
+  
+  const requiredWidth = PADDING + maxX * baseScale + PADDING;
+  const requiredHeight = PADDING + maxY * baseScale + PADDING;
+  
+  const availableWidth = canvas.width;
+  const availableHeight = canvas.height;
+  
+  const scaleX = availableWidth / requiredWidth;
+  const scaleY = availableHeight / requiredHeight;
+  
+  state.viewScale = Math.min(1, scaleX, scaleY);
 }
 
 function moveTo(x, y) {
