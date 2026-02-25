@@ -200,8 +200,8 @@ function drawSide() {
         // Add the material thickness point (junction where shelf meets last row) with label
         add(shelfStartX, shelfStartY);
         
-        // Add the top-right corner of the shelf with label
-        add(shelfEndX, shelfEndY);
+        // Add the top-right corner of the shelf with label (positioned right and below to avoid overlap)
+        add(shelfEndX, shelfEndY, { labelPos: { below: true, side: 'right' } });
         
         // Go straight down to the bottom with label
         add(shelfEndX, 0);
@@ -803,7 +803,12 @@ function drawPath(pts) {
                 writeCoords(x, y);
             }
         } else {
-            pts.shift();
+            var marker = pts.shift();
+            // Check if marker is an object with label positioning info
+            if (marker && typeof marker === "object" && marker.labelPos) {
+                writeCoords(x, y, marker.labelPos.below, marker.labelPos.side);
+            }
+            // If marker is "nowrite" or true, skip writing coords (already shifted)
         }
     }
     ctx.stroke();
