@@ -1,4 +1,5 @@
 import { state } from "./state.js";
+import { HP_TO_MM } from "./constants.js";
 
 export function rad(d) {
   return (d / 180) * Math.PI;
@@ -46,6 +47,7 @@ export function calculateCaseGeometry() {
     shelfPieceOutline: [],
     baseBoardOutline: [],
     panels: [],
+    cutPanels: [],
     maxX: 0,
     maxY: 0,
   };
@@ -184,6 +186,62 @@ export function calculateCaseGeometry() {
     geometry.drillHoles.push(screwCoords.bottomScrew);
     geometry.drillHoles.push(screwCoords.topScrew);
   });
+
+  const panelWidth = state.caseWidthHP * HP_TO_MM;
+
+  const frontHeight = state.useStaticRise
+    ? state.actualPanelDepth
+    : Math.abs(state.actualPanelDepth * Math.sin(Math.PI / 2 - rad(firstAngle)));
+
+  const bottomDepth = geometry.maxX;
+
+  let backHeight, topShelfDepth;
+
+  if (state.flattenTopShelf) {
+    const lastRowEndY = geometry.outline[geometry.outline.length - 4].y;
+    const shelfY = lastRowEndY + Math.sin(rad(lastRowAngle)) * state.caseMaterialThickness;
+    backHeight = shelfY - state.caseMaterialThickness;
+    
+    const lastRowEndX = geometry.outline[geometry.outline.length - 5].x;
+    const shelfStartX = lastRowEndX + Math.cos(rad(lastRowAngle)) * state.caseMaterialThickness;
+    topShelfDepth = geometry.maxX - shelfStartX;
+  } else {
+    const backWallTopY = geometry.outline[geometry.outline.length - 3].y;
+    backHeight = geometry.maxY;
+    topShelfDepth = state.actualPanelDepth;
+  }
+
+  geometry.cutPanels = [
+    {
+      name: "Front",
+      width: panelWidth,
+      height: frontHeight,
+    },
+    {
+      name: "Bottom",
+      width: panelWidth,
+      height: bottomDepth,
+    },
+    {
+      name: "Back",
+      width: panelWidth,
+      height: backHeight,
+    },
+  ];
+
+  if (state.flattenTopShelf) {
+    geometry.cutPanels.push({
+      name: "Top Shelf",
+      width: panelWidth,
+      height: topShelfDepth,
+    });
+  } else {
+    geometry.cutPanels.push({
+      name: "Back-Top (angled)",
+      width: panelWidth,
+      height: topShelfDepth,
+    });
+  }
 
   return geometry;
 }

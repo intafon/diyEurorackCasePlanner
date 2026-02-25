@@ -1,5 +1,5 @@
 import { state } from "./state.js";
-import { rad, actualDistance, roundToPlace, getScrewHoleCoords } from "./geometry.js";
+import { rad, actualDistance, roundToPlace, getScrewHoleCoords, calculateCaseGeometry } from "./geometry.js";
 import { COLORS } from "./constants.js";
 
 let canvas, ctx;
@@ -317,3 +317,4 @@ export function drawPanelRails(panels) {
   }
   return p;
 }
+

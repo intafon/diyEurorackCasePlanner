@@ -116,7 +116,7 @@ export function setupHpWidthInput() {
   }
 }
 
-export function writeSummary(width, height, outlinePoints, railScrewCoords) {
+export function writeSummary(width, height, outlinePoints, railScrewCoords, cutPanels) {
   const cabinetInfo = [
     "Cabinet depth and height: ",
     actualDistance(width, true) + " x " + actualDistance(height, true),
@@ -206,8 +206,15 @@ export function writeSummary(width, height, outlinePoints, railScrewCoords) {
     .map((a) => a[0] + "<b>" + a[1] + "</b>")
     .join("<br/>");
 
+  if (cutPanels && cutPanels.length > 0) {
+    summaryHtml += "<br/><br/><b>Cut panel dimensions (depth x width):</b><br/>";
+    cutPanels.forEach((panel) => {
+      summaryHtml += `&nbsp;&nbsp;${panel.name}: <b>${roundToPlace(panel.height, 1)}mm x ${roundToPlace(panel.width, 1)}mm</b><br/>`;
+    });
+  }
+
   summaryHtml +=
-    "<br/><br/>How wide should the front, bottom, and back panels be based on my HP requirement?&nbsp;";
+    "<br/>How wide should the front, bottom, and back panels be based on my HP requirement?&nbsp;";
   summaryHtml +=
     '<input type="number" id="hp-width-input" value="' +
     state.caseWidthHP +

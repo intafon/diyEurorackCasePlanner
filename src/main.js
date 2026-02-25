@@ -1,5 +1,5 @@
 import { state } from "./state.js";
-import { oneUFormats } from "./constants.js";
+import { oneUFormats, HP_TO_MM } from "./constants.js";
 import { rad } from "./geometry.js";
 import {
   initCanvas,
@@ -19,7 +19,7 @@ import "./style.css";
 
 let canvasDiv, canvas, ctx;
 
-function calculateCaseBounds() {
+function calculateCaseBoundsAndPanels() {
   let maxX = 0, maxY = 0;
   let x = 0, y = 0;
 
@@ -28,6 +28,8 @@ function calculateCaseBounds() {
   const bottomPanelDepth = state.useStaticRise
     ? state.actualPanelDepth
     : Math.abs(state.actualPanelDepth * Math.sin(Math.PI / 2 - rad(firstAngle)));
+  
+  const frontHeight = bottomPanelDepth;
   
   y += bottomPanelDepth;
   x += Math.cos(rad(firstAngle)) * state.caseMaterialThickness;
@@ -42,25 +44,51 @@ function calculateCaseBounds() {
   });
 
   const lastRowAngle = state.getActualRowAngle();
+  const lastRowEndX = x;
+  const lastRowEndY = y;
+
+  let backHeight, topShelfDepth;
 
   if (state.flattenTopShelf) {
-    const shelfStartY = y + Math.sin(rad(lastRowAngle)) * state.caseMaterialThickness;
-    const normalBackWallInside = x + Math.sin(rad(lastRowAngle)) * state.actualPanelDepth;
+    const shelfStartX = lastRowEndX + Math.cos(rad(lastRowAngle)) * state.caseMaterialThickness;
+    const shelfStartY = lastRowEndY + Math.sin(rad(lastRowAngle)) * state.caseMaterialThickness;
+    const normalBackWallInside = lastRowEndX + Math.sin(rad(lastRowAngle)) * state.actualPanelDepth;
     const normalBackWallOutside = normalBackWallInside + state.caseMaterialThickness;
     maxX = Math.max(maxX, normalBackWallOutside);
     maxY = Math.max(maxY, shelfStartY);
+    
+    backHeight = shelfStartY - state.caseMaterialThickness;
+    topShelfDepth = normalBackWallOutside - shelfStartX;
   } else {
-    const backWallOutside = x + Math.sin(rad(lastRowAngle)) * state.actualPanelDepth + state.caseMaterialThickness;
-    const topY = y + Math.sin(rad(lastRowAngle)) * state.caseMaterialThickness;
+    const backWallOutside = lastRowEndX + Math.sin(rad(lastRowAngle)) * state.actualPanelDepth + state.caseMaterialThickness;
+    const topY = lastRowEndY + Math.sin(rad(lastRowAngle)) * state.caseMaterialThickness;
     maxX = Math.max(maxX, backWallOutside);
     maxY = Math.max(maxY, topY);
+    
+    backHeight = topY;
+    topShelfDepth = state.actualPanelDepth;
   }
 
-  return { maxX, maxY };
+  const panelWidth = state.caseWidthHP * HP_TO_MM;
+  const bottomDepth = maxX;
+
+  const cutPanels = [
+    { name: "Front", width: panelWidth, height: frontHeight },
+    { name: "Bottom", width: panelWidth, height: bottomDepth },
+    { name: "Back", width: panelWidth, height: backHeight },
+  ];
+
+  if (state.flattenTopShelf) {
+    cutPanels.push({ name: "Top Shelf", width: panelWidth, height: topShelfDepth });
+  } else {
+    cutPanels.push({ name: "Back-Top", width: panelWidth, height: topShelfDepth });
+  }
+
+  return { maxX, maxY, cutPanels };
 }
 
 function drawSide() {
-  const bounds = calculateCaseBounds();
+  const bounds = calculateCaseBoundsAndPanels();
   calculateViewScale(bounds.maxX, bounds.maxY);
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -225,7 +253,7 @@ function drawSide() {
 
   drawJointDistanceIndicators(state.panels, backWallInside);
 
-  writeSummary(maxX, maxY, pathCoords, railScrewCoords);
+  writeSummary(maxX, maxY, pathCoords, railScrewCoords, bounds.cutPanels);
 }
 
 function init() {
