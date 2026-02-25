@@ -82,3 +82,26 @@ input {
 #oneU-format-container input[type="radio"] {
     margin-right: 3px;
 }
+
+.export-buttons {
+    margin-top: 10px;
+}
+
+.export-buttons button {
+    padding: 8px 16px;
+    font-size: 12px;
+    cursor: pointer;
+    background-color: #4a90d9;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.export-buttons button:hover {
+    background-color: #357abd;
+}
+
+.export-buttons button:active {
+    background-color: #2a5f8f;
+}
