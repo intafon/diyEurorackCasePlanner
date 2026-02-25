@@ -175,8 +175,8 @@ export function writeSummary(width, height, outlinePoints, railScrewCoords, cutP
     const ops = outlinePoints.slice(0);
     const s = [];
     while (ops.length > 0) {
-      const x = `${roundToPlace(ops.shift(), 1)}mm`;
-      const y = `${roundToPlace(ops.shift(), 1)}mm`;
+      const x = `${roundToPlace(ops.shift(), 2)}mm`;
+      const y = `${roundToPlace(ops.shift(), 2)}mm`;
       if (typeof ops[0] !== "number") {
         ops.shift();
       } else {
@@ -191,7 +191,7 @@ export function writeSummary(width, height, outlinePoints, railScrewCoords, cutP
     const s = [];
     while (rcs.length > 0) {
       s.push(
-        `(${roundToPlace(rcs.shift(), 1)}mm, ${roundToPlace(rcs.shift(), 1)}mm)`
+        `(${roundToPlace(rcs.shift(), 2)}mm, ${roundToPlace(rcs.shift(), 2)}mm)`
       );
     }
     return s.join(", ");
@@ -209,7 +209,7 @@ export function writeSummary(width, height, outlinePoints, railScrewCoords, cutP
   if (cutPanels && cutPanels.length > 0) {
     summaryHtml += "<br/><br/><b>Cut panel dimensions (depth x width):</b><br/>";
     cutPanels.forEach((panel) => {
-      summaryHtml += `&nbsp;&nbsp;${panel.name}: <b>${roundToPlace(panel.height, 1)}mm x ${roundToPlace(panel.width, 1)}mm</b><br/>`;
+      summaryHtml += `&nbsp;&nbsp;${panel.name}: <b>${roundToPlace(panel.height, 2)}mm x ${roundToPlace(panel.width, 2)}mm</b><br/>`;
     });
   }
 

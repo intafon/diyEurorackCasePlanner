@@ -10,9 +10,9 @@ export function roundToPlace(v, p) {
 }
 
 export function actualDistance(d, showInches) {
-  let t = Math.abs(roundToPlace(d, 1)) + "mm";
+  let t = Math.abs(roundToPlace(d, 2)) + "mm";
   if (showInches) {
-    t += " (" + Math.abs(roundToPlace(d / 25.4, 1)) + "in)";
+    t += " (" + Math.abs(roundToPlace(d / 25.4, 2)) + "in)";
   }
   return t;
 }
