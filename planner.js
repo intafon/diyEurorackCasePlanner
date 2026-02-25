@@ -31,6 +31,7 @@ var actualRailDepth = 14;
 var actualPanelDepth = 60;
 var useStaticRise = false;
 var caseMaterialThickness = 3;
+var flattenTopShelf = false;
 
 var pxPerCm = 400 / actualPanelHeight;
 var panelHeight = actualPanelHeight * pxPerCm;
@@ -170,28 +171,76 @@ function drawSide() {
         panels[i].coords.push(x, y);
     });
 
-    // Add the points for drawing the dotted line representing the cardboard
-    // piece for the case back on the other side of the side panel.
-    backPieceOutline.push(x, y);
-    // Now get the *inside* x position of the back of the case. We will add the material
-    // thickness to this below.
-    const backWallInside = x + Math.sin(rad(getActualRowAngle())) * actualPanelDepth;
-    backPieceOutline.push(
-        backWallInside,
-        y - Math.cos(rad(getActualRowAngle())) * actualPanelDepth
-    );
-    backPieceOutline.push(backWallInside, 0);
+    // Store the end of last row position before adding more points
+    const lastRowEndX = x;
+    const lastRowEndY = y;
+    const lastRowAngle = getActualRowAngle();
+    
+    // Calculate the back wall position based on whether top shelf is flattened
+    let backWallInside, backWallY, backWallOutside;
+    var shelfPieceOutline = [];
+    
+    if (flattenTopShelf) {
+        // The point where material thickness meets the top of the last row
+        const shelfStartX = lastRowEndX + Math.cos(rad(lastRowAngle)) * caseMaterialThickness;
+        const shelfStartY = lastRowEndY + Math.sin(rad(lastRowAngle)) * caseMaterialThickness;
+        
+        // Calculate where the normal inclined back wall outside would be
+        const normalBackWallInside = lastRowEndX + Math.sin(rad(lastRowAngle)) * actualPanelDepth;
+        const normalBackWallOutside = normalBackWallInside + caseMaterialThickness;
+        
+        // The flat shelf extends horizontally from shelfStart to the same X as normal back wall
+        const shelfEndX = normalBackWallOutside;
+        const shelfEndY = shelfStartY;
+        
+        // Back wall inner position for the flat shelf case
+        backWallInside = shelfEndX - caseMaterialThickness;
+        backWallOutside = shelfEndX;
+        
+        // Add the material thickness point (junction where shelf meets last row) with label
+        add(shelfStartX, shelfStartY);
+        
+        // Add the top-right corner of the shelf with label
+        add(shelfEndX, shelfEndY);
+        
+        // Go straight down to the bottom
+        add(shelfEndX, 0, "nowrite");
+        
+        // Back wall inner dotted line - extends from bottom up to the flat shelf underside
+        backPieceOutline.push(lastRowEndX, lastRowEndY);
+        backPieceOutline.push(backWallInside, shelfEndY - caseMaterialThickness);
+        backPieceOutline.push(backWallInside, 0);
+        
+        // Shelf thickness outline (dotted line showing material thickness below the shelf)
+        shelfPieceOutline.push(shelfStartX, shelfStartY);
+        shelfPieceOutline.push(shelfStartX, shelfStartY - caseMaterialThickness);
+        shelfPieceOutline.push(backWallInside, shelfStartY - caseMaterialThickness);
+        shelfPieceOutline.push(backWallInside, 0);
+    } else {
+        // Inclined shelf: follow the angle of the last row
+        backWallInside = lastRowEndX + Math.sin(rad(lastRowAngle)) * actualPanelDepth;
+        backWallY = lastRowEndY - Math.cos(rad(lastRowAngle)) * actualPanelDepth;
+        backWallOutside = backWallInside + caseMaterialThickness;
+        
+        // Add the points for drawing the dotted line representing the cardboard
+        // piece for the case back on the other side of the side panel.
+        backPieceOutline.push(lastRowEndX, lastRowEndY);
+        backPieceOutline.push(backWallInside, backWallY);
+        backPieceOutline.push(backWallInside, 0);
+        
+        // Material thickness follows the angle
+        add(
+            lastRowEndX + Math.cos(rad(lastRowAngle)) * caseMaterialThickness,
+            lastRowEndY + Math.sin(rad(lastRowAngle)) * caseMaterialThickness
+        );
+        add(
+            backWallOutside,
+            backWallY
+        );
+        
+        add(backWallOutside, 0, "nowrite");
+    }
 
-    add(
-        x + Math.cos(rad(getActualRowAngle())) * caseMaterialThickness,
-        y + Math.sin(rad(getActualRowAngle())) * caseMaterialThickness
-    );
-
-    add(
-        backWallInside + caseMaterialThickness,
-        y - Math.cos(rad(getActualRowAngle())) * actualPanelDepth
-    );
-    add(x, 0);
     add(0, 0);
 
     ctx.setLineDash([1, 5]);
@@ -221,13 +270,21 @@ function drawSide() {
     ctx.beginPath();
     drawPath(backPieceOutline);
     ctx.closePath();
+    
+    // draw the shelf thickness outline if flat shelf is enabled
+    if (flattenTopShelf && shelfPieceOutline.length > 0) {
+        shelfPieceOutline.unshift("false");
+        ctx.beginPath();
+        drawPath(shelfPieceOutline);
+        ctx.closePath();
+    }
 
     ctx.setLineDash([]);
     const railScrewCoords = drawPanelRails(panels);
     const pathCoords = p.slice(0);
     drawPath(p);
 
-    drawJointDistanceIndicators(panels, maxX);
+    drawJointDistanceIndicators(panels, backWallInside);
 
     writeSummary(maxX, maxY, pathCoords, railScrewCoords);
 }
@@ -322,11 +379,11 @@ function getScrewHoleCoords(panel, panelIndex) {
  *
  * @param {object} screw The screw hole coordinates {x, y}
  * @param {number} angle The row angle
- * @param {number} maxX The maximum x coordinate (back of case)
+ * @param {number} backWallX The x coordinate of the inner back wall
  * @param {number} labelOffsetX Label x offset
  * @param {number} labelOffsetY Label y offset
  */
-function drawScrewPerpIndicator(screw, angle, maxX, labelOffsetX, labelOffsetY) {
+function drawScrewPerpIndicator(screw, angle, backWallX, labelOffsetX, labelOffsetY) {
     const perpDirX = Math.sin(rad(angle));
     const perpDirY = -Math.cos(rad(angle));
 
@@ -334,7 +391,7 @@ function drawScrewPerpIndicator(screw, angle, maxX, labelOffsetX, labelOffsetY) 
     const startY = screw.y - perpDirY * actualRailDepth;
 
     const tBottom = screw.y / Math.cos(rad(angle));
-    const tBack = (maxX - screw.x) / Math.sin(rad(angle));
+    const tBack = (backWallX - screw.x) / Math.sin(rad(angle));
     const t = (tBottom > 0 && tBack > 0) ? Math.min(tBottom, tBack) : Math.max(tBottom, tBack);
     const perpDist = Math.abs(t) + actualRailDepth;
 
@@ -348,12 +405,12 @@ function drawScrewPerpIndicator(screw, angle, maxX, labelOffsetX, labelOffsetY) 
  * Draws perpendicular distance indicators at each joint between rows,
  * plus the first and last screw holes.
  * Lines originate from the row surface, pass through the screw hole,
- * and extend perpendicular to that row until hitting the bottom or back of the case.
+ * and extend perpendicular to that row until hitting the bottom or inner back wall.
  *
  * @param {array} panels The panels array with coordinates
- * @param {number} maxX The maximum x coordinate (back of case)
+ * @param {number} backWallX The x coordinate of the inner back wall
  */
-function drawJointDistanceIndicators(panels, maxX) {
+function drawJointDistanceIndicators(panels, backWallX) {
     const savedStrokeStyle = ctx.strokeStyle;
     const savedFillStyle = ctx.fillStyle;
     const savedLineDash = ctx.getLineDash();
@@ -366,13 +423,13 @@ function drawJointDistanceIndicators(panels, maxX) {
     // Draw indicator for the first screw hole (bottom screw of first row)
     const firstRowAngle = getActualRowAngle(0);
     const firstScrews = getScrewHoleCoords(panels[0], 0);
-    drawScrewPerpIndicator(firstScrews.bottomScrew, firstRowAngle, maxX, 5, -5);
+    drawScrewPerpIndicator(firstScrews.bottomScrew, firstRowAngle, backWallX, 5, -5);
 
     // Draw indicator for the last screw hole (top screw of last row)
     const lastRowIndex = panels.length - 1;
     const lastRowAngle = getActualRowAngle(lastRowIndex);
     const lastScrews = getScrewHoleCoords(panels[lastRowIndex], lastRowIndex);
-    drawScrewPerpIndicator(lastScrews.topScrew, lastRowAngle, maxX, -30, -3);
+    drawScrewPerpIndicator(lastScrews.topScrew, lastRowAngle, backWallX, -30, -3);
 
     // Draw indicators at joints between rows
     for (let i = 1; i < panels.length; i++) {
@@ -399,9 +456,9 @@ function drawJointDistanceIndicators(panels, maxX) {
             const startX = screw2.x - perpDirX * actualRailDepth;
             const startY = screw2.y - perpDirY * actualRailDepth;
 
-            // Calculate where perpendicular hits bottom (y=0) and back (x=maxX) from screw position
+            // Calculate where perpendicular hits bottom (y=0) and back (x=backWallX) from screw position
             const tBottom = screw2.y / Math.cos(rad(angle));
-            const tBack = (maxX - screw2.x) / Math.sin(rad(angle));
+            const tBack = (backWallX - screw2.x) / Math.sin(rad(angle));
 
             // Use whichever is hit first (smaller positive t)
             const t = (tBottom > 0 && tBack > 0) ? Math.min(tBottom, tBack) : Math.max(tBottom, tBack);
@@ -424,7 +481,7 @@ function drawJointDistanceIndicators(panels, maxX) {
             const startY1 = screw1.y - perpDirY1 * actualRailDepth;
 
             const tBottom1 = screw1.y / Math.cos(rad(angle1));
-            const tBack1 = (maxX - screw1.x) / Math.sin(rad(angle1));
+            const tBack1 = (backWallX - screw1.x) / Math.sin(rad(angle1));
             const t1 = (tBottom1 > 0 && tBack1 > 0) ? Math.min(tBottom1, tBack1) : Math.max(tBottom1, tBack1);
             const perpDist1 = Math.abs(t1) + actualRailDepth;
 
@@ -443,7 +500,7 @@ function drawJointDistanceIndicators(panels, maxX) {
             const startY2 = screw2.y - perpDirY2 * actualRailDepth;
 
             const tBottom2 = screw2.y / Math.cos(rad(angle2));
-            const tBack2 = (maxX - screw2.x) / Math.sin(rad(angle2));
+            const tBack2 = (backWallX - screw2.x) / Math.sin(rad(angle2));
             const t2 = (tBottom2 > 0 && tBack2 > 0) ? Math.min(tBottom2, tBack2) : Math.max(tBottom2, tBack2);
             const perpDist2 = Math.abs(t2) + actualRailDepth;
 
@@ -990,6 +1047,13 @@ function init() {
         }, 0);
     };
     pxPerCmInput.addEventListener("input", onPxPerCmChange);
+
+    const flattenTopShelfCb = document.getElementById("flatten-top-shelf");
+    flattenTopShelfCb.checked = flattenTopShelf;
+    flattenTopShelfCb.addEventListener("change", (event) => {
+        flattenTopShelf = event.target.checked;
+        drawSide();
+    });
 
     canvasDiv = document.getElementById("canvas-div");
     canvas = document.getElementById("the-canvas");
