@@ -45,12 +45,11 @@ input {
     margin-right: 5px;
     flex: 1;
     overflow: auto;
-    /*width: 100%;*/
+    min-height: 300px;
 }
 
 #the-canvas {
-    width: 100%;
-    height: 100%;
+    display: block;
     padding: 0px;
 }
 

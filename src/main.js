@@ -327,24 +327,25 @@ function init() {
   canvasDiv = document.getElementById("canvas-div");
   canvas = document.getElementById("the-canvas");
   ctx = initCanvas(canvas);
-  const w = canvasDiv.clientWidth;
-  const h = canvasDiv.clientHeight;
-  canvas.width = w;
-  canvas.height = h;
-  ctx.fillStyle = "rgb(0, 0, 0)";
-  ctx.strokeStyle = "#999999";
 
   inputDepth.value = state.actualPanelDepth;
 
-  drawSide();
-
-  window.onresize = function () {
+  function resizeCanvas() {
     const w = canvasDiv.clientWidth;
     const h = canvasDiv.clientHeight;
-    canvas.width = w;
-    canvas.height = h;
-    ctx.clearRect(0, 0, w, h);
-    drawSide();
+    if (w > 0 && h > 0) {
+      canvas.width = w;
+      canvas.height = h;
+      ctx.fillStyle = "rgb(0, 0, 0)";
+      ctx.strokeStyle = "#999999";
+      drawSide();
+    }
+  }
+
+  requestAnimationFrame(resizeCanvas);
+
+  window.onresize = function () {
+    resizeCanvas();
   };
 }
 

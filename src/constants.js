@@ -1,19 +1,43 @@
-export const oneUFormats = {
-  intellijel: { name: "Intellijel", height: 39.65, railSeparation: 29.5 },
-  pulplogic: { name: "Pulp Logic", height: 43.18, railSeparation: 33 },
-};
-
 export const HP_TO_MM = 5.08;
+
+const SPEC_3U_HEIGHT = 133.35; // (5.25in)
+const SPEC_1U_INTELLIJEL_HEIGHT = 44.45; // (1.5625in)
+const SPEC_3U_PANEL_HEIGHT = 128.5;
+const SPEC_1U_INTELLIJEL_PANEL_HEIGHT = 39.65;
+const SPEC_1U_PULP_LOGIC_PANEL_HEIGHT = 43.18;
+// Basing this on panel intellijel 1u panel height minus the 1U spec height.
+const SPEC_1U_PULP_LOGIC_HEIGHT = 4.8 + SPEC_1U_PULP_LOGIC_PANEL_HEIGHT;
+// This is based on the Future Music guide, and may apply only to TipTop Audio Z-Rails.
+const SPEC_3U_RAIL_HOLE_SPACING = 123;
+const SPEC_HEIGHT_TO_HOLE_SPACING_DIFF = 10.35; // 3U_SPEC_HEIGHT - 3U_SPEC_RAIL_HOLE_SPACING;
+const SPEC_1U_INTELLIJEL_RAIL_HOLE_SPACING =
+  SPEC_1U_INTELLIJEL_HEIGHT - SPEC_HEIGHT_TO_HOLE_SPACING_DIFF;
+const SPEC_1U_PULP_LOGIC_RAIL_HOLE_SPACING =
+  SPEC_1U_PULP_LOGIC_HEIGHT - SPEC_HEIGHT_TO_HOLE_SPACING_DIFF;
+
+export const oneUFormats = {
+  intellijel: {
+    name: "Intellijel",
+    height: SPEC_1U_INTELLIJEL_HEIGHT,
+    railSeparation: SPEC_1U_INTELLIJEL_RAIL_HOLE_SPACING,
+  },
+  pulplogic: {
+    name: "Pulp Logic",
+    height: SPEC_1U_PULP_LOGIC_HEIGHT,
+    railSeparation: SPEC_1U_PULP_LOGIC_RAIL_HOLE_SPACING,
+  },
+};
 
 export const DEFAULTS = {
   rowCounts: [1, 2, 3, 4, 5],
   rowCount: 3,
   rowAngles: [5, 10, 10],
   defaultAngle: 5,
-  actualPanelHeight: 133.4,
-  actual1UPanelHeight: 39.65,
-  actualRailSeparation: 123,
-  actual1URailSeparation: 29.5,
+  // Note, this actualPanelHeight is actually top of top rail to bottom of bottom rail for 3U.
+  actualPanelHeight: SPEC_3U_HEIGHT,
+  actual1UPanelHeight: SPEC_1U_INTELLIJEL_HEIGHT,
+  actualRailSeparation: SPEC_3U_RAIL_HOLE_SPACING,
+  actual1URailSeparation: SPEC_1U_INTELLIJEL_RAIL_HOLE_SPACING,
   actualRailDepth: 14,
   actualPanelDepth: 60,
   caseMaterialThickness: 3,

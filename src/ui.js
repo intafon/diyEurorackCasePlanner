@@ -152,10 +152,10 @@ export function writeSummary(width, height, outlinePoints, railScrewCoords, cutP
     `${state.getActualRowAngle()}`,
   ];
   const footnote = [
-    "*Note: rail spacing based on the measurements provided by " +
+    "<b>*Note: rail spacing based on the measurements provided by " +
       '<a href="http://www.musicradar.com/tuition/tech/how-to-build-your-own-cardboard-' +
       "eurorack-modular-case-625196\">Future Music's cardboard DIY</a> " +
-      "case using TipTop Audio Z-Rails.",
+      "case using TipTop Audio Z-Rails.</b>",
     "",
   ];
   const info = [
