@@ -32,7 +32,7 @@ jobs:
         run: npm ci
 
       - name: Build
-        run: npm run build
+        run: npx vite build --base=/diyEurorackCasePlanner/
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
