@@ -203,8 +203,8 @@ function drawSide() {
         // Add the top-right corner of the shelf with label
         add(shelfEndX, shelfEndY);
         
-        // Go straight down to the bottom
-        add(shelfEndX, 0, "nowrite");
+        // Go straight down to the bottom with label
+        add(shelfEndX, 0);
         
         // Back wall inner dotted line - extends from bottom up to the flat shelf underside
         backPieceOutline.push(lastRowEndX, lastRowEndY);
@@ -712,6 +712,7 @@ function roundToPlace(v, p) {
 function drawPanelRail(panel, panelIndex) {
     let p = [];
     var circR = 3;
+    const drillHoleColor = "#a33";
     const panelHeight = getPanelHeightForRow(panelIndex);
     const railSeparation = getRailSeparationForRow(panelIndex);
     var screwDist = (panelHeight - railSeparation) / 2;
@@ -719,6 +720,11 @@ function drawPanelRail(panel, panelIndex) {
     var screwDistY = Math.sin(rad(panel.angle)) * screwDist;
     var screwDistDepthX = Math.sin(rad(panel.angle)) * actualRailDepth;
     var screwDistDepthY = -Math.cos(rad(panel.angle)) * actualRailDepth;
+
+    var savedStrokeStyle = ctx.strokeStyle;
+    var savedFillStyle = ctx.fillStyle;
+    ctx.strokeStyle = drillHoleColor;
+    ctx.fillStyle = drillHoleColor;
 
     var screwX = panel.coords[0] + screwDistX + screwDistDepthX;
     var screwY = panel.coords[1] + screwDistY + screwDistDepthY;
@@ -732,7 +738,7 @@ function drawPanelRail(panel, panelIndex) {
     ctx.arc(plot.x, plot.y, circR / 5, 0, 2 * Math.PI);
     ctx.fill();
     ctx.closePath();
-    writeCoords(screwX, screwY, true, 'right');
+    writeCoords(screwX, screwY, true, 'right', drillHoleColor);
     p = p.concat(screwX, screwY);
 
     screwX = panel.coords[2] - screwDistX + screwDistDepthX;
@@ -747,8 +753,11 @@ function drawPanelRail(panel, panelIndex) {
     ctx.arc(plot.x, plot.y, circR / 5, 0, 2 * Math.PI);
     ctx.fill();
     ctx.closePath();
-    writeCoords(screwX, screwY, true, 'left');
+    writeCoords(screwX, screwY, true, 'left', drillHoleColor);
     p = p.concat(screwX, screwY);
+
+    ctx.strokeStyle = savedStrokeStyle;
+    ctx.fillStyle = savedFillStyle;
 
     return p;
 }
@@ -808,8 +817,9 @@ function drawPath(pts) {
  * @param {number} y
  * @param {boolean} showBelow
  * @param {string} side - 'left' or 'right' to position label on that side of the point
+ * @param {string} color - optional color for the text
  */
-function writeCoords(x, y, showBelow, side) {
+function writeCoords(x, y, showBelow, side, color) {
     var yFactor = showBelow ? -1 : 1;
     ctx.font = "10px sans-serif";
     var plot = getPlot(x, y);
@@ -823,11 +833,16 @@ function writeCoords(x, y, showBelow, side) {
         xOffset = 5;
     }
 
+    var savedFillStyle = ctx.fillStyle;
+    if (color) {
+        ctx.fillStyle = color;
+    }
     ctx.fillText(
         text,
         plot.x + xOffset,
         plot.y - 10 * yFactor
     );
+    ctx.fillStyle = savedFillStyle;
 }
 
 /**
