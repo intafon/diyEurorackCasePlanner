@@ -3,6 +3,12 @@ import { calculateCaseGeometry } from "./geometry.js";
 import { state } from "./state.js";
 import { HP_TO_MM } from "./constants.js";
 
+let includeCutPanels = true;
+
+export function setIncludeCutPanels(value) {
+  includeCutPanels = value;
+}
+
 export function generateSVG() {
   const geometry = calculateCaseGeometry();
   const padding = 10;
@@ -10,17 +16,20 @@ export function generateSVG() {
   const scale = 1;
 
   let cutPanelsTotalWidth = 0;
-  geometry.cutPanels.forEach((panel, index) => {
-    cutPanelsTotalWidth += panel.height;
-    if (index < geometry.cutPanels.length - 1) {
-      cutPanelsTotalWidth += panelSpacing;
-    }
-  });
-
-  const cutPanelsMaxHeight = Math.max(...geometry.cutPanels.map(p => p.width));
+  let cutPanelsMaxHeight = 0;
   
-  const totalWidth = Math.max(geometry.maxX, cutPanelsTotalWidth);
-  const totalHeight = geometry.maxY + padding + cutPanelsMaxHeight;
+  if (includeCutPanels) {
+    geometry.cutPanels.forEach((panel, index) => {
+      cutPanelsTotalWidth += panel.height;
+      if (index < geometry.cutPanels.length - 1) {
+        cutPanelsTotalWidth += panelSpacing;
+      }
+    });
+    cutPanelsMaxHeight = Math.max(...geometry.cutPanels.map(p => p.width));
+  }
+  
+  const totalWidth = includeCutPanels ? Math.max(geometry.maxX, cutPanelsTotalWidth) : geometry.maxX;
+  const totalHeight = includeCutPanels ? geometry.maxY + padding + cutPanelsMaxHeight : geometry.maxY;
 
   const width = (totalWidth + padding * 2) * scale;
   const height = (totalHeight + padding * 2) * scale;
@@ -32,6 +41,8 @@ export function generateSVG() {
     return (totalHeight - y + padding) * scale;
   }
 
+  const sideYOffset = includeCutPanels ? cutPanelsMaxHeight + padding : 0;
+
   let svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${width}mm" height="${height}mm" viewBox="0 0 ${width} ${height}">
   <title>Eurorack Case Panels</title>
@@ -42,7 +53,6 @@ export function generateSVG() {
     <path d="`;
 
   const outline = geometry.outline;
-  const sideYOffset = cutPanelsMaxHeight + padding;
   svg += `M ${tx(outline[0].x)} ${ty(outline[0].y + sideYOffset)}`;
   for (let i = 1; i < outline.length; i++) {
     svg += ` L ${tx(outline[i].x)} ${ty(outline[i].y + sideYOffset)}`;
@@ -60,26 +70,30 @@ export function generateSVG() {
   });
 
   svg += `
-  </g>
+  </g>`;
+
+  if (includeCutPanels) {
+    svg += `
   
   <!-- Cut Panels (Front, Bottom, Back, Top) -->
   <g id="cut-panels" stroke="#000000" stroke-width="0.5" fill="none">`;
 
-  let currentX = 0;
-  geometry.cutPanels.forEach((panel, index) => {
-    const x1 = currentX;
-    const y1 = 0;
-    const x2 = currentX + panel.height;
-    const y2 = panel.width;
-    
-    svg += `
+    let currentX = 0;
+    geometry.cutPanels.forEach((panel) => {
+      const x1 = currentX;
+      const y2 = panel.width;
+      
+      svg += `
     <rect x="${tx(x1)}" y="${ty(y2)}" width="${panel.height}" height="${panel.width}" />`;
-    
-    currentX += panel.height + panelSpacing;
-  });
+      
+      currentX += panel.height + panelSpacing;
+    });
+
+    svg += `
+  </g>`;
+  }
 
   svg += `
-  </g>
 </svg>`;
 
   return svg;
@@ -92,10 +106,12 @@ export function generateDXF() {
 
   dxf.addLayer("SIDE_PANEL", DxfWriter.ACI.WHITE, "CONTINUOUS");
   dxf.addLayer("DRILL_HOLES", DxfWriter.ACI.RED, "CONTINUOUS");
-  dxf.addLayer("CUT_PANELS", DxfWriter.ACI.CYAN, "CONTINUOUS");
+  if (includeCutPanels) {
+    dxf.addLayer("CUT_PANELS", DxfWriter.ACI.CYAN, "CONTINUOUS");
+  }
 
-  const cutPanelsMaxHeight = Math.max(...geometry.cutPanels.map(p => p.width));
-  const sideYOffset = cutPanelsMaxHeight + panelSpacing;
+  const cutPanelsMaxHeight = includeCutPanels ? Math.max(...geometry.cutPanels.map(p => p.width)) : 0;
+  const sideYOffset = includeCutPanels ? cutPanelsMaxHeight + panelSpacing : 0;
 
   dxf.setActiveLayer("SIDE_PANEL");
   const outline = geometry.outline;
@@ -114,21 +130,23 @@ export function generateDXF() {
     dxf.drawCircle(hole.x, hole.y + sideYOffset, drillRadius);
   });
 
-  dxf.setActiveLayer("CUT_PANELS");
-  let currentX = 0;
-  geometry.cutPanels.forEach((panel) => {
-    const x1 = currentX;
-    const y1 = 0;
-    const x2 = currentX + panel.height;
-    const y2 = panel.width;
-    
-    dxf.drawLine(x1, y1, x2, y1);
-    dxf.drawLine(x2, y1, x2, y2);
-    dxf.drawLine(x2, y2, x1, y2);
-    dxf.drawLine(x1, y2, x1, y1);
-    
-    currentX += panel.height + panelSpacing;
-  });
+  if (includeCutPanels) {
+    dxf.setActiveLayer("CUT_PANELS");
+    let currentX = 0;
+    geometry.cutPanels.forEach((panel) => {
+      const x1 = currentX;
+      const y1 = 0;
+      const x2 = currentX + panel.height;
+      const y2 = panel.width;
+      
+      dxf.drawLine(x1, y1, x2, y1);
+      dxf.drawLine(x2, y1, x2, y2);
+      dxf.drawLine(x2, y2, x1, y2);
+      dxf.drawLine(x1, y2, x1, y1);
+      
+      currentX += panel.height + panelSpacing;
+    });
+  }
 
   return dxf.toDxfString();
 }
