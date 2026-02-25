@@ -224,7 +224,196 @@ function drawSide() {
     const pathCoords = p.slice(0);
     drawPath(p);
 
+    drawJointDistanceIndicators(panels, maxX);
+
     writeSummary(maxX, maxY, pathCoords, railScrewCoords);
+}
+
+/**
+ * Draws an arrow head at the end of a line.
+ *
+ * @param {number} toX End x coordinate
+ * @param {number} toY End y coordinate
+ * @param {number} angle Angle of the line in radians
+ * @param {number} headLength Length of the arrow head
+ */
+function drawArrowHead(toX, toY, angle, headLength) {
+    const headAngle = Math.PI / 6;
+    ctx.beginPath();
+    ctx.moveTo(toX, toY);
+    ctx.lineTo(
+        toX - headLength * Math.cos(angle - headAngle),
+        toY - headLength * Math.sin(angle - headAngle)
+    );
+    ctx.moveTo(toX, toY);
+    ctx.lineTo(
+        toX - headLength * Math.cos(angle + headAngle),
+        toY - headLength * Math.sin(angle + headAngle)
+    );
+    ctx.stroke();
+    ctx.closePath();
+}
+
+/**
+ * Draws a distance indicator line with arrow and label.
+ *
+ * @param {number} startX Start x in real coordinates
+ * @param {number} startY Start y in real coordinates
+ * @param {number} endX End x in real coordinates
+ * @param {number} endY End y in real coordinates
+ * @param {number} distance The distance to display
+ * @param {number} labelOffsetX Offset for label positioning
+ * @param {number} labelOffsetY Offset for label positioning
+ */
+function drawDistanceIndicator(startX, startY, endX, endY, distance, labelOffsetX, labelOffsetY) {
+    const plotStart = getPlot(startX, startY);
+    const plotEnd = getPlot(endX, endY);
+    
+    const angle = Math.atan2(plotEnd.y - plotStart.y, plotEnd.x - plotStart.x);
+    
+    ctx.beginPath();
+    ctx.moveTo(plotStart.x, plotStart.y);
+    ctx.lineTo(plotEnd.x, plotEnd.y);
+    ctx.stroke();
+    ctx.closePath();
+    
+    drawArrowHead(plotEnd.x, plotEnd.y, angle, 6);
+    
+    const midX = (plotStart.x + plotEnd.x) / 2 + labelOffsetX;
+    const midY = (plotStart.y + plotEnd.y) / 2 + labelOffsetY;
+    
+    ctx.font = "9px sans-serif";
+    ctx.fillText(actualDistance(distance, false), midX, midY);
+}
+
+/**
+ * Gets the screw hole coordinates for a panel.
+ * 
+ * @param {object} panel The panel object
+ * @param {number} panelIndex The index of the panel
+ * @returns {object} Object with bottomScrew and topScrew coordinates
+ */
+function getScrewHoleCoords(panel, panelIndex) {
+    const panelHeight = getPanelHeightForRow(panelIndex);
+    const railSeparation = getRailSeparationForRow(panelIndex);
+    const screwDist = (panelHeight - railSeparation) / 2;
+    const screwDistX = Math.cos(rad(panel.angle)) * screwDist;
+    const screwDistY = Math.sin(rad(panel.angle)) * screwDist;
+    const screwDistDepthX = Math.sin(rad(panel.angle)) * actualRailDepth;
+    const screwDistDepthY = -Math.cos(rad(panel.angle)) * actualRailDepth;
+    
+    return {
+        bottomScrew: {
+            x: panel.coords[0] + screwDistX + screwDistDepthX,
+            y: panel.coords[1] + screwDistY + screwDistDepthY
+        },
+        topScrew: {
+            x: panel.coords[2] - screwDistX + screwDistDepthX,
+            y: panel.coords[3] - screwDistY + screwDistDepthY
+        }
+    };
+}
+
+/**
+ * Draws perpendicular distance indicators at each joint between rows.
+ * Lines originate from the row surface, pass through the screw hole,
+ * and extend perpendicular to that row until hitting the bottom or back of the case.
+ *
+ * @param {array} panels The panels array with coordinates
+ * @param {number} maxX The maximum x coordinate (back of case)
+ */
+function drawJointDistanceIndicators(panels, maxX) {
+    const savedStrokeStyle = ctx.strokeStyle;
+    const savedFillStyle = ctx.fillStyle;
+    const savedLineDash = ctx.getLineDash();
+    
+    const indicatorColor = "#888888";
+    ctx.strokeStyle = indicatorColor;
+    ctx.fillStyle = indicatorColor;
+    ctx.setLineDash([3, 3]);
+    
+    for (let i = 1; i < panels.length; i++) {
+        const prevRowAngle = getActualRowAngle(i - 1);
+        const currentRowAngle = getActualRowAngle(i);
+        const relativeAngle = rowAngles[i];
+        
+        // Get screw hole positions
+        const prevScrews = getScrewHoleCoords(panels[i - 1], i - 1);
+        const currentScrews = getScrewHoleCoords(panels[i], i);
+        
+        // Top screw of previous row (near the joint)
+        const screw1 = prevScrews.topScrew;
+        // Bottom screw of current row (near the joint)
+        const screw2 = currentScrews.bottomScrew;
+        
+        if (relativeAngle === 0) {
+            // Same angle - draw only one line through the current row's bottom screw
+            const angle = currentRowAngle;
+            const perpDirX = Math.sin(rad(angle));
+            const perpDirY = -Math.cos(rad(angle));
+            
+            // Start point: go backwards from screw hole to the row surface (by actualRailDepth)
+            const startX = screw2.x - perpDirX * actualRailDepth;
+            const startY = screw2.y - perpDirY * actualRailDepth;
+            
+            // Calculate where perpendicular hits bottom (y=0) and back (x=maxX) from screw position
+            const tBottom = screw2.y / Math.cos(rad(angle));
+            const tBack = (maxX - screw2.x) / Math.sin(rad(angle));
+            
+            // Use whichever is hit first (smaller positive t)
+            const t = (tBottom > 0 && tBack > 0) ? Math.min(tBottom, tBack) : Math.max(tBottom, tBack);
+            const perpDist = Math.abs(t) + actualRailDepth;
+            
+            const endX = screw2.x + perpDirX * t;
+            const endY = screw2.y + perpDirY * t;
+            
+            drawDistanceIndicator(startX, startY, endX, endY, perpDist, 5, -5);
+        } else {
+            // Different angles - draw two lines through respective screw holes
+            
+            // Line through top screw of previous row
+            const angle1 = prevRowAngle;
+            const perpDirX1 = Math.sin(rad(angle1));
+            const perpDirY1 = -Math.cos(rad(angle1));
+            
+            // Start point: go backwards from screw hole to the row surface
+            const startX1 = screw1.x - perpDirX1 * actualRailDepth;
+            const startY1 = screw1.y - perpDirY1 * actualRailDepth;
+            
+            const tBottom1 = screw1.y / Math.cos(rad(angle1));
+            const tBack1 = (maxX - screw1.x) / Math.sin(rad(angle1));
+            const t1 = (tBottom1 > 0 && tBack1 > 0) ? Math.min(tBottom1, tBack1) : Math.max(tBottom1, tBack1);
+            const perpDist1 = Math.abs(t1) + actualRailDepth;
+            
+            const endX1 = screw1.x + perpDirX1 * t1;
+            const endY1 = screw1.y + perpDirY1 * t1;
+            
+            drawDistanceIndicator(startX1, startY1, endX1, endY1, perpDist1, -30, -3);
+            
+            // Line through bottom screw of current row
+            const angle2 = currentRowAngle;
+            const perpDirX2 = Math.sin(rad(angle2));
+            const perpDirY2 = -Math.cos(rad(angle2));
+            
+            // Start point: go backwards from screw hole to the row surface
+            const startX2 = screw2.x - perpDirX2 * actualRailDepth;
+            const startY2 = screw2.y - perpDirY2 * actualRailDepth;
+            
+            const tBottom2 = screw2.y / Math.cos(rad(angle2));
+            const tBack2 = (maxX - screw2.x) / Math.sin(rad(angle2));
+            const t2 = (tBottom2 > 0 && tBack2 > 0) ? Math.min(tBottom2, tBack2) : Math.max(tBottom2, tBack2);
+            const perpDist2 = Math.abs(t2) + actualRailDepth;
+            
+            const endX2 = screw2.x + perpDirX2 * t2;
+            const endY2 = screw2.y + perpDirY2 * t2;
+            
+            drawDistanceIndicator(startX2, startY2, endX2, endY2, perpDist2, 5, -3);
+        }
+    }
+    
+    ctx.strokeStyle = savedStrokeStyle;
+    ctx.fillStyle = savedFillStyle;
+    ctx.setLineDash(savedLineDash);
 }
 
 /**
