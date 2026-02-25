@@ -589,7 +589,7 @@ function drawPanelRail(panel, panelIndex) {
     ctx.arc(plot.x, plot.y, circR / 5, 0, 2 * Math.PI);
     ctx.fill();
     ctx.closePath();
-    writeCoords(screwX, screwY, true);
+    writeCoords(screwX, screwY, true, 'right');
     p = p.concat(screwX, screwY);
 
     screwX = panel.coords[2] - screwDistX + screwDistDepthX;
@@ -604,7 +604,7 @@ function drawPanelRail(panel, panelIndex) {
     ctx.arc(plot.x, plot.y, circR / 5, 0, 2 * Math.PI);
     ctx.fill();
     ctx.closePath();
-    writeCoords(screwX, screwY, true);
+    writeCoords(screwX, screwY, true, 'left');
     p = p.concat(screwX, screwY);
 
     return p;
@@ -664,14 +664,25 @@ function drawPath(pts) {
  * @param {number} x
  * @param {number} y
  * @param {boolean} showBelow
+ * @param {string} side - 'left' or 'right' to position label on that side of the point
  */
-function writeCoords(x, y, showBelow, offsetX, offsetY) {
+function writeCoords(x, y, showBelow, side) {
     var yFactor = showBelow ? -1 : 1;
     ctx.font = "10px sans-serif";
     var plot = getPlot(x, y);
+    var text = actualDistance(x) + ", " + actualDistance(y);
+    var textWidth = ctx.measureText(text).width;
+    
+    var xOffset;
+    if (side === 'left') {
+        xOffset = -textWidth - 5;
+    } else {
+        xOffset = 5;
+    }
+    
     ctx.fillText(
-        actualDistance(x) + ", " + actualDistance(y),
-        plot.x + 5,
+        text,
+        plot.x + xOffset,
         plot.y - 10 * yFactor
     );
 }
