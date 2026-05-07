@@ -72,9 +72,10 @@ function calculateCaseBoundsAndPanels() {
   const panelWidth = state.caseWidthHP * HP_TO_MM;
   const bottomDepth = maxX;
 
+  const bottomWidth = panelWidth + 2 * state.caseMaterialThickness;
   const cutPanels = [
     { name: "Front", width: panelWidth, height: frontHeight },
-    { name: "Bottom", width: panelWidth, height: bottomDepth },
+    { name: "Bottom", width: bottomWidth, height: bottomDepth },
     { name: "Back", width: panelWidth, height: backHeight },
   ];
 

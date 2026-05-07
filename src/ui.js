@@ -106,12 +106,17 @@ export function resetRowInputs(c) {
 export function setupHpWidthInput() {
   const hpWidthInput = document.getElementById("hp-width-input");
   const hpWidthMmDisplay = document.getElementById("hp-width-mm");
+  const hpWidthMmBottomDisplay = document.getElementById("hp-width-mm-bottom");
 
   if (hpWidthInput && !hpWidthInput.hasAttribute("data-listener-added")) {
     hpWidthInput.setAttribute("data-listener-added", "true");
     hpWidthInput.addEventListener("input", (event) => {
       state.caseWidthHP = parseFloat(event.target.value) || 0;
-      hpWidthMmDisplay.value = roundToPlace(state.caseWidthHP * HP_TO_MM, 2);
+      const innerWidth = state.caseWidthHP * HP_TO_MM;
+      hpWidthMmDisplay.value = roundToPlace(innerWidth, 2);
+      if (hpWidthMmBottomDisplay) {
+        hpWidthMmBottomDisplay.value = roundToPlace(innerWidth + 2 * state.caseMaterialThickness, 2);
+      }
     });
   }
 }
@@ -224,7 +229,12 @@ export function writeSummary(width, height, outlinePoints, railScrewCoords, cutP
     '&nbsp;&nbsp;<input type="text" id="hp-width-mm" value="' +
     roundToPlace(state.caseWidthHP * HP_TO_MM, 2) +
     '" readonly style="width: 80px; background-color: #eee;" />';
-  summaryHtml += '&nbsp;<span class="input-span unit">mm</span>';
+  summaryHtml += '&nbsp;<span class="input-span unit">mm (front &amp; back)</span>';
+  summaryHtml +=
+    '&nbsp;&nbsp;<input type="text" id="hp-width-mm-bottom" value="' +
+    roundToPlace(state.caseWidthHP * HP_TO_MM + 2 * state.caseMaterialThickness, 2) +
+    '" readonly style="width: 80px; background-color: #eee;" />';
+  summaryHtml += '&nbsp;<span class="input-span unit">mm (bottom/base)</span>';
 
   summaryHtml += '<br/><br/><div class="export-options">';
   summaryHtml += '<label><input type="checkbox" id="include-cut-panels" checked /> Include front, bottom, back, and top panels in export</label>';
