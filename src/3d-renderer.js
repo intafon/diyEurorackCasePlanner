@@ -98,27 +98,43 @@ function makeBoardMesh(points2D, depthZ, material, zOffset) {
   return mesh;
 }
 
-function makeHorizontalRailMesh(panel, panelIndex, caseWidth, isBottom) {
-  const railHeight = 8;
-  const railDepth = 8;
+function makeHorizontalRailMesh(panel, panelIndex, caseWidth, isBottom, totalRows) {
   const railLength = caseWidth + 2 * state.caseMaterialThickness; // Full width including side walls
+  const railHeight = 15; // 15mm tall
+  const railDepth = 10;  // 10mm deep
 
   const screws = getScrewHoleCoords(panel, panelIndex);
   const screwPos = isBottom ? screws.bottomScrew : screws.topScrew;
 
-  // Position rail inward from the panel face
+  // Position rail so the screw hole is in the center of the 10mm depth and 5mm from bottom
   const inwardX = Math.sin(rad(panel.angle));
   const inwardY = -Math.cos(rad(panel.angle));
-  const railOffsetIn = state.actualRailDepth;
   
-  const railX = screwPos.x + inwardX * (railOffsetIn - railDepth / 2);
-  const railY = screwPos.y + inwardY * (railDepth / 2);
+  // Rail center should be railDepth/2 inward from the screw hole position
+  const railCenterX = screwPos.x + inwardX * (railDepth / 2);
+  const railCenterY = screwPos.y + inwardY * (railDepth / 2);
+  
+  // Adjust Y position so screw is 5mm from bottom of rail
+  const screwOffsetFromBottom = 5; // 5mm from bottom of rail
+  const railBottomOffset = railHeight / 2 - screwOffsetFromBottom;
+  const railY = railCenterY + railBottomOffset * Math.cos(rad(panel.angle));
+  const railX = railCenterX + railBottomOffset * Math.sin(rad(panel.angle));
 
-  const geom = new THREE.BoxGeometry(railDepth, railHeight, railLength);
+  // Create rail geometry with holes drilled through it (width-wise, not length-wise)
+  const railGeom = new THREE.BoxGeometry(railDepth, railHeight, railLength);
   const mat = new THREE.MeshLambertMaterial({ color: COLOR_RAIL });
-  const mesh = new THREE.Mesh(geom, mat);
+  const mesh = new THREE.Mesh(railGeom, mat);
 
-  // Rotate to align with the panel angle
+  // Add the screw hole as a dark cylinder going through the ENTIRE case width (Z direction)
+  const holeMatGeom = new THREE.CylinderGeometry(1.5, 1.5, railLength + 10, 12);
+  const holeMat = new THREE.MeshLambertMaterial({ color: 0x222222 });
+  const holeVisMesh = new THREE.Mesh(holeMatGeom, holeMat);
+  holeVisMesh.position.set(0, -railHeight/2 + screwOffsetFromBottom, 0);
+  holeVisMesh.rotation.x = Math.PI / 2; // Rotate to go through case width (Z direction)
+  
+  mesh.add(holeVisMesh);
+
+  // Rotate the rail to align with the panel angle
   mesh.rotation.z = rad(panel.angle);
   mesh.position.set(railX, railY, 0);
   
@@ -213,10 +229,11 @@ export function buildScene() {
   }
 
   geom.panels.forEach((panel, i) => {
-    // Add horizontal rails that span the full case width
-    sceneRoot.add(makeHorizontalRailMesh(panel, i, innerWidth, true));  // Bottom rail
-    sceneRoot.add(makeHorizontalRailMesh(panel, i, innerWidth, false)); // Top rail
+    // Add horizontal rails that span the full case width (now with holes drilled through them)
+    sceneRoot.add(makeHorizontalRailMesh(panel, i, innerWidth, true, geom.panels.length));  // Bottom rail
+    sceneRoot.add(makeHorizontalRailMesh(panel, i, innerWidth, false, geom.panels.length)); // Top rail
 
+    // Add screw holes in the side panels (DO NOT MOVE THESE - they stay exactly where they are)
     const screws = getScrewHoleCoords(panel, i);
     sceneRoot.add(makeScrewHoleMesh(screws.bottomScrew, panel.angle, innerWidth, true));
     sceneRoot.add(makeScrewHoleMesh(screws.topScrew, panel.angle, innerWidth, true));
