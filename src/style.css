@@ -10,6 +10,26 @@ body {
 }
 
 body {
+    display: flex;
+    flex-direction: column;
+}
+
+#app-header {
+    position: relative;
+    background-color: #f8f9fa;
+    padding: 8px 15px;
+    border-bottom: 1px solid #dee2e6;
+    flex-shrink: 0;
+}
+
+#version-display {
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    transform: translateY(-50%);
+    font-size: 10px;
+    color: #6c757d;
+    font-weight: 500;
 }
 
 input {
@@ -28,9 +48,10 @@ input {
 
 #container {
     width: 100%;
-    height: 100%;
+    flex: 1;
     display: flex;
     flex-flow: column;
+    min-height: 0;
 }
 
 #input-div {

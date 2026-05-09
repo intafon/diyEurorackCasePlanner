@@ -16,6 +16,7 @@ import {
   writeSummary,
 } from "./ui.js";
 import "./style.css";
+import packageJson from "../package.json";
 
 let canvasDiv, canvas, ctx;
 
@@ -350,4 +351,14 @@ function init() {
   };
 }
 
-document.addEventListener("DOMContentLoaded", init);
+function initVersionDisplay() {
+  const versionTextEl = document.getElementById("version-text");
+  if (versionTextEl && packageJson.version) {
+    versionTextEl.textContent = packageJson.version;
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  initVersionDisplay();
+  init();
+});

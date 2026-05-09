@@ -1,11 +1,12 @@
 {
   "name": "diy-eurorack-case-planner",
-  "version": "1.0.0",
+  "version": "2.0.0-alpha",
   "description": "A simple tool for planning DIY eurorack modular synthesizer cases",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node scripts/build-prod.js",
+    "build:dev": "vite build",
     "preview": "vite preview",
     "format": "prettier --write \"src/**/*.{js,css,html}\" \"*.{js,html,json,md}\"",
     "format:check": "prettier --check \"src/**/*.{js,css,html}\" \"*.{js,html,json,md}\""
