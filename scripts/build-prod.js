@@ -50,7 +50,7 @@ async function main() {
 
     // Run the build
     console.log('Starting build...');
-    execSync('npm run build', { stdio: 'inherit' });
+    execSync('npm run build:dev', { stdio: 'inherit' });
     console.log('Build completed successfully!');
 
   } catch (error) {
