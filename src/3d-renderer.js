@@ -13,11 +13,11 @@ let rafHandle = null;
 let isRunning = false;
 let sceneRoot = null;
 
-const COLOR_BOTTOM = 0x8b6f47;
-const COLOR_FRONT = 0xa67c52;
-const COLOR_BACK = 0xa67c52;
-const COLOR_SHELF = 0x8b6f47;
-const COLOR_SIDE = 0xc9a57b;
+const COLOR_BOTTOM = 0x8b6f47;  // Keep existing brown
+const COLOR_FRONT = 0x4a90e2;   // Blue
+const COLOR_BACK = 0x27ae60;    // Green (back wall)
+const COLOR_SHELF = 0xe74c3c;   // Red (top shelf)
+const COLOR_SIDE = 0x9b59b6;    // Purple
 const COLOR_RAIL = 0xb0b0b0;
 const COLOR_SCREW = 0x444444;
 const COLOR_BG = 0xf2f2f2;
