@@ -14,11 +14,21 @@ import {
   setDrawCallback,
   resetRowInputs,
   writeSummary,
+  setupHpWidthInput,
 } from "./ui.js";
+import {
+  initThreeRenderer,
+  buildScene,
+  startRenderLoop,
+  stopRenderLoop,
+  resizeThreeCanvas,
+} from "./3d-renderer.js";
 import "./style.css";
 import packageJson from "../package.json";
 
 let canvasDiv, canvas, ctx;
+let threeCanvas;
+let activeView = "2d";
 
 function calculateCaseBoundsAndPanels() {
   let maxX = 0, maxY = 0;
@@ -256,6 +266,56 @@ function drawSide() {
   drawJointDistanceIndicators(state.panels, backWallInside);
 
   writeSummary(maxX, maxY, pathCoords, railScrewCoords, bounds.cutPanels);
+
+  if (activeView === "3d") {
+    buildScene();
+  }
+}
+
+function setActiveView(view) {
+  if (view === activeView) return;
+  activeView = view;
+
+  const btn2d = document.getElementById("view-toggle-2d");
+  const btn3d = document.getElementById("view-toggle-3d");
+
+  if (view === "3d") {
+    canvas.style.display = "none";
+    threeCanvas.style.display = "block";
+    btn2d.classList.remove("active");
+    btn3d.classList.add("active");
+    resizeAllCanvases();
+    buildScene();
+    startRenderLoop();
+  } else {
+    stopRenderLoop();
+    threeCanvas.style.display = "none";
+    canvas.style.display = "block";
+    btn3d.classList.remove("active");
+    btn2d.classList.add("active");
+    resizeAllCanvases();
+    drawSide();
+  }
+}
+
+function resizeAllCanvases() {
+  const w = canvasDiv.clientWidth;
+  const h = canvasDiv.clientHeight;
+  if (w <= 0 || h <= 0) return;
+
+  if (activeView === "2d") {
+    canvas.width = w;
+    canvas.height = h;
+    ctx.fillStyle = "rgb(0, 0, 0)";
+    ctx.strokeStyle = "#999999";
+    drawSide();
+  } else {
+    threeCanvas.width = w;
+    threeCanvas.height = h;
+    threeCanvas.style.width = w + "px";
+    threeCanvas.style.height = h + "px";
+    resizeThreeCanvas(w, h);
+  }
 }
 
 function init() {
@@ -330,24 +390,22 @@ function init() {
   canvas = document.getElementById("the-canvas");
   ctx = initCanvas(canvas);
 
+  threeCanvas = document.getElementById("three-canvas");
+  initThreeRenderer(threeCanvas);
+
   inputDepth.value = state.actualPanelDepth;
 
-  function resizeCanvas() {
-    const w = canvasDiv.clientWidth;
-    const h = canvasDiv.clientHeight;
-    if (w > 0 && h > 0) {
-      canvas.width = w;
-      canvas.height = h;
-      ctx.fillStyle = "rgb(0, 0, 0)";
-      ctx.strokeStyle = "#999999";
-      drawSide();
-    }
-  }
+  setupHpWidthInput();
 
-  requestAnimationFrame(resizeCanvas);
+  const btn2d = document.getElementById("view-toggle-2d");
+  const btn3d = document.getElementById("view-toggle-3d");
+  btn2d.addEventListener("click", () => setActiveView("2d"));
+  btn3d.addEventListener("click", () => setActiveView("3d"));
+
+  requestAnimationFrame(resizeAllCanvases);
 
   window.onresize = function () {
-    resizeCanvas();
+    resizeAllCanvases();
   };
 }
 

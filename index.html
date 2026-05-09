@@ -51,12 +51,31 @@
           <span class="input-span unit">mm</span>
         </span>
         <span class="input-span">
+          Case width:&nbsp;
+          <input id="hp-width-input" value="84" style="width: 60px" />
+          <span class="input-span unit">hp</span>
+        </span>
+        <span class="input-span">
           Flatten top shelf:
           <input type="checkbox" id="flatten-top-shelf" />
+        </span>
+        <span class="input-span" id="view-toggle-container">
+          View:&nbsp;
+          <button
+            type="button"
+            id="view-toggle-2d"
+            class="view-toggle-btn active"
+          >
+            Side View
+          </button>
+          <button type="button" id="view-toggle-3d" class="view-toggle-btn">
+            3D View
+          </button>
         </span>
       </div>
       <div id="canvas-div">
         <canvas id="the-canvas" width="150" height="150"></canvas>
+        <canvas id="three-canvas" style="display: none"></canvas>
       </div>
       <div id="summary-container">
         <div class="summary-div" id="summary-div"></div>

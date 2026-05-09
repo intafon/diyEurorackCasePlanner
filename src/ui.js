@@ -103,22 +103,34 @@ export function resetRowInputs(c) {
   reset1UCheckboxes(c);
 }
 
-export function setupHpWidthInput() {
-  const hpWidthInput = document.getElementById("hp-width-input");
+function updateHpWidthReadouts() {
   const hpWidthMmDisplay = document.getElementById("hp-width-mm");
   const hpWidthMmBottomDisplay = document.getElementById("hp-width-mm-bottom");
+  const innerWidth = state.caseWidthHP * HP_TO_MM;
+  if (hpWidthMmDisplay) {
+    hpWidthMmDisplay.value = roundToPlace(innerWidth, 2);
+  }
+  if (hpWidthMmBottomDisplay) {
+    hpWidthMmBottomDisplay.value = roundToPlace(
+      innerWidth + 2 * state.caseMaterialThickness,
+      2
+    );
+  }
+}
+
+export function setupHpWidthInput() {
+  const hpWidthInput = document.getElementById("hp-width-input");
 
   if (hpWidthInput && !hpWidthInput.hasAttribute("data-listener-added")) {
     hpWidthInput.setAttribute("data-listener-added", "true");
+    hpWidthInput.value = state.caseWidthHP;
     hpWidthInput.addEventListener("input", (event) => {
       state.caseWidthHP = parseFloat(event.target.value) || 0;
-      const innerWidth = state.caseWidthHP * HP_TO_MM;
-      hpWidthMmDisplay.value = roundToPlace(innerWidth, 2);
-      if (hpWidthMmBottomDisplay) {
-        hpWidthMmBottomDisplay.value = roundToPlace(innerWidth + 2 * state.caseMaterialThickness, 2);
-      }
+      updateHpWidthReadouts();
+      triggerRedraw();
     });
   }
+  updateHpWidthReadouts();
 }
 
 export function writeSummary(width, height, outlinePoints, railScrewCoords, cutPanels) {
@@ -218,22 +230,16 @@ export function writeSummary(width, height, outlinePoints, railScrewCoords, cutP
     });
   }
 
+  summaryHtml += "<br/>Panel widths from HP setting:&nbsp;";
   summaryHtml +=
-    "<br/>How wide should the front, bottom, and back panels be based on my HP requirement?&nbsp;";
-  summaryHtml +=
-    '<input type="number" id="hp-width-input" value="' +
-    state.caseWidthHP +
-    '" style="width: 60px;" />';
-  summaryHtml += '&nbsp;<span class="input-span unit">hp</span>';
-  summaryHtml +=
-    '&nbsp;&nbsp;<input type="text" id="hp-width-mm" value="' +
+    '<input type="text" id="hp-width-mm" value="' +
     roundToPlace(state.caseWidthHP * HP_TO_MM, 2) +
-    '" readonly style="width: 80px; background-color: #eee;" />';
+    '" readonly style="width: 80px;" />';
   summaryHtml += '&nbsp;<span class="input-span unit">mm (front &amp; back)</span>';
   summaryHtml +=
     '&nbsp;&nbsp;<input type="text" id="hp-width-mm-bottom" value="' +
     roundToPlace(state.caseWidthHP * HP_TO_MM + 2 * state.caseMaterialThickness, 2) +
-    '" readonly style="width: 80px; background-color: #eee;" />';
+    '" readonly style="width: 80px;" />';
   summaryHtml += '&nbsp;<span class="input-span unit">mm (bottom/base)</span>';
 
   summaryHtml += '<br/><br/><div class="export-options">';
