@@ -211,6 +211,7 @@ export function calculateCaseGeometry() {
     topShelfDepth = state.actualPanelDepth;
   }
 
+  const bottomWidth = panelWidth + 2 * state.caseMaterialThickness;
   geometry.cutPanels = [
     {
       name: "Front",
@@ -219,7 +220,7 @@ export function calculateCaseGeometry() {
     },
     {
       name: "Bottom",
-      width: panelWidth,
+      width: bottomWidth,
       height: bottomDepth,
     },
     {
