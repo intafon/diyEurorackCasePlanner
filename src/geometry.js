@@ -89,6 +89,7 @@ export function calculateCaseGeometry() {
     y: 0,
   });
   geometry.frontPieceOutline.push({ x: 0, y: 0 });
+  geometry.frontPieceOutline.push({ x: 0, y: y });
 
   addPoint(
     x + Math.cos(rad(firstAngle)) * state.caseMaterialThickness,
@@ -201,7 +202,7 @@ export function calculateCaseGeometry() {
     const lastRowEndY = geometry.outline[geometry.outline.length - 4].y;
     const shelfY = lastRowEndY + Math.sin(rad(lastRowAngle)) * state.caseMaterialThickness;
     backHeight = shelfY - state.caseMaterialThickness;
-    
+
     const lastRowEndX = geometry.outline[geometry.outline.length - 5].x;
     const shelfStartX = lastRowEndX + Math.cos(rad(lastRowAngle)) * state.caseMaterialThickness;
     topShelfDepth = geometry.maxX - shelfStartX;

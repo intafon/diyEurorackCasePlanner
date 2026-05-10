@@ -109,11 +109,11 @@ function makeHorizontalRailMesh(panel, panelIndex, caseWidth, isBottom, totalRow
   // Position rail so the screw hole is in the center of the 10mm depth and 5mm from bottom
   const inwardX = Math.sin(rad(panel.angle));
   const inwardY = -Math.cos(rad(panel.angle));
-  
+
   // Rail center should be railDepth/2 inward from the screw hole position
   const railCenterX = screwPos.x + inwardX * (railDepth / 2);
   const railCenterY = screwPos.y + inwardY * (railDepth / 2);
-  
+
   // Adjust Y position so screw is 5mm from bottom of rail
   const screwOffsetFromBottom = 5; // 5mm from bottom of rail
   const railBottomOffset = railHeight / 2 - screwOffsetFromBottom;
@@ -131,13 +131,13 @@ function makeHorizontalRailMesh(panel, panelIndex, caseWidth, isBottom, totalRow
   const holeVisMesh = new THREE.Mesh(holeMatGeom, holeMat);
   holeVisMesh.position.set(0, -railHeight/2 + screwOffsetFromBottom, 0);
   holeVisMesh.rotation.x = Math.PI / 2; // Rotate to go through case width (Z direction)
-  
+
   mesh.add(holeVisMesh);
 
   // Rotate the rail to align with the panel angle
   mesh.rotation.z = rad(panel.angle);
   mesh.position.set(railX, railY, 0);
-  
+
   return mesh;
 }
 
