@@ -117,12 +117,12 @@ function drawSide() {
   function add(xn, yn, noWriteMarker) {
     x = xn;
     y = yn;
-    maxX = Math.max(maxX, xn);
-    maxY = Math.max(maxY, yn);
-    p.push(xn, yn);
-    if (noWriteMarker) {
-      p.push(noWriteMarker);
-    }
+    // maxX = Math.max(maxX, xn);
+    // maxY = Math.max(maxY, yn);
+    // p.push(xn, yn);
+    // if (noWriteMarker) {
+    //   p.push(noWriteMarker);
+    // }
   }
 
   const firstAngle = state.rowAngles[0];
@@ -207,7 +207,6 @@ function drawSide() {
   const pathCoords = p.slice(0);
 
   console.info(p, calculateCaseGeometry().outline);
-  // drawPath(p);
   drawPath(
     calculateCaseGeometry().outline.reduce((acc, p) => {
       acc.push(p.x, p.y);

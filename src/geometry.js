@@ -18,6 +18,7 @@ export function actualDistance(d, showInches) {
 }
 
 export function getScrewHoleCoords(panel, panelIndex) {
+
   const panelHeight = state.getPanelHeightForRow(panelIndex);
   const railSeparation = state.getRailSeparationForRow(panelIndex);
   const screwDist = (panelHeight - railSeparation) / 2;

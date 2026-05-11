@@ -37,16 +37,16 @@ export function getPlot(x, y) {
 
 export function calculateViewScale(maxX, maxY) {
   const baseScale = 1 / state.heightRatio;
-  
+
   const requiredWidth = PADDING + maxX * baseScale + PADDING;
   const requiredHeight = PADDING + maxY * baseScale + PADDING;
-  
+
   const availableWidth = canvas.width;
   const availableHeight = canvas.height;
-  
+
   const scaleX = availableWidth / requiredWidth;
   const scaleY = availableHeight / requiredHeight;
-  
+
   state.viewScale = Math.min(1, scaleX, scaleY);
 }
 
@@ -288,22 +288,15 @@ export function drawJointDistanceIndicators(panels, backWallX) {
 export function drawPanelRail(panel, panelIndex) {
   const p = [];
   const circR = 3;
-  const panelHeight = state.getPanelHeightForRow(panelIndex);
-  const railSeparation = state.getRailSeparationForRow(panelIndex);
-  const screwDist = (panelHeight - railSeparation) / 2;
-  const screwDistX = Math.cos(rad(panel.angle)) * screwDist;
-  const screwDistY = Math.sin(rad(panel.angle)) * screwDist;
-  const screwDistDepthX = Math.sin(rad(panel.angle)) * state.actualRailDepth;
-  const screwDistDepthY = -Math.cos(rad(panel.angle)) * state.actualRailDepth;
-
+  const screwHoles = getScrewHoleCoords(panel, panelIndex);
   const savedStrokeStyle = ctx.strokeStyle;
   const savedFillStyle = ctx.fillStyle;
   ctx.strokeStyle = COLORS.drillHole;
   ctx.fillStyle = COLORS.drillHole;
 
   // Bottom screw - label below
-  let screwX = panel.coords[0] + screwDistX + screwDistDepthX;
-  let screwY = panel.coords[1] + screwDistY + screwDistDepthY;
+  let screwX = screwHoles.bottomScrew.x;
+  let screwY = screwHoles.bottomScrew.y;
   let plot = getPlot(screwX, screwY);
 
   ctx.beginPath();
@@ -318,8 +311,8 @@ export function drawPanelRail(panel, panelIndex) {
   p.push(screwX, screwY);
 
   // Top screw - label above
-  screwX = panel.coords[2] - screwDistX + screwDistDepthX;
-  screwY = panel.coords[3] - screwDistY + screwDistDepthY;
+  screwX = screwHoles.topScrew.x;
+  screwY = screwHoles.topScrew.y;
   plot = getPlot(screwX, screwY);
 
   ctx.beginPath();
