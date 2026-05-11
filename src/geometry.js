@@ -122,7 +122,8 @@ export function calculateCaseGeometry() {
 
     const normalBackWallInside =
       lastRowEndX + Math.sin(rad(lastRowAngle)) * state.actualPanelDepth;
-    const normalBackWallOutside = normalBackWallInside + state.caseMaterialThickness;
+    const normalBackWallOutside =
+      normalBackWallInside + state.caseMaterialThickness;
 
     const shelfEndX = normalBackWallOutside;
     const shelfEndY = shelfStartY;
@@ -130,27 +131,60 @@ export function calculateCaseGeometry() {
     backWallInside = shelfEndX - state.caseMaterialThickness;
     backWallOutside = shelfEndX;
 
+    const shelfTopLeftX =
+      lastRowEndX + Math.cos(rad(lastRowAngle)) * state.caseMaterialThickness;
+    const shelfTopLeftY =
+      lastRowEndY + Math.sin(rad(lastRowAngle)) * state.caseMaterialThickness;
+    const shelfTopRightX = backWallOutside;
+    const shelfTopRightY = shelfTopLeftY;
+    const shelfBottomRightX = backWallOutside;
+    const shelfBottomRightY = shelfTopLeftY - state.caseMaterialThickness;
+    const shelfBottomLeftX = shelfTopLeftX;
+    const shelfBottomLeftY = shelfBottomRightY;
+
     addPoint(shelfStartX, shelfStartY);
-    addPoint(shelfEndX, shelfEndY, { labelPos: { below: true, side: "right" } });
+    addPoint(shelfEndX, shelfEndY, {
+      labelPos: { below: true, side: "right" },
+    });
     addPoint(shelfEndX, 0);
 
-    geometry.backPieceOutline.push({ x: lastRowEndX, y: lastRowEndY });
-    geometry.backPieceOutline.push({
-      x: backWallInside,
-      y: shelfEndY - state.caseMaterialThickness,
-    });
-    geometry.backPieceOutline.push({ x: backWallInside, y: 0 });
+    const backTopLeftX = backWallInside;
+    const backTopLeftY = shelfTopRightY - state.caseMaterialThickness;
+    const backTopRightX = backWallOutside;
+    const backTopRightY = backTopLeftY;
+    const backBottomRightX = backWallOutside;
+    const backBottomRightY = 0;
+    const backBottomLeftX = backWallInside;
+    const backBottomLeftY = 0;
 
-    geometry.shelfPieceOutline.push({ x: shelfStartX, y: shelfStartY });
+    geometry.backPieceOutline.push({ x: backTopLeftX, y: backTopLeftY });
+    geometry.backPieceOutline.push({
+      x: backTopRightX,
+      y: backTopRightY,
+    });
+    geometry.backPieceOutline.push({
+      x: backBottomRightX,
+      y: backBottomRightY,
+    });
+    geometry.backPieceOutline.push({
+      x: backBottomLeftX,
+      y: backBottomLeftY,
+    });
+
+    geometry.shelfPieceOutline.push({ x: shelfTopLeftX, y: shelfTopLeftY });
     geometry.shelfPieceOutline.push({
-      x: shelfStartX,
-      y: shelfStartY - state.caseMaterialThickness,
+      x: shelfTopRightX,
+      y: shelfTopRightY,
     });
     geometry.shelfPieceOutline.push({
-      x: backWallInside,
-      y: shelfStartY - state.caseMaterialThickness,
+      x: shelfBottomRightX,
+      y: shelfBottomRightY,
     });
-    geometry.shelfPieceOutline.push({ x: backWallInside, y: 0 });
+    geometry.shelfPieceOutline.push({
+      x: shelfBottomLeftX,
+      y: shelfBottomLeftY,
+    });
+
   } else {
     backWallInside =
       lastRowEndX + Math.sin(rad(lastRowAngle)) * state.actualPanelDepth;
@@ -158,9 +192,45 @@ export function calculateCaseGeometry() {
       lastRowEndY - Math.cos(rad(lastRowAngle)) * state.actualPanelDepth;
     backWallOutside = backWallInside + state.caseMaterialThickness;
 
-    geometry.backPieceOutline.push({ x: lastRowEndX, y: lastRowEndY });
-    geometry.backPieceOutline.push({ x: backWallInside, y: backWallY });
-    geometry.backPieceOutline.push({ x: backWallInside, y: 0 });
+    const shelfTopRightX =
+      lastRowEndX + Math.cos(rad(lastRowAngle)) * state.caseMaterialThickness;
+    const shelfTopRightY =
+      lastRowEndY + Math.sin(rad(lastRowAngle)) * state.caseMaterialThickness;
+    const shelfBottomRightX = backWallOutside;
+    const shelfBottomRightY = backWallY;
+    const shelfBottomLeftX =
+      shelfBottomRightX -
+      Math.cos(rad(lastRowAngle)) * state.caseMaterialThickness;
+    const shelfBottomLeftY =
+      shelfBottomRightY -
+      Math.sin(rad(lastRowAngle)) * state.caseMaterialThickness;
+    geometry.shelfPieceOutline.push({ x: lastRowEndX, y: lastRowEndY });
+    geometry.shelfPieceOutline.push({ x: shelfTopRightX, y: shelfTopRightY });
+    geometry.shelfPieceOutline.push({
+      x: shelfBottomRightX,
+      y: shelfBottomRightY,
+    });
+    geometry.shelfPieceOutline.push({
+      x: shelfBottomLeftX,
+      y: shelfBottomLeftY,
+    });
+
+    geometry.backPieceOutline.push({
+      x: backWallInside,
+      y: backWallY,
+    });
+    geometry.backPieceOutline.push({
+      x: backWallInside + state.caseMaterialThickness,
+      y: backWallY,
+    });
+    geometry.backPieceOutline.push({
+      x: backWallInside + state.caseMaterialThickness,
+      y: 0,
+    });
+    geometry.backPieceOutline.push({
+      x: backWallInside,
+      y: 0,
+    });
 
     addPoint(
       lastRowEndX + Math.cos(rad(lastRowAngle)) * state.caseMaterialThickness,

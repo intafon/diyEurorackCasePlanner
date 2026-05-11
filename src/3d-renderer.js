@@ -175,27 +175,61 @@ export function buildScene() {
 
   sceneRoot = new THREE.Group();
 
-  const matBottom = new THREE.MeshLambertMaterial({ color: COLOR_BOTTOM });
-  const matFront = new THREE.MeshLambertMaterial({ color: COLOR_FRONT });
-  const matBack = new THREE.MeshLambertMaterial({ color: COLOR_BACK });
-  const matShelf = new THREE.MeshLambertMaterial({ color: COLOR_SHELF });
+  const SIDE_OPACITY = 0.55;
+  const BOTTOM_OPACITY = 0.55;
+  const OTHER_OPACITY = 0.55;
+
+  const matBottom = new THREE.MeshLambertMaterial({
+    color: COLOR_BOTTOM,
+    transparent: true,
+    opacity: BOTTOM_OPACITY,
+    side: THREE.DoubleSide,
+  });
+  const matFront = new THREE.MeshLambertMaterial({
+    color: COLOR_FRONT,
+    transparent: true,
+    opacity: OTHER_OPACITY,
+    side: THREE.DoubleSide,
+  });
+  const matBack = new THREE.MeshLambertMaterial({
+    color: COLOR_BACK,
+    transparent: true,
+    opacity: OTHER_OPACITY,
+    side: THREE.DoubleSide,
+  });
+  const matShelf = new THREE.MeshLambertMaterial({
+    color: COLOR_SHELF,
+    transparent: true,
+    opacity: OTHER_OPACITY,
+    side: THREE.DoubleSide,
+  });
   const matSide = new THREE.MeshLambertMaterial({
     color: COLOR_SIDE,
     transparent: true,
-    opacity: 0.55,
+    opacity: SIDE_OPACITY,
     side: THREE.DoubleSide,
   });
 
-  const sideOutlinePts = pointsFromOutline(geom.outline).filter(
-    (_, i, arr) => {
-      if (i === 0) return true;
-      const prev = arr[i - 1];
-      return !(Math.abs(prev.x - arr[i].x) < 0.001 && Math.abs(prev.y - arr[i].y) < 0.001);
-    }
-  );
+  const sideOutlinePts = pointsFromOutline(geom.outline).filter((_, i, arr) => {
+    if (i === 0) return true;
+    const prev = arr[i - 1];
+    return !(
+      Math.abs(prev.x - arr[i].x) < 0.001 && Math.abs(prev.y - arr[i].y) < 0.001
+    );
+  });
 
-  const leftSide = makeBoardMesh(sideOutlinePts, sideThickness, matSide, -innerWidth / 2 - sideThickness);
-  const rightSide = makeBoardMesh(sideOutlinePts, sideThickness, matSide, innerWidth / 2);
+  const leftSide = makeBoardMesh(
+    sideOutlinePts,
+    sideThickness,
+    matSide,
+    -innerWidth / 2 - sideThickness
+  );
+  const rightSide = makeBoardMesh(
+    sideOutlinePts,
+    sideThickness,
+    matSide,
+    innerWidth / 2
+  );
   sceneRoot.add(leftSide);
   sceneRoot.add(rightSide);
 
@@ -212,33 +246,61 @@ export function buildScene() {
 
   if (geom.frontPieceOutline && geom.frontPieceOutline.length > 0) {
     const frontPts = geom.frontPieceOutline.map((p) => ({ x: p.x, y: p.y }));
-    const frontMesh = makeBoardMesh(frontPts, innerWidth, matFront, -innerWidth / 2);
+    const frontMesh = makeBoardMesh(
+      frontPts,
+      innerWidth,
+      matFront,
+      -innerWidth / 2
+    );
     sceneRoot.add(frontMesh);
   }
 
   if (geom.backPieceOutline && geom.backPieceOutline.length > 0) {
     const backPts = geom.backPieceOutline.map((p) => ({ x: p.x, y: p.y }));
-    const backMesh = makeBoardMesh(backPts, innerWidth, matBack, -innerWidth / 2);
+    const backMesh = makeBoardMesh(
+      backPts,
+      innerWidth,
+      matBack,
+      -innerWidth / 2
+    );
     sceneRoot.add(backMesh);
   }
 
-  if (state.flattenTopShelf && geom.shelfPieceOutline && geom.shelfPieceOutline.length > 0) {
-    const shelfPts = geom.shelfPieceOutline.map((p) => ({ x: p.x, y: p.y }));
-    const shelfMesh = makeBoardMesh(shelfPts, innerWidth, matShelf, -innerWidth / 2);
-    sceneRoot.add(shelfMesh);
-  }
+  // Always render the "shelf"
+  //if (state.flattenTopShelf && geom.shelfPieceOutline && geom.shelfPieceOutline.length > 0) {
+  const shelfPts = geom.shelfPieceOutline.map((p) => ({ x: p.x, y: p.y }));
+  const shelfMesh = makeBoardMesh(
+    shelfPts,
+    innerWidth,
+    matShelf,
+    -innerWidth / 2
+  );
+  sceneRoot.add(shelfMesh);
+  //}
 
   geom.panels.forEach((panel, i) => {
     // Add horizontal rails that span the full case width (now with holes drilled through them)
-    sceneRoot.add(makeHorizontalRailMesh(panel, i, innerWidth, true, geom.panels.length));  // Bottom rail
-    sceneRoot.add(makeHorizontalRailMesh(panel, i, innerWidth, false, geom.panels.length)); // Top rail
+    sceneRoot.add(
+      makeHorizontalRailMesh(panel, i, innerWidth, true, geom.panels.length)
+    ); // Bottom rail
+    sceneRoot.add(
+      makeHorizontalRailMesh(panel, i, innerWidth, false, geom.panels.length)
+    ); // Top rail
 
     // Add screw holes in the side panels (DO NOT MOVE THESE - they stay exactly where they are)
     const screws = getScrewHoleCoords(panel, i);
-    sceneRoot.add(makeScrewHoleMesh(screws.bottomScrew, panel.angle, innerWidth, true));
-    sceneRoot.add(makeScrewHoleMesh(screws.topScrew, panel.angle, innerWidth, true));
-    sceneRoot.add(makeScrewHoleMesh(screws.bottomScrew, panel.angle, innerWidth, false));
-    sceneRoot.add(makeScrewHoleMesh(screws.topScrew, panel.angle, innerWidth, false));
+    sceneRoot.add(
+      makeScrewHoleMesh(screws.bottomScrew, panel.angle, innerWidth, true)
+    );
+    sceneRoot.add(
+      makeScrewHoleMesh(screws.topScrew, panel.angle, innerWidth, true)
+    );
+    sceneRoot.add(
+      makeScrewHoleMesh(screws.bottomScrew, panel.angle, innerWidth, false)
+    );
+    sceneRoot.add(
+      makeScrewHoleMesh(screws.topScrew, panel.angle, innerWidth, false)
+    );
   });
 
   const cx = geom.maxX / 2;
