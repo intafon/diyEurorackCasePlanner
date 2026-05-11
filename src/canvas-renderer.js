@@ -337,6 +337,36 @@ export function drawPanelRails(panels) {
   for (let i = 0; i < panels.length; i++) {
     p.push(...drawPanelRail(panels[i], i));
   }
+  console.info("drawPanelRails", p);
+  return p;
+}
+
+export function drawPanelRailHoles(drillHoles) {
+  console.info("drawPanelRailHoles", drillHoles);
+  const p = [];
+  // drillHoles.forEach((hole) => {
+  //   // for (const hole of drillHoles) {
+
+  //   screwX = hole.x;
+  //   screwY = hole.y;
+  //   plot = getPlot(screwX, screwY);
+
+  //   ctx.beginPath();
+  //   ctx.arc(plot.x, plot.y, circR, 0, 2 * Math.PI);
+  //   ctx.stroke();
+  //   ctx.closePath();
+  //   ctx.beginPath();
+  //   ctx.arc(plot.x, plot.y, circR / 5, 0, 2 * Math.PI);
+  //   ctx.fill();
+  //   ctx.closePath();
+  //   writeCoords(screwX, screwY, false, "left", COLORS.drillHole);
+  //   p.push(screwX, screwY);
+
+  //   ctx.strokeStyle = savedStrokeStyle;
+  //   ctx.fillStyle = savedFillStyle;
+
+  //   p.push(hole.x, hole.y);
+  // });
   return p;
 }
 

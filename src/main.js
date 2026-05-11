@@ -9,6 +9,7 @@ import {
   drawPanelRails,
   drawJointDistanceIndicators,
   calculateViewScale,
+  drawPanelRailHoles,
 } from "./canvas-renderer.js";
 import {
   setDrawCallback,
@@ -117,12 +118,6 @@ function drawSide() {
   function add(xn, yn, noWriteMarker) {
     x = xn;
     y = yn;
-    // maxX = Math.max(maxX, xn);
-    // maxY = Math.max(maxY, yn);
-    // p.push(xn, yn);
-    // if (noWriteMarker) {
-    //   p.push(noWriteMarker);
-    // }
   }
 
   const firstAngle = state.rowAngles[0];
@@ -202,13 +197,16 @@ function drawSide() {
 
   add(0, 0);
 
+  const caseGeometry = calculateCaseGeometry();
+
   ctx.setLineDash([]);
   const railScrewCoords = drawPanelRails(state.panels);
+  const railScrewCoords2 = drawPanelRailHoles(caseGeometry.drillHoles);
   const pathCoords = p.slice(0);
 
-  console.info(p, calculateCaseGeometry().outline);
+  console.info(p, caseGeometry.outline);
   drawPath(
-    calculateCaseGeometry().outline.reduce((acc, p) => {
+    caseGeometry.outline.reduce((acc, p) => {
       acc.push(p.x, p.y);
       if (p.marker) {
         acc.push(p.marker);
@@ -217,23 +215,20 @@ function drawSide() {
     }, [])
   );
 
-  drawJointDistanceIndicators(
-    state.panels,
-    calculateCaseGeometry().backWallInside
-  );
+  drawJointDistanceIndicators(state.panels, caseGeometry.backWallInside);
 
   writeSummary(maxX, maxY, pathCoords, railScrewCoords, bounds.cutPanels);
 
   // Redraw the entire side outline
   // drawAnOutline(calculateCaseGeometry().outline, "#ff0000", [2, 2]);
   // Redraw the front outline
-  drawAnOutline(calculateCaseGeometry().frontPieceOutline, "#999999", [3, 3]);
+  drawAnOutline(caseGeometry.frontPieceOutline, "#999999", [3, 3]);
   // Redraw the back outline
-  drawAnOutline(calculateCaseGeometry().backPieceOutline, "#999999", [3, 3]);
+  drawAnOutline(caseGeometry.backPieceOutline, "#999999", [3, 3]);
   // Redraw the shelf/diagonal back outline
-  drawAnOutline(calculateCaseGeometry().shelfPieceOutline, "#999999", [3, 3]);
+  drawAnOutline(caseGeometry.shelfPieceOutline, "#999999", [3, 3]);
   // Redraw the base outline
-  drawAnOutline(calculateCaseGeometry().baseBoardOutline, "#999999", [1, 5]);
+  drawAnOutline(caseGeometry.baseBoardOutline, "#999999", [1, 5]);
 
   if (activeView === "3d") {
     buildScene();

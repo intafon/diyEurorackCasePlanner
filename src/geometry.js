@@ -81,17 +81,6 @@ export function calculateCaseGeometry() {
       );
   addPoint(x, y + bottomPanelDepth);
 
-  // geometry.frontPieceOutline.push({
-  //   x: x + Math.cos(rad(firstAngle)) * state.caseMaterialThickness,
-  //   y: y + Math.sin(rad(firstAngle)) * state.caseMaterialThickness,
-  // });
-  // geometry.frontPieceOutline.push({
-  //   x: x + Math.cos(rad(firstAngle)) * state.caseMaterialThickness,
-  //   y: 0,
-  // });
-  // geometry.frontPieceOutline.push({ x: 0, y: 0 });
-  // geometry.frontPieceOutline.push({ x: 0, y: y });
-
   geometry.frontPieceOutline.push({ x: 0, y: y });
   geometry.frontPieceOutline.push({
     x: x + state.caseMaterialThickness,
@@ -289,9 +278,6 @@ export function calculateCaseGeometry() {
     // maxScrewX = Math.max(maxScrewX, screwCoords.topScrew.x);
     // maxScrewY = Math.max(maxScrewY, screwCoords.topScrew.y);
   });
-
-  console.info("maxScrewX", maxScrewX);
-  console.info("maxScrewY", maxScrewY);
 
   const panelWidth = state.caseWidthHP * HP_TO_MM;
 
