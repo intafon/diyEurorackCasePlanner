@@ -132,10 +132,6 @@ function drawSide() {
     coords: [],
   }));
 
-  const frontPieceOutline = [];
-  const backPieceOutline = [];
-  let shelfPieceOutline = [];
-
   add(0, 0);
 
   const bottomPanelDepth = state.useStaticRise
@@ -145,15 +141,6 @@ function drawSide() {
       );
   add(x, y + bottomPanelDepth);
 
-  frontPieceOutline.push(
-    x + Math.cos(rad(firstAngle)) * state.caseMaterialThickness,
-    y + Math.sin(rad(firstAngle)) * state.caseMaterialThickness
-  );
-  frontPieceOutline.push(
-    x + Math.cos(rad(firstAngle)) * state.caseMaterialThickness,
-    0
-  );
-  frontPieceOutline.push(0, 0);
   add(
     x + Math.cos(rad(firstAngle)) * state.caseMaterialThickness,
     y + Math.sin(rad(firstAngle)) * state.caseMaterialThickness,
@@ -198,34 +185,12 @@ function drawSide() {
     add(shelfStartX, shelfStartY);
     add(shelfEndX, shelfEndY, { labelPos: { below: true, side: "right" } });
     add(shelfEndX, 0);
-
-    backPieceOutline.push(lastRowEndX, lastRowEndY);
-    backPieceOutline.push(
-      backWallInside,
-      shelfEndY - state.caseMaterialThickness
-    );
-    backPieceOutline.push(backWallInside, 0);
-
-    shelfPieceOutline.push(shelfStartX, shelfStartY);
-    shelfPieceOutline.push(
-      shelfStartX,
-      shelfStartY - state.caseMaterialThickness
-    );
-    shelfPieceOutline.push(
-      backWallInside,
-      shelfStartY - state.caseMaterialThickness
-    );
-    shelfPieceOutline.push(backWallInside, 0);
   } else {
     backWallInside =
       lastRowEndX + Math.sin(rad(lastRowAngle)) * state.actualPanelDepth;
     backWallY =
       lastRowEndY - Math.cos(rad(lastRowAngle)) * state.actualPanelDepth;
     backWallOutside = backWallInside + state.caseMaterialThickness;
-
-    backPieceOutline.push(lastRowEndX, lastRowEndY);
-    backPieceOutline.push(backWallInside, backWallY);
-    backPieceOutline.push(backWallInside, 0);
 
     add(
       lastRowEndX + Math.cos(rad(lastRowAngle)) * state.caseMaterialThickness,
@@ -236,39 +201,6 @@ function drawSide() {
   }
 
   add(0, 0);
-
-  ctx.setLineDash([1, 5]);
-  ctx.beginPath();
-  drawPath(
-    false,
-    0,
-    0,
-    maxX,
-    0,
-    maxX,
-    -state.caseMaterialThickness,
-    0,
-    -state.caseMaterialThickness,
-    0,
-    0
-  );
-  ctx.closePath();
-
-  frontPieceOutline.unshift("false");
-  backPieceOutline.unshift("false");
-  ctx.beginPath();
-  drawPath(frontPieceOutline);
-  ctx.closePath();
-  ctx.beginPath();
-  drawPath(backPieceOutline);
-  ctx.closePath();
-
-  if (state.flattenTopShelf && shelfPieceOutline.length > 0) {
-    shelfPieceOutline.unshift("false");
-    ctx.beginPath();
-    drawPath(shelfPieceOutline);
-    ctx.closePath();
-  }
 
   ctx.setLineDash([]);
   const railScrewCoords = drawPanelRails(state.panels);
@@ -286,20 +218,23 @@ function drawSide() {
     }, [])
   );
 
-  drawJointDistanceIndicators(state.panels, backWallInside);
+  drawJointDistanceIndicators(
+    state.panels,
+    calculateCaseGeometry().backWallInside
+  );
 
   writeSummary(maxX, maxY, pathCoords, railScrewCoords, bounds.cutPanels);
 
   // Redraw the entire side outline
   // drawAnOutline(calculateCaseGeometry().outline, "#ff0000", [2, 2]);
   // Redraw the front outline
-  drawAnOutline(calculateCaseGeometry().frontPieceOutline, "#0000ff", [3, 3]);
+  drawAnOutline(calculateCaseGeometry().frontPieceOutline, "#999999", [3, 3]);
   // Redraw the back outline
-  drawAnOutline(calculateCaseGeometry().backPieceOutline, "#0000ff", [3, 3]);
+  drawAnOutline(calculateCaseGeometry().backPieceOutline, "#999999", [3, 3]);
   // Redraw the shelf/diagonal back outline
-  drawAnOutline(calculateCaseGeometry().shelfPieceOutline, "#0000ff", [3, 3]);
+  drawAnOutline(calculateCaseGeometry().shelfPieceOutline, "#999999", [3, 3]);
   // Redraw the base outline
-  drawAnOutline(calculateCaseGeometry().baseBoardOutline, "#0000ff", [3, 3]);
+  drawAnOutline(calculateCaseGeometry().baseBoardOutline, "#999999", [1, 5]);
 
   if (activeView === "3d") {
     buildScene();
