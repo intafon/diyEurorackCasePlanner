@@ -80,22 +80,36 @@ export function calculateCaseGeometry() {
       );
   addPoint(x, y + bottomPanelDepth);
 
+  // geometry.frontPieceOutline.push({
+  //   x: x + Math.cos(rad(firstAngle)) * state.caseMaterialThickness,
+  //   y: y + Math.sin(rad(firstAngle)) * state.caseMaterialThickness,
+  // });
+  // geometry.frontPieceOutline.push({
+  //   x: x + Math.cos(rad(firstAngle)) * state.caseMaterialThickness,
+  //   y: 0,
+  // });
+  // geometry.frontPieceOutline.push({ x: 0, y: 0 });
+  // geometry.frontPieceOutline.push({ x: 0, y: y });
+
+  geometry.frontPieceOutline.push({ x: 0, y: y });
   geometry.frontPieceOutline.push({
-    x: x + Math.cos(rad(firstAngle)) * state.caseMaterialThickness,
-    y: y + Math.sin(rad(firstAngle)) * state.caseMaterialThickness,
+    x: x + state.caseMaterialThickness,
+    y: y,
   });
   geometry.frontPieceOutline.push({
-    x: x + Math.cos(rad(firstAngle)) * state.caseMaterialThickness,
+    x: x + state.caseMaterialThickness,
     y: 0,
   });
   geometry.frontPieceOutline.push({ x: 0, y: 0 });
-  geometry.frontPieceOutline.push({ x: 0, y: y });
 
   addPoint(
     x + Math.cos(rad(firstAngle)) * state.caseMaterialThickness,
     y + Math.sin(rad(firstAngle)) * state.caseMaterialThickness,
     "nowrite"
   );
+
+  let maxScrewX = 0;
+  let maxScrewY = 0;
 
   state.rowAngles.forEach((angle, i) => {
     const rowHeight = state.getPanelHeightForRow(i);
@@ -106,11 +120,21 @@ export function calculateCaseGeometry() {
       i === state.rowAngles.length - 1 ? true : null
     );
     geometry.panels[i].coords.push(x, y);
+    const screwCoords = getScrewHoleCoords(geometry.panels[i], i);
+    maxScrewX = Math.max(maxScrewX, screwCoords.topScrew.x);
+    maxScrewY = Math.max(maxScrewY, screwCoords.topScrew.y);
   });
 
   const lastRowEndX = x;
   const lastRowEndY = y;
   const lastRowAngle = state.getActualRowAngle();
+  // Inner back wall should allow for module depth to be that specified by user.
+  const backInnerWallX =
+    maxScrewX +
+    Math.sin(rad(lastRowAngle)) *
+      (state.actualPanelDepth - state.actualRailDepth);
+  console.info("backInnerWallX", backInnerWallX);
+  const backOuterWallX = backInnerWallX + state.caseMaterialThickness;
 
   let backWallInside, backWallY, backWallOutside;
 
@@ -120,10 +144,8 @@ export function calculateCaseGeometry() {
     const shelfStartY =
       lastRowEndY + Math.sin(rad(lastRowAngle)) * state.caseMaterialThickness;
 
-    const normalBackWallInside =
-      lastRowEndX + Math.sin(rad(lastRowAngle)) * state.actualPanelDepth;
-    const normalBackWallOutside =
-      normalBackWallInside + state.caseMaterialThickness;
+    const normalBackWallInside = backWallInside;
+    const normalBackWallOutside = backOuterWallX;
 
     const shelfEndX = normalBackWallOutside;
     const shelfEndY = shelfStartY;
@@ -184,26 +206,33 @@ export function calculateCaseGeometry() {
       x: shelfBottomLeftX,
       y: shelfBottomLeftY,
     });
-
   } else {
-    backWallInside =
-      lastRowEndX + Math.sin(rad(lastRowAngle)) * state.actualPanelDepth;
-    backWallY =
-      lastRowEndY - Math.cos(rad(lastRowAngle)) * state.actualPanelDepth;
-    backWallOutside = backWallInside + state.caseMaterialThickness;
-
+    const shelfTopLeftX = lastRowEndX;
+    const shelfTopLeftY = lastRowEndY;
     const shelfTopRightX =
       lastRowEndX + Math.cos(rad(lastRowAngle)) * state.caseMaterialThickness;
     const shelfTopRightY =
-      lastRowEndY + Math.sin(rad(lastRowAngle)) * state.caseMaterialThickness;
-    const shelfBottomRightX = backWallOutside;
-    const shelfBottomRightY = backWallY;
+      shelfTopLeftY + Math.sin(rad(lastRowAngle)) * state.caseMaterialThickness;
+    const shelfBottomRightX = backOuterWallX;
+    // shelfTopRightX + Math.sin(rad(lastRowAngle)) * state.actualPanelDepth;
+    const shelfBottomRightY =
+      shelfTopRightY -
+      ((backOuterWallX - shelfTopRightX) / Math.sin(rad(lastRowAngle))) *
+        Math.cos(rad(lastRowAngle));
+    // shelfTopRightY - Math.cos(rad(lastRowAngle)) * state.actualPanelDepth;
     const shelfBottomLeftX =
       shelfBottomRightX -
-      Math.cos(rad(lastRowAngle)) * state.caseMaterialThickness;
+      state.caseMaterialThickness * Math.cos(rad(lastRowAngle));
+    // shelfTopLeftX + Math.sin(rad(lastRowAngle)) * state.actualPanelDepth;
     const shelfBottomLeftY =
       shelfBottomRightY -
-      Math.sin(rad(lastRowAngle)) * state.caseMaterialThickness;
+      state.caseMaterialThickness * Math.sin(rad(lastRowAngle));
+    // shelfTopLeftY - Math.cos(rad(lastRowAngle)) * state.actualPanelDepth;
+
+    backWallY = shelfBottomRightY;
+    backWallOutside = shelfBottomRightX;
+    backWallInside = backWallOutside - state.caseMaterialThickness;
+
     geometry.shelfPieceOutline.push({ x: lastRowEndX, y: lastRowEndY });
     geometry.shelfPieceOutline.push({ x: shelfTopRightX, y: shelfTopRightY });
     geometry.shelfPieceOutline.push({
@@ -220,11 +249,11 @@ export function calculateCaseGeometry() {
       y: backWallY,
     });
     geometry.backPieceOutline.push({
-      x: backWallInside + state.caseMaterialThickness,
+      x: backWallOutside,
       y: backWallY,
     });
     geometry.backPieceOutline.push({
-      x: backWallInside + state.caseMaterialThickness,
+      x: backWallOutside,
       y: 0,
     });
     geometry.backPieceOutline.push({
@@ -232,10 +261,7 @@ export function calculateCaseGeometry() {
       y: 0,
     });
 
-    addPoint(
-      lastRowEndX + Math.cos(rad(lastRowAngle)) * state.caseMaterialThickness,
-      lastRowEndY + Math.sin(rad(lastRowAngle)) * state.caseMaterialThickness
-    );
+    addPoint(shelfTopRightX, shelfTopRightY);
     addPoint(backWallOutside, backWallY);
     addPoint(backWallOutside, 0, "nowrite");
   }
@@ -252,17 +278,27 @@ export function calculateCaseGeometry() {
     { x: 0, y: 0 },
   ];
 
+  // let maxScrewX = 0;
+  // let maxScrewY = 0;
+
   geometry.panels.forEach((panel, i) => {
     const screwCoords = getScrewHoleCoords(panel, i);
     geometry.drillHoles.push(screwCoords.bottomScrew);
     geometry.drillHoles.push(screwCoords.topScrew);
+    // maxScrewX = Math.max(maxScrewX, screwCoords.topScrew.x);
+    // maxScrewY = Math.max(maxScrewY, screwCoords.topScrew.y);
   });
+
+  console.info("maxScrewX", maxScrewX);
+  console.info("maxScrewY", maxScrewY);
 
   const panelWidth = state.caseWidthHP * HP_TO_MM;
 
   const frontHeight = state.useStaticRise
     ? state.actualPanelDepth
-    : Math.abs(state.actualPanelDepth * Math.sin(Math.PI / 2 - rad(firstAngle)));
+    : Math.abs(
+        state.actualPanelDepth * Math.sin(Math.PI / 2 - rad(firstAngle))
+      );
 
   const bottomDepth = geometry.maxX;
 
@@ -270,11 +306,13 @@ export function calculateCaseGeometry() {
 
   if (state.flattenTopShelf) {
     const lastRowEndY = geometry.outline[geometry.outline.length - 4].y;
-    const shelfY = lastRowEndY + Math.sin(rad(lastRowAngle)) * state.caseMaterialThickness;
+    const shelfY =
+      lastRowEndY + Math.sin(rad(lastRowAngle)) * state.caseMaterialThickness;
     backHeight = shelfY - state.caseMaterialThickness;
 
     const lastRowEndX = geometry.outline[geometry.outline.length - 5].x;
-    const shelfStartX = lastRowEndX + Math.cos(rad(lastRowAngle)) * state.caseMaterialThickness;
+    const shelfStartX =
+      lastRowEndX + Math.cos(rad(lastRowAngle)) * state.caseMaterialThickness;
     topShelfDepth = geometry.maxX - shelfStartX;
   } else {
     const backWallTopY = geometry.outline[geometry.outline.length - 3].y;

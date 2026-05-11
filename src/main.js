@@ -1,6 +1,6 @@
 import { state } from "./state.js";
 import { oneUFormats, HP_TO_MM } from "./constants.js";
-import { rad } from "./geometry.js";
+import { rad, calculateCaseGeometry } from "./geometry.js";
 import {
   initCanvas,
   getCanvas,
@@ -39,9 +39,9 @@ function calculateCaseBoundsAndPanels() {
   const bottomPanelDepth = state.useStaticRise
     ? state.actualPanelDepth
     : Math.abs(state.actualPanelDepth * Math.sin(Math.PI / 2 - rad(firstAngle)));
-  
+
   const frontHeight = bottomPanelDepth;
-  
+
   y += bottomPanelDepth;
   x += Math.cos(rad(firstAngle)) * state.caseMaterialThickness;
   y = Math.sin(rad(firstAngle)) * state.caseMaterialThickness + bottomPanelDepth;
@@ -67,7 +67,7 @@ function calculateCaseBoundsAndPanels() {
     const normalBackWallOutside = normalBackWallInside + state.caseMaterialThickness;
     maxX = Math.max(maxX, normalBackWallOutside);
     maxY = Math.max(maxY, shelfStartY);
-    
+
     backHeight = shelfStartY - state.caseMaterialThickness;
     topShelfDepth = normalBackWallOutside - shelfStartX;
   } else {
@@ -75,7 +75,7 @@ function calculateCaseBoundsAndPanels() {
     const topY = lastRowEndY + Math.sin(rad(lastRowAngle)) * state.caseMaterialThickness;
     maxX = Math.max(maxX, backWallOutside);
     maxY = Math.max(maxY, topY);
-    
+
     backHeight = topY;
     topShelfDepth = state.actualPanelDepth;
   }
@@ -140,7 +140,9 @@ function drawSide() {
 
   const bottomPanelDepth = state.useStaticRise
     ? state.actualPanelDepth
-    : Math.abs(state.actualPanelDepth * Math.sin(Math.PI / 2 - rad(firstAngle)));
+    : Math.abs(
+        state.actualPanelDepth * Math.sin(Math.PI / 2 - rad(firstAngle))
+      );
   add(x, y + bottomPanelDepth);
 
   frontPieceOutline.push(
@@ -184,7 +186,8 @@ function drawSide() {
 
     const normalBackWallInside =
       lastRowEndX + Math.sin(rad(lastRowAngle)) * state.actualPanelDepth;
-    const normalBackWallOutside = normalBackWallInside + state.caseMaterialThickness;
+    const normalBackWallOutside =
+      normalBackWallInside + state.caseMaterialThickness;
 
     const shelfEndX = normalBackWallOutside;
     const shelfEndY = shelfStartY;
@@ -197,12 +200,21 @@ function drawSide() {
     add(shelfEndX, 0);
 
     backPieceOutline.push(lastRowEndX, lastRowEndY);
-    backPieceOutline.push(backWallInside, shelfEndY - state.caseMaterialThickness);
+    backPieceOutline.push(
+      backWallInside,
+      shelfEndY - state.caseMaterialThickness
+    );
     backPieceOutline.push(backWallInside, 0);
 
     shelfPieceOutline.push(shelfStartX, shelfStartY);
-    shelfPieceOutline.push(shelfStartX, shelfStartY - state.caseMaterialThickness);
-    shelfPieceOutline.push(backWallInside, shelfStartY - state.caseMaterialThickness);
+    shelfPieceOutline.push(
+      shelfStartX,
+      shelfStartY - state.caseMaterialThickness
+    );
+    shelfPieceOutline.push(
+      backWallInside,
+      shelfStartY - state.caseMaterialThickness
+    );
     shelfPieceOutline.push(backWallInside, 0);
   } else {
     backWallInside =
@@ -261,15 +273,58 @@ function drawSide() {
   ctx.setLineDash([]);
   const railScrewCoords = drawPanelRails(state.panels);
   const pathCoords = p.slice(0);
-  drawPath(p);
+
+  console.info(p, calculateCaseGeometry().outline);
+  // drawPath(p);
+  drawPath(
+    calculateCaseGeometry().outline.reduce((acc, p) => {
+      acc.push(p.x, p.y);
+      if (p.marker) {
+        acc.push(p.marker);
+      }
+      return acc;
+    }, [])
+  );
 
   drawJointDistanceIndicators(state.panels, backWallInside);
 
   writeSummary(maxX, maxY, pathCoords, railScrewCoords, bounds.cutPanels);
 
+  // Redraw the entire side outline
+  // drawAnOutline(calculateCaseGeometry().outline, "#ff0000", [2, 2]);
+  // Redraw the front outline
+  drawAnOutline(calculateCaseGeometry().frontPieceOutline, "#0000ff", [3, 3]);
+  // Redraw the back outline
+  drawAnOutline(calculateCaseGeometry().backPieceOutline, "#0000ff", [3, 3]);
+  // Redraw the shelf/diagonal back outline
+  drawAnOutline(calculateCaseGeometry().shelfPieceOutline, "#0000ff", [3, 3]);
+  // Redraw the base outline
+  drawAnOutline(calculateCaseGeometry().baseBoardOutline, "#0000ff", [3, 3]);
+
   if (activeView === "3d") {
     buildScene();
   }
+}
+
+/**
+ * Draws an outline shape defined by the points.
+ *
+ * @param {Array<{x: number, y: number}>} outlineData Array of points to draw shape
+ * @param {string} color CSS color string
+ * @param {Array<number>} dashes Array of numbers representing the dash pattern
+ */
+function drawAnOutline(outlineData, color = "#CCCCCC99", dashes = []) {
+  let outlinePts = outlineData.reduce((acc, p) => {
+    acc.push(p.x, p.y);
+    return acc;
+  }, []);
+  outlinePts.push(outlinePts[0], outlinePts[1]);
+  outlinePts.unshift("false");
+  ctx.setLineDash(dashes);
+  ctx.strokeStyle = color;
+  ctx.beginPath();
+  drawPath(outlinePts);
+  ctx.closePath();
 }
 
 function setActiveView(view) {
