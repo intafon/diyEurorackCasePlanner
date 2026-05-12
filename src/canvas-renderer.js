@@ -342,7 +342,6 @@ export function drawJointDistanceIndicators(panels, backWallX) {
 // }
 
 export function drawPanelRailHoles(drillHoles) {
-  console.info("drawPanelRailHoles", drillHoles);
   const p = [];
   drillHoles.forEach((hole, index) => {
     const screwX = hole.x;

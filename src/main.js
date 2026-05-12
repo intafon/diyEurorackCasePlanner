@@ -205,7 +205,6 @@ function drawSide() {
   // const railScrewCoords = railScrewCoords2;
   const pathCoords = p.slice(0);
 
-  console.info(p, caseGeometry.outline);
   drawPath(
     caseGeometry.outline.reduce((acc, p) => {
       acc.push(p.x, p.y);

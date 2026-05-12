@@ -123,7 +123,6 @@ export function calculateCaseGeometry() {
     maxScrewX +
     Math.sin(rad(lastRowAngle)) *
       (state.actualPanelDepth - state.actualRailDepth);
-  console.info("backInnerWallX", backInnerWallX);
   const backOuterWallX = backInnerWallX + state.caseMaterialThickness;
 
   let backWallInside, backWallY, backWallOutside;

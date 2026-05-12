@@ -12,6 +12,8 @@ let canvasEl = null;
 let rafHandle = null;
 let isRunning = false;
 let sceneRoot = null;
+let preservedCameraState = null;
+let isFirstBuild = true;
 
 const COLOR_BOTTOM = 0x8b6f47;  // Keep existing brown
 const COLOR_FRONT = 0x4a90e2;   // Blue
@@ -26,6 +28,10 @@ export function initThreeRenderer(canvas) {
   canvasEl = canvas;
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio || 1);
+
+  // Reset state when initializing
+  isFirstBuild = true;
+  preservedCameraState = null;
 
   scene = new THREE.Scene();
   scene.background = new THREE.Color(COLOR_BG);
@@ -74,6 +80,23 @@ export function disposeScene() {
     scene.remove(sceneRoot);
     disposeNode(sceneRoot);
     sceneRoot = null;
+  }
+}
+
+function storeCameraState() {
+  if (camera && controls) {
+    preservedCameraState = {
+      position: camera.position.clone(),
+      target: controls.target.clone(),
+    };
+  }
+}
+
+function restoreCameraState() {
+  if (preservedCameraState && camera && controls) {
+    camera.position.copy(preservedCameraState.position);
+    controls.target.copy(preservedCameraState.target);
+    controls.update();
   }
 }
 
@@ -165,6 +188,11 @@ function pointsFromOutline(outline) {
 
 export function buildScene() {
   if (!scene) return;
+
+  // Only store camera state if this isn't the first build
+  if (!isFirstBuild) {
+    storeCameraState();
+  }
 
   disposeScene();
 
@@ -311,14 +339,53 @@ export function buildScene() {
 
   const maxDim = Math.max(geom.maxX, geom.maxY, innerWidth);
   const dist = maxDim * 1.8;
-  camera.position.set(dist * 0.7, dist * 0.55, dist * 0.9);
-  controls.target.set(0, cy, 0);
-  controls.update();
+  currentDist = dist; // Update for logging
+
+  if (preservedCameraState && !isFirstBuild) {
+    // Restore the previous camera state to maintain user's viewing angle
+    restoreCameraState();
+  } else {
+    // Set initial camera position to view the front-right corner
+    // This shows both the opposite side profile and the front panel
+    camera.position.set(dist * -0.65, dist * 0.273, dist * 0.891);
+    controls.target.set(0, cy, 0);
+    controls.update();
+  }
+
+  // Mark that we've completed the first build
+  isFirstBuild = false;
 }
+
+let lastLoggedPosition = null;
+let currentDist = 1; // Will be updated in buildScene
 
 function renderLoop() {
   if (!isRunning) return;
   controls.update();
+
+  // Log camera position as multiples of dist when it changes
+  // if (camera && currentDist > 0) {
+  //   const pos = camera.position;
+  //   const normalizedPos = {
+  //     x: (pos.x / currentDist).toFixed(3),
+  //     y: (pos.y / currentDist).toFixed(3),
+  //     z: (pos.z / currentDist).toFixed(3),
+  //   };
+
+  //   // Only log if position has changed significantly
+  //   if (
+  //     !lastLoggedPosition ||
+  //     Math.abs(normalizedPos.x - lastLoggedPosition.x) > 0.01 ||
+  //     Math.abs(normalizedPos.y - lastLoggedPosition.y) > 0.01 ||
+  //     Math.abs(normalizedPos.z - lastLoggedPosition.z) > 0.01
+  //   ) {
+  //     console.log(
+  //       `Camera position (as multiples of dist): x=${normalizedPos.x}, y=${normalizedPos.y}, z=${normalizedPos.z}`
+  //     );
+  //     lastLoggedPosition = normalizedPos;
+  //   }
+  // }
+
   renderer.render(scene, camera);
   rafHandle = requestAnimationFrame(renderLoop);
 }
