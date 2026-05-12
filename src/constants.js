@@ -40,7 +40,7 @@ export const DEFAULTS = {
   actual1URailSeparation: SPEC_1U_INTELLIJEL_RAIL_HOLE_SPACING,
   actualRailDepth: 14,
   actualPanelDepth: 60,
-  caseMaterialThickness: 23, //3,
+  caseMaterialThickness: 3,
   caseWidthHP: 84,
 };
 
@@ -49,3 +49,5 @@ export const COLORS = {
   indicator: "#888888",
   outline: "#999999",
 };
+
+export const DRILL_HOLE_2D_RADIUS = 3;

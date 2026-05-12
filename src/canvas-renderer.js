@@ -1,6 +1,6 @@
 import { state } from "./state.js";
 import { rad, actualDistance, roundToPlace, getScrewHoleCoords, calculateCaseGeometry } from "./geometry.js";
-import { COLORS } from "./constants.js";
+import { COLORS, DRILL_HOLE_2D_RADIUS } from "./constants.js";
 
 let canvas, ctx;
 
@@ -285,88 +285,97 @@ export function drawJointDistanceIndicators(panels, backWallX) {
   ctx.setLineDash(savedLineDash);
 }
 
-export function drawPanelRail(panel, panelIndex) {
-  const p = [];
-  const circR = 3;
-  const screwHoles = getScrewHoleCoords(panel, panelIndex);
-  const savedStrokeStyle = ctx.strokeStyle;
-  const savedFillStyle = ctx.fillStyle;
-  ctx.strokeStyle = COLORS.drillHole;
-  ctx.fillStyle = COLORS.drillHole;
+// export function drawPanelRail(panel, panelIndex) {
+//   const p = [];
+//   const circR = DRILL_HOLE_2D_RADIUS;
+//   const screwHoles = getScrewHoleCoords(panel, panelIndex);
+//   const savedStrokeStyle = ctx.strokeStyle;
+//   const savedFillStyle = ctx.fillStyle;
+//   ctx.strokeStyle = COLORS.drillHole;
+//   ctx.fillStyle = COLORS.drillHole;
 
-  // Bottom screw - label below
-  let screwX = screwHoles.bottomScrew.x;
-  let screwY = screwHoles.bottomScrew.y;
-  let plot = getPlot(screwX, screwY);
+//   // Bottom screw - label below
+//   let screwX = screwHoles.bottomScrew.x;
+//   let screwY = screwHoles.bottomScrew.y;
+//   let plot = getPlot(screwX, screwY);
 
-  ctx.beginPath();
-  ctx.arc(plot.x, plot.y, circR, 0, 2 * Math.PI);
-  ctx.stroke();
-  ctx.closePath();
-  ctx.beginPath();
-  ctx.arc(plot.x, plot.y, circR / 5, 0, 2 * Math.PI);
-  ctx.fill();
-  ctx.closePath();
-  writeCoords(screwX, screwY, true, "right", COLORS.drillHole);
-  p.push(screwX, screwY);
+//   ctx.beginPath();
+//   ctx.arc(plot.x, plot.y, circR, 0, 2 * Math.PI);
+//   ctx.stroke();
+//   ctx.closePath();
+//   ctx.beginPath();
+//   ctx.arc(plot.x, plot.y, circR / 5, 0, 2 * Math.PI);
+//   ctx.fill();
+//   ctx.closePath();
+//   writeCoords(screwX, screwY, true, "right", COLORS.drillHole);
+//   p.push(screwX, screwY);
 
-  // Top screw - label above
-  screwX = screwHoles.topScrew.x;
-  screwY = screwHoles.topScrew.y;
-  plot = getPlot(screwX, screwY);
+//   // Top screw - label above
+//   screwX = screwHoles.topScrew.x;
+//   screwY = screwHoles.topScrew.y;
+//   plot = getPlot(screwX, screwY);
 
-  ctx.beginPath();
-  ctx.arc(plot.x, plot.y, circR, 0, 2 * Math.PI);
-  ctx.stroke();
-  ctx.closePath();
-  ctx.beginPath();
-  ctx.arc(plot.x, plot.y, circR / 5, 0, 2 * Math.PI);
-  ctx.fill();
-  ctx.closePath();
-  writeCoords(screwX, screwY, false, "left", COLORS.drillHole);
-  p.push(screwX, screwY);
+//   ctx.beginPath();
+//   ctx.arc(plot.x, plot.y, circR, 0, 2 * Math.PI);
+//   ctx.stroke();
+//   ctx.closePath();
+//   ctx.beginPath();
+//   ctx.arc(plot.x, plot.y, circR / 5, 0, 2 * Math.PI);
+//   ctx.fill();
+//   ctx.closePath();
+//   writeCoords(screwX, screwY, false, "left", COLORS.drillHole);
+//   p.push(screwX, screwY);
 
-  ctx.strokeStyle = savedStrokeStyle;
-  ctx.fillStyle = savedFillStyle;
+//   ctx.strokeStyle = savedStrokeStyle;
+//   ctx.fillStyle = savedFillStyle;
 
-  return p;
-}
+//   return p;
+// }
 
-export function drawPanelRails(panels) {
-  const p = [];
-  for (let i = 0; i < panels.length; i++) {
-    p.push(...drawPanelRail(panels[i], i));
-  }
-  console.info("drawPanelRails", p);
-  return p;
-}
+// export function drawPanelRails(panels) {
+//   const p = [];
+//   for (let i = 0; i < panels.length; i++) {
+//     p.push(...drawPanelRail(panels[i], i));
+//   }
+//   console.info("drawPanelRails", p);
+//   return p;
+// }
 
 export function drawPanelRailHoles(drillHoles) {
   console.info("drawPanelRailHoles", drillHoles);
   const p = [];
-  // drillHoles.forEach((hole) => {
-  //   // for (const hole of drillHoles) {
+  drillHoles.forEach((hole, index) => {
+    const screwX = hole.x;
+    const screwY = hole.y;
+    const plot = getPlot(screwX, screwY);
+    const savedStrokeStyle = ctx.strokeStyle;
+    const savedFillStyle = ctx.fillStyle;
+    ctx.strokeStyle = COLORS.drillHole;
+    ctx.fillStyle = COLORS.drillHole;
+    const isBottomHole = index % 2 === 0;
 
-  //   screwX = hole.x;
-  //   screwY = hole.y;
-  //   plot = getPlot(screwX, screwY);
+    ctx.beginPath();
+    ctx.arc(plot.x, plot.y, DRILL_HOLE_2D_RADIUS, 0, 2 * Math.PI);
+    ctx.stroke();
+    ctx.closePath();
+    ctx.beginPath();
+    ctx.arc(plot.x, plot.y, DRILL_HOLE_2D_RADIUS / 5, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.closePath();
+    writeCoords(
+      screwX,
+      screwY,
+      isBottomHole,
+      isBottomHole ? "right" : "left",
+      COLORS.drillHole
+    );
+    p.push(screwX, screwY);
 
-  //   ctx.beginPath();
-  //   ctx.arc(plot.x, plot.y, circR, 0, 2 * Math.PI);
-  //   ctx.stroke();
-  //   ctx.closePath();
-  //   ctx.beginPath();
-  //   ctx.arc(plot.x, plot.y, circR / 5, 0, 2 * Math.PI);
-  //   ctx.fill();
-  //   ctx.closePath();
-  //   writeCoords(screwX, screwY, false, "left", COLORS.drillHole);
-  //   p.push(screwX, screwY);
+    ctx.strokeStyle = savedStrokeStyle;
+    ctx.fillStyle = savedFillStyle;
 
-  //   ctx.strokeStyle = savedStrokeStyle;
-  //   ctx.fillStyle = savedFillStyle;
-
-  //   p.push(hole.x, hole.y);
-  // });
+    p.push(hole.x, hole.y);
+  });
   return p;
 }
 

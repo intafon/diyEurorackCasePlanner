@@ -6,7 +6,7 @@ import {
   getCanvas,
   getContext,
   drawPath,
-  drawPanelRails,
+  // drawPanelRails,
   drawJointDistanceIndicators,
   calculateViewScale,
   drawPanelRailHoles,
@@ -200,8 +200,9 @@ function drawSide() {
   const caseGeometry = calculateCaseGeometry();
 
   ctx.setLineDash([]);
-  const railScrewCoords = drawPanelRails(state.panels);
-  const railScrewCoords2 = drawPanelRailHoles(caseGeometry.drillHoles);
+  // const railScrewCoords = drawPanelRails(state.panels);
+  const railScrewCoords = drawPanelRailHoles(caseGeometry.drillHoles);
+  // const railScrewCoords = railScrewCoords2;
   const pathCoords = p.slice(0);
 
   console.info(p, caseGeometry.outline);
