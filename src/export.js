@@ -5,31 +5,150 @@ import { HP_TO_MM } from "./constants.js";
 
 let includeCutPanels = true;
 
+/**
+ * Creates a horizontally mirrored version of the side panel
+ * @param {Object} geometry - The case geometry object
+ * @returns {Object} - Mirrored geometry with outline and drill holes
+ */
+function createMirroredPanel(geometry) {
+  const maxX = geometry.maxX;
+  
+  // Mirror the outline by flipping X coordinates
+  const mirroredOutline = geometry.outline.map(point => ({
+    x: maxX - point.x,
+    y: point.y,
+    marker: point.marker
+  }));
+
+  // Mirror the drill holes by flipping X coordinates
+  const mirroredDrillHoles = geometry.drillHoles.map(hole => ({
+    x: maxX - hole.x,
+    y: hole.y
+  }));
+
+  return {
+    outline: mirroredOutline,
+    drillHoles: mirroredDrillHoles
+  };
+}
+
+/**
+ * Simple shape packing algorithm to optimize space usage
+ * @param {Array} shapes - Array of shape objects with width and height
+ * @returns {Object} - Packed layout with positions and total dimensions
+ */
+function packShapes(shapes) {
+  if (shapes.length === 0) return { shapes: [], totalWidth: 0, totalHeight: 0 };
+  
+  // Simple bin packing: try to arrange shapes to minimize total area
+  const packedShapes = [];
+  let currentX = 0;
+  let currentY = 0;
+  let maxWidth = 0;
+  let maxHeight = 0;
+  
+  // Sort shapes by area (largest first) for better packing
+  const sortedShapes = [...shapes].sort((a, b) => (b.width * b.height) - (a.width * a.height));
+  
+  // First, place all side panels side by side
+  const sidePanels = sortedShapes.filter(s => s.type === 'sidePanel');
+  sidePanels.forEach((shape, index) => {
+    const packedShape = {
+      ...shape,
+      x: currentX,
+      y: currentY
+    };
+    
+    packedShapes.push(packedShape);
+    currentX += shape.width + 15; // 15mm spacing
+    maxHeight = Math.max(maxHeight, shape.height);
+  });
+  
+  // Update maxWidth for side panels
+  if (sidePanels.length > 0) {
+    maxWidth = Math.max(maxWidth, currentX - 15); // Subtract the last spacing
+  }
+  
+  // Place cut panels below side panels if they exist
+  const cutPanels = sortedShapes.filter(s => s.type === 'cutPanel');
+  if (cutPanels.length > 0) {
+    let cutPanelX = 0;
+    const cutPanelY = maxHeight + 15; // 15mm spacing below side panels
+    let cutPanelsMaxHeight = 0;
+    
+    cutPanels.forEach(panel => {
+      const packedShape = {
+        ...panel,
+        x: cutPanelX,
+        y: cutPanelY
+      };
+      
+      packedShapes.push(packedShape);
+      cutPanelX += panel.width + 15; // 15mm spacing between panels
+      cutPanelsMaxHeight = Math.max(cutPanelsMaxHeight, panel.height);
+    });
+    
+    // Update total dimensions including cut panels
+    maxWidth = Math.max(maxWidth, cutPanelX - 15); // Subtract the last spacing
+    maxHeight = cutPanelY + cutPanelsMaxHeight;
+  }
+  
+  return {
+    shapes: packedShapes,
+    totalWidth: Math.max(maxWidth, 0),
+    totalHeight: Math.max(maxHeight, 0)
+  };
+}
+
 export function setIncludeCutPanels(value) {
   includeCutPanels = value;
 }
 
 export function generateSVG() {
   const geometry = calculateCaseGeometry();
+  const mirroredPanel = createMirroredPanel(geometry);
   const padding = 10;
-  const panelSpacing = 15;
   const scale = 1;
 
-  let cutPanelsTotalWidth = 0;
-  let cutPanelsMaxHeight = 0;
+  // Prepare shapes for packing
+  const shapes = [];
   
+  // Add both side panels
+  shapes.push({
+    type: 'sidePanel',
+    name: 'Right Side Panel',
+    width: geometry.maxX,
+    height: geometry.maxY,
+    outline: geometry.outline,
+    drillHoles: geometry.drillHoles
+  });
+  
+  shapes.push({
+    type: 'sidePanel', 
+    name: 'Left Side Panel',
+    width: geometry.maxX,
+    height: geometry.maxY,
+    outline: mirroredPanel.outline,
+    drillHoles: mirroredPanel.drillHoles
+  });
+
+  // Add cut panels if included
   if (includeCutPanels) {
-    geometry.cutPanels.forEach((panel, index) => {
-      cutPanelsTotalWidth += panel.height;
-      if (index < geometry.cutPanels.length - 1) {
-        cutPanelsTotalWidth += panelSpacing;
-      }
+    geometry.cutPanels.forEach(panel => {
+      shapes.push({
+        type: 'cutPanel',
+        name: panel.name,
+        width: panel.height, // Note: swapped because panels are rotated 90°
+        height: panel.width
+      });
     });
-    cutPanelsMaxHeight = Math.max(...geometry.cutPanels.map(p => p.width));
   }
+
+  // Pack shapes for optimal layout
+  const packedLayout = packShapes(shapes);
   
-  const totalWidth = includeCutPanels ? Math.max(geometry.maxX, cutPanelsTotalWidth) : geometry.maxX;
-  const totalHeight = includeCutPanels ? geometry.maxY + padding + cutPanelsMaxHeight : geometry.maxY;
+  const totalWidth = packedLayout.totalWidth;
+  const totalHeight = packedLayout.totalHeight;
 
   const width = (totalWidth + padding * 2) * scale;
   const height = (totalHeight + padding * 2) * scale;
@@ -41,57 +160,49 @@ export function generateSVG() {
     return (totalHeight - y + padding) * scale;
   }
 
-  const sideYOffset = includeCutPanels ? cutPanelsMaxHeight + padding : 0;
-
   let svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${width}mm" height="${height}mm" viewBox="0 0 ${width} ${height}">
-  <title>Eurorack Case Panels</title>
-  <desc>Generated by DIY Eurorack Case Planner</desc>
+  <title>Eurorack Case Panels - Left and Right Sides</title>
+  <desc>Generated by DIY Eurorack Case Planner</desc>`;
+
+  // Render each packed shape
+  packedLayout.shapes.forEach((shape, shapeIndex) => {
+    if (shape.type === 'sidePanel') {
+      svg += `
   
-  <!-- Side Panel - Cut lines (outline) -->
-  <g id="side-panel-outline" stroke="#000000" stroke-width="0.5" fill="none">
+  <!-- ${shape.name} - Cut lines (outline) -->
+  <g id="${shape.name.toLowerCase().replace(/\s+/g, '-')}-outline" stroke="#FF0000" stroke-width="0.01" fill="none">
     <path d="`;
 
-  const outline = geometry.outline;
-  svg += `M ${tx(outline[0].x)} ${ty(outline[0].y + sideYOffset)}`;
-  for (let i = 1; i < outline.length; i++) {
-    svg += ` L ${tx(outline[i].x)} ${ty(outline[i].y + sideYOffset)}`;
-  }
-  svg += ` Z" />
+      const outline = shape.outline;
+      svg += `M ${tx(outline[0].x + shape.x)} ${ty(outline[0].y + shape.y)}`;
+      for (let i = 1; i < outline.length; i++) {
+        svg += ` L ${tx(outline[i].x + shape.x)} ${ty(outline[i].y + shape.y)}`;
+      }
+      svg += ` Z" />
   </g>
   
-  <!-- Side Panel - Drill holes -->
-  <g id="side-panel-drill-holes" stroke="#aa3333" stroke-width="0.3" fill="none">`;
+  <!-- ${shape.name} - Drill holes -->
+  <g id="${shape.name.toLowerCase().replace(/\s+/g, '-')}-drill-holes" stroke="#FF0000" stroke-width="0.01" fill="none">`;
 
-  const drillRadius = 2.1;
-  geometry.drillHoles.forEach((hole) => {
-    svg += `
-    <circle cx="${tx(hole.x)}" cy="${ty(hole.y + sideYOffset)}" r="${drillRadius}" />`;
-  });
+      const drillRadius = 2.1;
+      shape.drillHoles.forEach((hole) => {
+        svg += `
+    <circle cx="${tx(hole.x + shape.x)}" cy="${ty(hole.y + shape.y)}" r="${drillRadius}" />`;
+      });
 
-  svg += `
-  </g>`;
-
-  if (includeCutPanels) {
-    svg += `
-  
-  <!-- Cut Panels (Front, Bottom, Back, Top) -->
-  <g id="cut-panels" stroke="#000000" stroke-width="0.5" fill="none">`;
-
-    let currentX = 0;
-    geometry.cutPanels.forEach((panel) => {
-      const x1 = currentX;
-      const y2 = panel.width;
-      
       svg += `
-    <rect x="${tx(x1)}" y="${ty(y2)}" width="${panel.height}" height="${panel.width}" />`;
-      
-      currentX += panel.height + panelSpacing;
-    });
-
-    svg += `
   </g>`;
-  }
+
+    } else if (shape.type === 'cutPanel') {
+      svg += `
+  
+  <!-- ${shape.name} Panel -->
+  <g id="${shape.name.toLowerCase().replace(/\s+/g, '-')}-panel" stroke="#FF0000" stroke-width="0.01" fill="none">
+    <rect x="${tx(shape.x)}" y="${ty(shape.y + shape.height)}" width="${shape.width}" height="${shape.height}" />
+  </g>`;
+    }
+  });
 
   svg += `
 </svg>`;
@@ -101,52 +212,105 @@ export function generateSVG() {
 
 export function generateDXF() {
   const geometry = calculateCaseGeometry();
+  const mirroredPanel = createMirroredPanel(geometry);
   const dxf = new DxfWriter();
-  const panelSpacing = 15;
 
-  dxf.addLayer("SIDE_PANEL", DxfWriter.ACI.WHITE, "CONTINUOUS");
-  dxf.addLayer("DRILL_HOLES", DxfWriter.ACI.RED, "CONTINUOUS");
+  dxf.addLayer("RIGHT_SIDE_PANEL", DxfWriter.ACI.RED, "CONTINUOUS");
+  dxf.addLayer("LEFT_SIDE_PANEL", DxfWriter.ACI.RED, "CONTINUOUS");
+  dxf.addLayer("RIGHT_DRILL_HOLES", DxfWriter.ACI.RED, "CONTINUOUS");
+  dxf.addLayer("LEFT_DRILL_HOLES", DxfWriter.ACI.RED, "CONTINUOUS");
   if (includeCutPanels) {
-    dxf.addLayer("CUT_PANELS", DxfWriter.ACI.CYAN, "CONTINUOUS");
+    dxf.addLayer("CUT_PANELS", DxfWriter.ACI.RED, "CONTINUOUS");
   }
 
-  const cutPanelsMaxHeight = includeCutPanels ? Math.max(...geometry.cutPanels.map(p => p.width)) : 0;
-  const sideYOffset = includeCutPanels ? cutPanelsMaxHeight + panelSpacing : 0;
-
-  dxf.setActiveLayer("SIDE_PANEL");
-  const outline = geometry.outline;
-  for (let i = 0; i < outline.length - 1; i++) {
-    dxf.drawLine(
-      outline[i].x,
-      outline[i].y + sideYOffset,
-      outline[i + 1].x,
-      outline[i + 1].y + sideYOffset
-    );
-  }
-
-  dxf.setActiveLayer("DRILL_HOLES");
-  const drillRadius = 2.1;
-  geometry.drillHoles.forEach((hole) => {
-    dxf.drawCircle(hole.x, hole.y + sideYOffset, drillRadius);
+  // Prepare shapes for packing
+  const shapes = [];
+  
+  // Add both side panels
+  shapes.push({
+    type: 'sidePanel',
+    name: 'Right Side Panel',
+    width: geometry.maxX,
+    height: geometry.maxY,
+    outline: geometry.outline,
+    drillHoles: geometry.drillHoles
+  });
+  
+  shapes.push({
+    type: 'sidePanel',
+    name: 'Left Side Panel', 
+    width: geometry.maxX,
+    height: geometry.maxY,
+    outline: mirroredPanel.outline,
+    drillHoles: mirroredPanel.drillHoles
   });
 
+  // Add cut panels if included
   if (includeCutPanels) {
-    dxf.setActiveLayer("CUT_PANELS");
-    let currentX = 0;
-    geometry.cutPanels.forEach((panel) => {
-      const x1 = currentX;
-      const y1 = 0;
-      const x2 = currentX + panel.height;
-      const y2 = panel.width;
+    geometry.cutPanels.forEach(panel => {
+      shapes.push({
+        type: 'cutPanel',
+        name: panel.name,
+        width: panel.height, // Note: swapped because panels are rotated 90°
+        height: panel.width
+      });
+    });
+  }
+
+  // Pack shapes for optimal layout
+  const packedLayout = packShapes(shapes);
+
+  const drillRadius = 2.1;
+
+  // Draw each packed shape
+  packedLayout.shapes.forEach((shape, shapeIndex) => {
+    if (shape.type === 'sidePanel') {
+      const isRightPanel = shape.name.includes('Right');
+      const panelLayerName = isRightPanel ? "RIGHT_SIDE_PANEL" : "LEFT_SIDE_PANEL";
+      const drillLayerName = isRightPanel ? "RIGHT_DRILL_HOLES" : "LEFT_DRILL_HOLES";
+
+      // Draw side panel outline
+      dxf.setActiveLayer(panelLayerName);
+      const outline = shape.outline;
+      for (let i = 0; i < outline.length - 1; i++) {
+        dxf.drawLine(
+          outline[i].x + shape.x,
+          outline[i].y + shape.y,
+          outline[i + 1].x + shape.x,
+          outline[i + 1].y + shape.y
+        );
+      }
+      
+      // Close the outline by connecting last point to first
+      if (outline.length > 2) {
+        dxf.drawLine(
+          outline[outline.length - 1].x + shape.x,
+          outline[outline.length - 1].y + shape.y,
+          outline[0].x + shape.x,
+          outline[0].y + shape.y
+        );
+      }
+
+      // Draw drill holes
+      dxf.setActiveLayer(drillLayerName);
+      shape.drillHoles.forEach((hole) => {
+        dxf.drawCircle(hole.x + shape.x, hole.y + shape.y, drillRadius);
+      });
+
+    } else if (shape.type === 'cutPanel') {
+      // Draw cut panels
+      dxf.setActiveLayer("CUT_PANELS");
+      const x1 = shape.x;
+      const y1 = shape.y;
+      const x2 = shape.x + shape.width;
+      const y2 = shape.y + shape.height;
       
       dxf.drawLine(x1, y1, x2, y1);
       dxf.drawLine(x2, y1, x2, y2);
       dxf.drawLine(x2, y2, x1, y2);
       dxf.drawLine(x1, y2, x1, y1);
-      
-      currentX += panel.height + panelSpacing;
-    });
-  }
+    }
+  });
 
   return dxf.toDxfString();
 }
@@ -165,10 +329,10 @@ export function downloadFile(content, filename, mimeType) {
 
 export function downloadSVG() {
   const svg = generateSVG();
-  downloadFile(svg, "eurorack-case-side.svg", "image/svg+xml");
+  downloadFile(svg, "eurorack-case-both-sides.svg", "image/svg+xml");
 }
 
 export function downloadDXF() {
   const dxf = generateDXF();
-  downloadFile(dxf, "eurorack-case-side.dxf", "application/dxf");
+  downloadFile(dxf, "eurorack-case-both-sides.dxf", "application/dxf");
 }
