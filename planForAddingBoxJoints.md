@@ -68,3 +68,4 @@ We may want to make some additional changes to make it easier to add laser engra
 - [ ] update the 3d display to extrude the new outlines instead of the side views where appropriate
 - [ ] update the svg/dxf output to use the new outlines (and probably remove the current "extruded" outlines since that currently has to base the shapes on the side view plus the case width)
 - [ ] Double check that we don't need to limit the box joints further from the corner due to some cases like the bottom panel where it meets the back panel, and the back panel is less wide than the bottom. (we probably do need to fix this)
+- [ ] Make the shape points for 3js go in a counterclockwise direction, not clockwise...

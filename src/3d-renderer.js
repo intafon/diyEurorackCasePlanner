@@ -204,22 +204,30 @@ function makeExtrudedPanelMesh(
   color = "#00FFFF",
   opacity = SIDE_OPACITY
 ) {
-  // 1. Convert {x,y,z} objects to THREE.Vector3
   const vecs = points3D.map((p) => new THREE.Vector3(p.x, p.y, p.z));
   const direction = new THREE.Vector3(extrudeVec.x, extrudeVec.y, extrudeVec.z);
 
-  // 2. Define a local coordinate system (Plane) for the shape
-  // We'll use the first three points to find the plane's orientation
+  // 1. Calculate the Normal of the plane the points sit on
   const v0 = vecs[0];
   const v1 = vecs[1];
   const v2 = vecs[2];
+  const edge1 = new THREE.Vector3().subVectors(v1, v0);
+  const edge2 = new THREE.Vector3().subVectors(v2, v0);
+  const normal = new THREE.Vector3().crossVectors(edge1, edge2).normalize();
 
-  const xAxis = new THREE.Vector3().subVectors(v1, v0).normalize();
-  const tempVec = new THREE.Vector3().subVectors(v2, v0).normalize();
-  const normal = new THREE.Vector3().crossVectors(xAxis, tempVec).normalize();
+  // 2. Build a STABLE Basis
+  // Instead of using the first edge as X, we pick a global "up"
+  // and derive X and Y from the plane's normal.
+  let worldUp = new THREE.Vector3(0, 1, 0);
+  // If the normal is already pointing UP, use Forward as a reference instead
+  if (Math.abs(normal.dot(worldUp)) > 0.99) {
+    worldUp.set(0, 0, 1);
+  }
+
+  const xAxis = new THREE.Vector3().crossVectors(worldUp, normal).normalize();
   const yAxis = new THREE.Vector3().crossVectors(normal, xAxis).normalize();
 
-  // 3. Project 3D points to 2D Shape coordinates
+  // 3. Project 3D points to 2D Shape
   const shape = new THREE.Shape();
   vecs.forEach((v, i) => {
     const localX = v.clone().sub(v0).dot(xAxis);
@@ -229,24 +237,19 @@ function makeExtrudedPanelMesh(
   });
   shape.closePath();
 
-  // 4. Create the Extrusion Path
-  // We extrude from 0 to the length of your vector
-  const path = new THREE.LineCurve3(
-    new THREE.Vector3(0, 0, 0),
-    new THREE.Vector3(0, 0, direction.length())
-  );
+  // 4. Create Extrusion
+  // We use the length of the extrudeVec, but we need to find
+  // its projection relative to our plane's normal
+  const distance = direction.dot(normal);
 
+  // Note: Standard ExtrudeGeometry extrudes along the Z axis (the normal)
   const geometry = new THREE.ExtrudeGeometry(shape, {
-    extrudePath: path,
+    depth: distance,
     steps: 1,
     bevelEnabled: false,
   });
 
-  // 5. Create Mesh and Orient it
-  //   const material = new THREE.MeshStandardMaterial({
-  //     color: 0x0077ff,
-  //     side: THREE.DoubleSide,
-  //   });
+  // 5. Create Mesh and Orient
   const material = new THREE.MeshLambertMaterial({
     color,
     transparent: true,
@@ -255,12 +258,70 @@ function makeExtrudedPanelMesh(
   });
   const mesh = new THREE.Mesh(geometry, material);
 
-  // Match the mesh orientation to our local 3D plane
+  // Apply the rotation matrix to match the 3D plane
   const matrix = new THREE.Matrix4().makeBasis(xAxis, yAxis, normal);
   mesh.applyMatrix4(matrix);
   mesh.position.copy(v0);
 
   return mesh;
+
+  //   // 1. Convert {x,y,z} objects to THREE.Vector3
+  //   const vecs = points3D.map((p) => new THREE.Vector3(p.x, p.y, p.z));
+  //   const direction = new THREE.Vector3(extrudeVec.x, extrudeVec.y, extrudeVec.z);
+
+  //   // 2. Define a local coordinate system (Plane) for the shape
+  //   // We'll use the first three points to find the plane's orientation
+  //   const v0 = vecs[0];
+  //   const v1 = vecs[1];
+  //   const v2 = vecs[2];
+
+  //   const xAxis = new THREE.Vector3().subVectors(v1, v0).normalize();
+  //   const tempVec = new THREE.Vector3().subVectors(v2, v0).normalize();
+  //   const normal = new THREE.Vector3().crossVectors(xAxis, tempVec).normalize();
+  //   const yAxis = new THREE.Vector3().crossVectors(normal, xAxis).normalize();
+
+  //   // 3. Project 3D points to 2D Shape coordinates
+  //   const shape = new THREE.Shape();
+  //   vecs.forEach((v, i) => {
+  //     const localX = v.clone().sub(v0).dot(xAxis);
+  //     const localY = v.clone().sub(v0).dot(yAxis);
+  //     if (i === 0) shape.moveTo(localX, localY);
+  //     else shape.lineTo(localX, localY);
+  //   });
+  //   shape.closePath();
+
+  //   // 4. Create the Extrusion Path
+  //   // We extrude from 0 to the length of your vector
+  //   const path = new THREE.LineCurve3(
+  //     new THREE.Vector3(0, 0, 0),
+  //     new THREE.Vector3(0, 0, direction.length())
+  //   );
+
+  //   const geometry = new THREE.ExtrudeGeometry(shape, {
+  //     extrudePath: path,
+  //     steps: 1,
+  //     bevelEnabled: false,
+  //   });
+
+  //   // 5. Create Mesh and Orient it
+  //   //   const material = new THREE.MeshStandardMaterial({
+  //   //     color: 0x0077ff,
+  //   //     side: THREE.DoubleSide,
+  //   //   });
+  //   const material = new THREE.MeshLambertMaterial({
+  //     color,
+  //     transparent: true,
+  //     opacity,
+  //     side: THREE.DoubleSide,
+  //   });
+  //   const mesh = new THREE.Mesh(geometry, material);
+
+  //   // Match the mesh orientation to our local 3D plane
+  //   const matrix = new THREE.Matrix4().makeBasis(xAxis, yAxis, normal);
+  //   mesh.applyMatrix4(matrix);
+  //   mesh.position.copy(v0);
+
+  //   return mesh;
 }
 
 function makeExtrudedFromPolygon(points2D, depthZ, material) {
@@ -396,35 +457,55 @@ export function buildScene() {
     opacity: OTHER_OPACITY,
     side: THREE.DoubleSide,
   });
-  const matSide = new THREE.MeshLambertMaterial({
-    color: COLOR_SIDE,
-    transparent: true,
-    opacity: SIDE_OPACITY,
-    side: THREE.DoubleSide,
-  });
+  //   const matSide = new THREE.MeshLambertMaterial({
+  //     color: COLOR_SIDE,
+  //     transparent: true,
+  //     opacity: SIDE_OPACITY,
+  //     side: THREE.DoubleSide,
+  //   });
 
-  const sideOutlinePts = pointsFromOutline(geom.outline).filter((_, i, arr) => {
-    if (i === 0) return true;
-    const prev = arr[i - 1];
-    return !(
-      Math.abs(prev.x - arr[i].x) < 0.001 && Math.abs(prev.y - arr[i].y) < 0.001
-    );
-  });
+  //   const sideOutlinePts = pointsFromOutline(geom.outline).filter((_, i, arr) => {
+  //     if (i === 0) return true;
+  //     const prev = arr[i - 1];
+  //     return !(
+  //       Math.abs(prev.x - arr[i].x) < 0.001 && Math.abs(prev.y - arr[i].y) < 0.001
+  //     );
+  //   });
 
-  const leftSide = makeBoardMesh(
-    sideOutlinePts,
-    sideThickness,
-    matSide,
-    -innerWidth / 2 - sideThickness
+  //   const leftSide = makeBoardMesh(
+  //     sideOutlinePts,
+  //     sideThickness,
+  //     matSide,
+  //     -innerWidth / 2 - sideThickness
+  //   );
+  //   const rightSide = makeBoardMesh(
+  //     sideOutlinePts,
+  //     sideThickness,
+  //     matSide,
+  //     innerWidth / 2
+  //   );
+  //   sceneRoot.add(leftSide);
+  //   sceneRoot.add(rightSide);
+
+  //   makeExtrudedPanelMesh;
+  //createSidePanelExtrudableOutline
+  const rightSidePoints = geom.createSidePanelExtrudableOutline();
+  const rightSideMesh = makeExtrudedPanelMesh(
+    rightSidePoints,
+    new THREE.Vector3(0, 0, -state.caseMaterialThickness),
+    COLOR_SIDE,
+    SIDE_OPACITY
   );
-  const rightSide = makeBoardMesh(
-    sideOutlinePts,
-    sideThickness,
-    matSide,
-    innerWidth / 2
+  sceneRoot.add(rightSideMesh);
+
+  const leftSidePoints = geom.createSidePanelExtrudableOutline("left");
+  const leftSideMesh = makeExtrudedPanelMesh(
+    leftSidePoints,
+    new THREE.Vector3(0, 0, state.caseMaterialThickness),
+    COLOR_SIDE,
+    SIDE_OPACITY
   );
-  sceneRoot.add(leftSide);
-  sceneRoot.add(rightSide);
+  sceneRoot.add(leftSideMesh);
 
   if (geom.baseBoardOutline && geom.baseBoardOutline.length > 0) {
     const basePts = geom.baseBoardOutline.map((p) => ({ x: p.x, y: p.y }));

@@ -375,22 +375,18 @@ export function calculateCaseGeometry() {
     const bottomRight = points.pop();
     const backTop = points.pop();
     const frontTop = points.pop();
-    const topJoints = createBoxJoints(frontTop, backTop, boxJointType.notch);
+    const topJoints = createBoxJoints(frontTop, backTop, boxJointType.tab);
     console.info("topJoints", topJoints);
-    const backJoints = createBoxJoints(
-      backTop,
-      bottomRight,
-      boxJointType.notch
-    );
+    const backJoints = createBoxJoints(backTop, bottomRight, boxJointType.tab);
     const bottomJoints = createBoxJoints(
       bottomRight,
       bottomLeft,
-      boxJointType.tab
+      boxJointType.notch
     );
     const frontJoints = createBoxJoints(
       bottomLeft,
       points[0],
-      boxJointType.notch
+      boxJointType.tab
     );
     return [
       ...points,
