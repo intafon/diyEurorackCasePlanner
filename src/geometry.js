@@ -514,10 +514,6 @@ function createFrontPanelExtrudableOutline() {
   // box joint tabs.
   const { topLeft, topRight, bottomRight, bottomLeft } =
     createFrontPanelOutline();
-  // const topLeft = { z: -state.caseWidth, y: getFrontPanelHeight(), x: 0 };
-  // const topRight = { z: state.caseWidth, y: getFrontPanelHeight(), x: 0 };
-  // const bottomRight = { z: state.caseWidth, y: 0, x: 0 };
-  // const bottomLeft = { z: -state.caseWidth, y: 0, x: 0 };
 
   // Now create outlines with tabs on the left and right sides and the bottom. First create the
   // center tab, then expend the tabs outward from there.
@@ -552,7 +548,7 @@ function createFrontPanelExtrudableOutline() {
 }
 
 function createBackPanelOutline() {
-  // Creates the outside face of the back panel.
+  // Creates the back panel, looking from the back at the back face of it.
   const backPieceOutline = calculateCaseGeometry().backPieceOutline;
   return {
     topLeft: {
@@ -589,15 +585,95 @@ function createBackPanel2dSideOutline() {
   ];
 }
 
-function createBackPanelExtrudableOutline() {}
+function createBackPanelExtrudableOutline() {
+  // back panel has tabs on all four sides
+  const { topLeft, topRight, bottomRight, bottomLeft } =
+    createBackPanelOutline();
 
-function createBottomPanel2dSideOutline() {}
+  // Now create outlines with tabs on the left and right sides and the bottom. First create the
+  // center tab, then expend the tabs outward from there.
+  const topJoints = createBoxJoints(topLeft, topRight, boxJointType.tab, false);
+  const rightJoints = createBoxJoints(
+    topRight,
+    bottomRight,
+    boxJointType.tab,
+    false
+  );
+  const bottomJoints = createBoxJoints(
+    bottomRight,
+    bottomLeft,
+    boxJointType.tab,
+    false
+  );
+  const leftJoints = createBoxJoints(
+    bottomLeft,
+    topLeft,
+    boxJointType.tab,
+    false
+  );
+  return [
+    topLeft,
+    ...topJoints,
+    topRight,
+    ...rightJoints,
+    bottomRight,
+    ...bottomJoints,
+    bottomLeft,
+    ...leftJoints,
+    topLeft,
+  ];
+}
+
+function createBottomPanelOutline() {
+  // Creates the bottom up view of the bottom panel, as if you were looking at the case from the
+  // front and lifted the front to look at the bottom (so the front is at the top)
+  const bottomPanelOutline = calculateCaseGeometry().baseBoardOutline;
+  return {
+    topLeft: {
+      z: -(state.caseWidth + state.caseMaterialThickness),
+      y: -state.caseMaterialThickness,
+      x: 0,
+    },
+    topRight: {
+      z: state.caseWidth + state.caseMaterialThickness,
+      y: -state.caseMaterialThickness,
+      x: 0,
+    },
+    bottomRight: {
+      z: state.caseWidth + state.caseMaterialThickness,
+      y: -state.caseMaterialThickness,
+      x: bottomPanelOutline[1].x,
+    },
+    bottomLeft: {
+      z: -(state.caseWidth + state.caseMaterialThickness),
+      y: -state.caseMaterialThickness,
+      x: bottomPanelOutline[1].x,
+    },
+  };
+}
+
+function createBottomPanel2dSideOutline() {
+  const { topLeft, topRight, bottomRight, bottomLeft } =
+    createBottomPanelOutline();
+  return [
+    { x: topLeft.x, y: 0 },
+    //   { x: topLeft.x - state.caseMaterialThickness, y: topLeft.y },
+    //   { x: topLeft.x, y: topLeft.y },
+    //   { x: bottomLeft.x, y: bottomLeft.y },
+    //   { x: bottomLeft.x - state.caseMaterialThickness, y: bottomLeft.y },
+  ];
+}
 
 function createBottomPanelExtrudableOutline() {}
+
+
+function createTopPanelOutline() {}
 
 function createTopPanel2dSideOutline() {}
 
 function createTopPanelExtrudableOutline() {}
+
+function createSidePanelOutline() {}
 
 function createSidePanel2dOutline() {
   // This should basically create what is currently created for 2d display
