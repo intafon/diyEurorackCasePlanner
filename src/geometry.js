@@ -480,6 +480,27 @@ function createBoxJoints(
   return points;
 }
 
+function createFrontPanelOutline() {
+  return {
+    topLeft: { z: -state.caseWidth, y: getFrontPanelHeight(), x: 0 },
+    topRight: { z: state.caseWidth, y: getFrontPanelHeight(), x: 0 },
+    bottomRight: { z: state.caseWidth, y: 0, x: 0 },
+    bottomLeft: { z: -state.caseWidth, y: 0, x: 0 },
+  };
+}
+
+function createFrontPanel2dSideOutline() {
+  // This should return the point necessary to create the side view outline of the panel.
+  const { topLeft, topRight, bottomRight, bottomLeft } =
+    createFrontPanelOutline();
+  return [
+    { x: topLeft.x, y: topLeft.y },
+    { x: topLeft.x + state.caseMaterialThickness, y: topLeft.y },
+    { x: bottomLeft.x + state.caseMaterialThickness, y: bottomLeft.y },
+    { x: bottomLeft.x, y: bottomLeft.y },
+  ];
+}
+
 function createFrontPanelExtrudableOutline() {
   // Creates the outline for the front panel with the box joint tabs and notches.
   // Note that the outline will currently be centered at the -caseWidth/2 Z position to match
@@ -491,10 +512,13 @@ function createFrontPanelExtrudableOutline() {
   //
   // In the Y direction, the front piece goes from 0 to state.actualPanelDepth not counting the
   // box joint tabs.
-  const topLeft = { z: -state.caseWidth, y: getFrontPanelHeight(), x: 0 };
-  const topRight = { z: state.caseWidth, y: getFrontPanelHeight(), x: 0 };
-  const bottomRight = { z: state.caseWidth, y: 0, x: 0 };
-  const bottomLeft = { z: -state.caseWidth, y: 0, x: 0 };
+  const { topLeft, topRight, bottomRight, bottomLeft } =
+    createFrontPanelOutline();
+  // const topLeft = { z: -state.caseWidth, y: getFrontPanelHeight(), x: 0 };
+  // const topRight = { z: state.caseWidth, y: getFrontPanelHeight(), x: 0 };
+  // const bottomRight = { z: state.caseWidth, y: 0, x: 0 };
+  // const bottomLeft = { z: -state.caseWidth, y: 0, x: 0 };
+
   // Now create outlines with tabs on the left and right sides and the bottom. First create the
   // center tab, then expend the tabs outward from there.
   const bottomJoints = createBoxJoints(
@@ -525,4 +549,69 @@ function createFrontPanelExtrudableOutline() {
     ...leftJoints,
     topLeft,
   ];
+}
+
+function createBackPanelOutline() {
+  // Creates the outside face of the back panel.
+  const backPieceOutline = calculateCaseGeometry().backPieceOutline;
+  return {
+    topLeft: {
+      z: state.caseWidth,
+      y: backPieceOutline[1].y,
+      x: backPieceOutline[1].x,
+    },
+    topRight: {
+      z: -state.caseWidth,
+      y: backPieceOutline[1].y,
+      x: backPieceOutline[1].x,
+    },
+    bottomRight: {
+      z: -state.caseWidth,
+      y: backPieceOutline[2].y,
+      x: backPieceOutline[2].x,
+    },
+    bottomLeft: {
+      z: state.caseWidth,
+      y: backPieceOutline[2].y,
+      x: backPieceOutline[2].x,
+    },
+  };
+}
+
+function createBackPanel2dSideOutline() {
+  const { topLeft, topRight, bottomRight, bottomLeft } =
+    createBackPanelOutline();
+  return [
+    { x: topLeft.x - state.caseMaterialThickness, y: topLeft.y },
+    { x: topLeft.x, y: topLeft.y },
+    { x: bottomLeft.x, y: bottomLeft.y },
+    { x: bottomLeft.x - state.caseMaterialThickness, y: bottomLeft.y },
+  ];
+}
+
+function createBackPanelExtrudableOutline() {}
+
+function createBottomPanel2dSideOutline() {}
+
+function createBottomPanelExtrudableOutline() {}
+
+function createTopPanel2dSideOutline() {}
+
+function createTopPanelExtrudableOutline() {}
+
+function createSidePanel2dOutline() {
+  // This should basically create what is currently created for 2d display
+}
+
+function createSidePanelExtrudableOutline() {
+  // This should create the side panel with the tabs/notches added
+  // For 3d and export we need to create a mirror image of this as well, which should be basically
+  // just the same points mirrored about the y-axis.
+}
+
+export function flattenXYCoordsToArray(coords) {
+  return coords.reduce((acc, coord) => {
+    acc.push(coord.x, coord.y);
+    return acc;
+  }, []);
 }
