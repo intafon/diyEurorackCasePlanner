@@ -50,6 +50,8 @@ export function calculateCaseGeometry() {
     cutPanels: [],
     maxX: 0,
     maxY: 0,
+    panelWidth: 0,
+    bottomWidth: 0,
   };
 
   let x = 0,
@@ -280,7 +282,8 @@ export function calculateCaseGeometry() {
     // maxScrewY = Math.max(maxScrewY, screwCoords.topScrew.y);
   });
 
-  const panelWidth = state.caseWidthHP * HP_TO_MM;
+  const panelWidth = state.caseWidth;
+  geometry.panelWidth = panelWidth;
 
   const frontHeight = state.useStaticRise
     ? state.actualPanelDepth
@@ -309,6 +312,7 @@ export function calculateCaseGeometry() {
   }
 
   const bottomWidth = panelWidth + 2 * state.caseMaterialThickness;
+  geometry.bottomWidth = bottomWidth;
   geometry.cutPanels = [
     {
       name: "Front",
@@ -341,7 +345,73 @@ export function calculateCaseGeometry() {
     });
   }
 
-  return geometry;
+  const createSidePanelOutline = (side = "right") => {
+    // the side panel from calculateCaseGeometry() starts at 0,0 x,y currently and goes up to the top
+    // left corner.
+    const outlinePoints = [...geometry.outline.slice(1)];
+    const zValue =
+      side === "right"
+        ? state.caseWidth / 2 + state.caseMaterialThickness
+        : -state.caseWidth / 2 - state.caseMaterialThickness;
+    return outlinePoints.map((point) => ({
+      ...point,
+      z: zValue,
+    }));
+  };
+
+  const createSidePanel2dSideOutline = () => {
+    // This should basically create what is currently created for 2d display
+    const outlinePoints = [...geometry.outline.slice(1)];
+    return outlinePoints;
+  };
+
+  const createSidePanelExtrudableOutline = (side = "right") => {
+    // This should create the side panel with the tabs/notches added
+    // For 3d and export we need to create a mirror image of this as well, which should be basically
+    // just the same points mirrored about the y-axis.
+    const points = createSidePanel2dSideOutline(side);
+    console.info("points", points);
+    const bottomLeft = points.pop();
+    const bottomRight = points.pop();
+    const backTop = points.pop();
+    const frontTop = points.pop();
+    console.info("frontTop", frontTop);
+    const topJoints = createBoxJoints(frontTop, backTop, boxJointType.notch);
+    const backJoints = createBoxJoints(
+      backTop,
+      bottomRight,
+      boxJointType.notch
+    );
+    const bottomJoints = createBoxJoints(
+      bottomRight,
+      bottomLeft,
+      boxJointType.tab
+    );
+    const frontJoints = createBoxJoints(
+      bottomLeft,
+      points[0],
+      boxJointType.notch
+    );
+    return [
+      ...points,
+      frontTop,
+      ...topJoints,
+      backTop,
+      ...backJoints,
+      bottomRight,
+      ...bottomJoints,
+      bottomLeft,
+      ...frontJoints,
+      points[0],
+    ];
+  };
+
+  return {
+    ...geometry,
+    createSidePanelOutline,
+    createSidePanel2dSideOutline,
+    createSidePanelExtrudableOutline,
+  };
 }
 
 function getFrontPanelHeight() {
@@ -703,24 +773,11 @@ function createBottomPanelExtrudableOutline() {
   ];
 }
 
-
 function createTopPanelOutline() {}
 
 function createTopPanel2dSideOutline() {}
 
 function createTopPanelExtrudableOutline() {}
-
-function createSidePanelOutline() {}
-
-function createSidePanel2dOutline() {
-  // This should basically create what is currently created for 2d display
-}
-
-function createSidePanelExtrudableOutline() {
-  // This should create the side panel with the tabs/notches added
-  // For 3d and export we need to create a mirror image of this as well, which should be basically
-  // just the same points mirrored about the y-axis.
-}
 
 export function flattenXYCoordsToArray(coords) {
   return coords.reduce((acc, coord) => {

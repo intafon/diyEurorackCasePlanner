@@ -1,4 +1,4 @@
-import { oneUFormats, DEFAULTS } from "./constants.js";
+import { oneUFormats, DEFAULTS, HP_TO_MM } from "./constants.js";
 
 class AppState {
   constructor() {
@@ -23,6 +23,8 @@ class AppState {
     this.caseMaterialThickness = DEFAULTS.caseMaterialThickness;
     this.flattenTopShelf = false;
     this.caseWidthHP = DEFAULTS.caseWidthHP;
+    this.caseWidth = HP_TO_MM * this.caseWidthHP;
+    this.caseWidthFull = this.caseWidth + 2 * this.caseMaterialThickness;
 
     this.pxPerCm = 400 / this.actualPanelHeight;
     this.panels = [];
@@ -35,6 +37,12 @@ class AppState {
 
   get heightRatio() {
     return this.actualPanelHeight / this.panelHeight;
+  }
+
+  setHpWidth(value) {
+    this.caseWidthHP = value;
+    this.caseWidth = HP_TO_MM * this.caseWidthHP;
+    this.caseWidthFull = this.caseWidth + 2 * this.caseMaterialThickness;
   }
 
   getPanelHeightForRow(rowIndex) {

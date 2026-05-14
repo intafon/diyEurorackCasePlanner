@@ -81,7 +81,7 @@ function calculateCaseBoundsAndPanels() {
     topShelfDepth = state.actualPanelDepth;
   }
 
-  const panelWidth = state.caseWidthHP * HP_TO_MM;
+  const panelWidth = state.caseWidth;
   const bottomDepth = maxX;
 
   const bottomWidth = panelWidth + 2 * state.caseMaterialThickness;
@@ -198,6 +198,16 @@ function drawSide() {
   add(0, 0);
 
   const caseGeometry = calculateCaseGeometry();
+
+  console.info("createSidePanelOutline", caseGeometry.createSidePanelOutline());
+  console.info(
+    "createSidePanel2dSideOutline",
+    caseGeometry.createSidePanel2dSideOutline()
+  );
+  console.info(
+    "createSidePanelExtrudableOutline",
+    caseGeometry.createSidePanelExtrudableOutline()
+  );
 
   ctx.setLineDash([]);
   // const railScrewCoords = drawPanelRails(state.panels);
