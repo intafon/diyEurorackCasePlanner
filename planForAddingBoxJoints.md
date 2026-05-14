@@ -45,7 +45,7 @@ We need to make the following changes to the output:
   - bottom needs to be extruded in Y direction
   - sides can remain extruded in Z direction
   - front and back will need to be extruded in X direction
-  - special handling will need to be done for the top back/shelf since that needs to be angled depending on the flattenTopShelf value. Currently we are just extruding that in the Z direction using the angled side outline. (maybe we can extrude in X-Y direction using angle?)
+  - special handling will need to be done for the top back/shelf since that needs to be angled depending on the flattenTopShelf value. This will extend to how we need to create the tabs/notches for the box joints. Currently we are just extruding that in the Z direction using the angled side outline. (maybe we can extrude in X-Y direction using angle?)
 - The SVG/DXF export will just use the points from the new outlines to create the shapes
   - Need to double-check, not sure if this will require additional tooling for the drawing or not since they may be getting drawn currently just as squares.
 

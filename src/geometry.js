@@ -1,5 +1,5 @@
 import { state } from "./state.js";
-import { HP_TO_MM } from "./constants.js";
+import { HP_TO_MM, BOX_JOINT_TAB_WIDTH } from "./constants.js";
 
 export function rad(d) {
   return (d / 180) * Math.PI;
@@ -18,7 +18,6 @@ export function actualDistance(d, showInches) {
 }
 
 export function getScrewHoleCoords(panel, panelIndex) {
-
   const panelHeight = state.getPanelHeightForRow(panelIndex);
   const railSeparation = state.getRailSeparationForRow(panelIndex);
   const screwDist = (panelHeight - railSeparation) / 2;
@@ -74,12 +73,12 @@ export function calculateCaseGeometry() {
 
   addPoint(0, 0);
 
-  const bottomPanelDepth = state.useStaticRise
-    ? state.actualPanelDepth
-    : Math.abs(
-        state.actualPanelDepth * Math.sin(Math.PI / 2 - rad(firstAngle))
-      );
-  addPoint(x, y + bottomPanelDepth);
+  //   const bottomPanelDepth = state.useStaticRise
+  //     ? state.actualPanelDepth
+  //     : Math.abs(
+  //         state.actualPanelDepth * Math.sin(Math.PI / 2 - rad(firstAngle))
+  //       );
+  addPoint(x, y + getFrontPanelHeight());
 
   geometry.frontPieceOutline.push({ x: 0, y: y });
   geometry.frontPieceOutline.push({
@@ -223,7 +222,10 @@ export function calculateCaseGeometry() {
     backWallInside = backWallOutside - state.caseMaterialThickness;
 
     geometry.shelfPieceOutline.push({ x: lastRowEndX, y: lastRowEndY });
-    geometry.shelfPieceOutline.push({ x: shelfTopRightX, y: shelfTopRightY });
+    geometry.shelfPieceOutline.push({
+      x: shelfTopRightX,
+      y: shelfTopRightY,
+    });
     geometry.shelfPieceOutline.push({
       x: shelfBottomRightX,
       y: shelfBottomRightY,
@@ -340,4 +342,187 @@ export function calculateCaseGeometry() {
   }
 
   return geometry;
+}
+
+function getFrontPanelHeight() {
+  const firstAngle = state.rowAngles[0];
+  const height = state.useStaticRise
+    ? state.actualPanelDepth
+    : Math.abs(
+        state.actualPanelDepth * Math.sin(Math.PI / 2 - rad(firstAngle))
+      );
+  return height;
+}
+
+const boxJointType = { tab: "tab", notch: "notch" };
+
+function findCenterPoint(point1, point2) {
+  return {
+    x: (point1.x + point2.x) / 2,
+    y: (point1.y + point2.y) / 2,
+    z: (point1.z + point2.z) / 2,
+  };
+}
+
+function createBoxJoints(
+  point1,
+  point2,
+  type = boxJointType.tab,
+  includeEndpoints = false
+) {
+  const jointHeight = state.caseMaterialThickness;
+  const jointWidth = BOX_JOINT_TAB_WIDTH;
+  // const centerPoint = findCenterPoint(point1, point2);
+  // const jointIndex = 0;
+
+  const dx = p2.x - p1.x;
+  const dy = p2.y - p1.y;
+  const dz = p2.z - p1.z;
+  const length = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+  // Basic safety check
+  if (length < jointWidth * 2) return [p1, p2];
+
+  const ux = dx / length;
+  const uy = dy / length;
+  const uz = dz / length;
+
+  // Normal vector (u x Z-axis)
+  // 'notch' flips the orientation of the tab height
+  const multiplier = type === boxJointType.notch ? -1 : 1;
+  const nx = uy * multiplier;
+  const ny = -ux * multiplier;
+  const nz = 0;
+
+  const halfW = jointWidth / 2;
+  const mid = length / 2;
+  const tabOffsets = [];
+
+  // Helper to check if a tab at a specific center point fits the boundary rules
+  const fits = (center) => {
+    const start = center - halfW;
+    const end = center + halfW;
+    // Tab must start and end at least jointWidth away from the line endpoints
+    return start >= jointWidth && end <= length - jointWidth;
+  };
+
+  // 1. Center tab
+  if (fits(mid)) {
+    tabOffsets.push(mid);
+
+    // 2. Add outward tabs with a period of 2 * jointWidth (1 tab + 1 gap)
+    let step = 1;
+    while (true) {
+      let added = false;
+      const forward = mid + step * (2 * jointWidth);
+      const backward = mid - step * (2 * jointWidth);
+
+      if (fits(forward)) {
+        tabOffsets.push(forward);
+        added = true;
+      }
+      if (fits(backward)) {
+        tabOffsets.push(backward);
+        added = true;
+      }
+
+      if (!added) break;
+      step++;
+    }
+  }
+
+  // Sort offsets chronologically along the line
+  tabOffsets.sort((a, b) => a - b);
+
+  const points = [];
+
+  if (includeEndpoints) {
+    points.push(p1);
+  }
+
+  tabOffsets.forEach((offset) => {
+    const tStart = offset - halfW;
+    const tEnd = offset + halfW;
+
+    // Move to tab start on the baseline
+    points.push({
+      x: p1.x + ux * tStart,
+      y: p1.y + uy * tStart,
+      z: p1.z + uz * tStart,
+    });
+
+    // Rise
+    points.push({
+      x: p1.x + ux * tStart + nx * jointHeight,
+      y: p1.y + uy * tStart + ny * jointHeight,
+      z: p1.z + uz * tStart + nz * jointHeight,
+    });
+
+    // Span tab width
+    points.push({
+      x: p1.x + ux * tEnd + nx * jointHeight,
+      y: p1.y + uy * tEnd + ny * jointHeight,
+      z: p1.z + uz * tEnd + nz * jointHeight,
+    });
+
+    // Drop back to baseline
+    points.push({
+      x: p1.x + ux * tEnd,
+      y: p1.y + uy * tEnd,
+      z: p1.z + uz * tEnd,
+    });
+  });
+
+  if (includeEndpoints) {
+    points.push(p2);
+  }
+
+  return points;
+}
+
+function createFrontPanelExtrudableOutline() {
+  // Creates the outline for the front panel with the box joint tabs and notches.
+  // Note that the outline will currently be centered at the -caseWidth/2 Z position to match
+  // with the current way the 3d geometry is handled.
+  //
+  // The current center Z point is at state.caseWidth/2, and thus since the front piece goes
+  // between the side panels, its main outline without the box joints will go from -state.caseWidth
+  // to state.caseWidth in the Z direction.
+  //
+  // In the Y direction, the front piece goes from 0 to state.actualPanelDepth not counting the
+  // box joint tabs.
+  const topLeft = { z: -state.caseWidth, y: getFrontPanelHeight(), x: 0 };
+  const topRight = { z: state.caseWidth, y: getFrontPanelHeight(), x: 0 };
+  const bottomRight = { z: state.caseWidth, y: 0, x: 0 };
+  const bottomLeft = { z: -state.caseWidth, y: 0, x: 0 };
+  // Now create outlines with tabs on the left and right sides and the bottom. First create the
+  // center tab, then expend the tabs outward from there.
+  const bottomJoints = createBoxJoints(
+    bottomRight,
+    bottomLeft,
+    boxJointType.tab,
+    false
+  );
+  const leftJoints = createBoxJoints(
+    bottomLeft,
+    topLeft,
+    boxJointType.tab,
+    false
+  );
+  const rightJoints = createBoxJoints(
+    topRight,
+    bottomRight,
+    boxJointType.tab,
+    false
+  );
+  return [
+    topLeft,
+    topRight,
+    ...rightJoints,
+    bottomRight,
+    ...bottomJoints,
+    bottomLeft,
+    ...leftJoints,
+    topLeft,
+  ];
 }
