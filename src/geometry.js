@@ -657,14 +657,51 @@ function createBottomPanel2dSideOutline() {
     createBottomPanelOutline();
   return [
     { x: topLeft.x, y: 0 },
-    //   { x: topLeft.x - state.caseMaterialThickness, y: topLeft.y },
-    //   { x: topLeft.x, y: topLeft.y },
-    //   { x: bottomLeft.x, y: bottomLeft.y },
-    //   { x: bottomLeft.x - state.caseMaterialThickness, y: bottomLeft.y },
+    { x: bottomLeft.x, y: 0 },
+    { x: bottomLeft.x, y: -state.caseMaterialThickness },
+    { x: topLeft.x, y: -state.caseMaterialThickness },
   ];
 }
 
-function createBottomPanelExtrudableOutline() {}
+function createBottomPanelExtrudableOutline() {
+  const { topLeft, topRight, bottomRight, bottomLeft } =
+    createBottomPanelOutline();
+  const topJoints = createBoxJoints(
+    topLeft,
+    topRight,
+    boxJointType.notch,
+    false
+  );
+  const rightJoints = createBoxJoints(
+    topRight,
+    bottomRight,
+    boxJointType.notch,
+    false
+  );
+  const bottomJoints = createBoxJoints(
+    bottomRight,
+    bottomLeft,
+    boxJointType.notch,
+    false
+  );
+  const leftJoints = createBoxJoints(
+    bottomLeft,
+    topLeft,
+    boxJointType.notch,
+    false
+  );
+  return [
+    topLeft,
+    ...topJoints,
+    topRight,
+    ...rightJoints,
+    bottomRight,
+    ...bottomJoints,
+    bottomLeft,
+    ...leftJoints,
+    topLeft,
+  ];
+}
 
 
 function createTopPanelOutline() {}
