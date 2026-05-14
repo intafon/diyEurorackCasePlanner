@@ -369,14 +369,14 @@ export function calculateCaseGeometry() {
     // This should create the side panel with the tabs/notches added
     // For 3d and export we need to create a mirror image of this as well, which should be basically
     // just the same points mirrored about the y-axis.
-    const points = createSidePanel2dSideOutline(side);
+    const points = createSidePanelOutline(side);
     console.info("points", points);
     const bottomLeft = points.pop();
     const bottomRight = points.pop();
     const backTop = points.pop();
     const frontTop = points.pop();
-    console.info("frontTop", frontTop);
     const topJoints = createBoxJoints(frontTop, backTop, boxJointType.notch);
+    console.info("topJoints", topJoints);
     const backJoints = createBoxJoints(
       backTop,
       bottomRight,
@@ -440,10 +440,11 @@ function createBoxJoints(
   type = boxJointType.tab,
   includeEndpoints = false
 ) {
+  // ensure that we have all the point values for the case where z might be missing
+  const p1 = { x: 0, y: 0, z: 0, ...point1 };
+  const p2 = { x: 0, y: 0, z: 0, ...point2 };
   const jointHeight = state.caseMaterialThickness;
   const jointWidth = BOX_JOINT_TAB_WIDTH;
-  // const centerPoint = findCenterPoint(point1, point2);
-  // const jointIndex = 0;
 
   const dx = p2.x - p1.x;
   const dy = p2.y - p1.y;

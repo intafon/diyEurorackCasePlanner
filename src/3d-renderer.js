@@ -24,6 +24,10 @@ const COLOR_RAIL = 0xb0b0b0;
 const COLOR_SCREW = 0x444444;
 const COLOR_BG = 0xf2f2f2;
 
+const SIDE_OPACITY = 0.55;
+const BOTTOM_OPACITY = 0.55;
+const OTHER_OPACITY = 0.55;
+
 export function initThreeRenderer(canvas) {
   canvasEl = canvas;
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -100,6 +104,165 @@ function restoreCameraState() {
   }
 }
 
+/*
+To extrude along a path:
+const points = [
+  new THREE.Vector2(0, 0),
+  new THREE.Vector2(10, 0),
+  new THREE.Vector2(10, 10),
+  new THREE.Vector2(0, 10)
+];
+
+const shape = new THREE.Shape(points);
+
+const path = new THREE.LineCurve3(
+  new THREE.Vector3(0, 0, 0),
+  new THREE.Vector3(0, 10, 0) // Extrude 10 units up the Y axis
+);
+
+const extrudeSettings = {
+  steps: 20,
+  extrudePath: path,
+  steps: 1, // number of steps to take along the path-- if your line curve is windy, then the
+            // number of steps determines the precision of the extruded curve
+};
+
+const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+
+
+  const matSide = new THREE.MeshLambertMaterial({
+    color: COLOR_SIDE,
+    transparent: true,
+    opacity: SIDE_OPACITY,
+    side: THREE.DoubleSide,
+  });
+
+    const leftSide = makeBoardMesh(
+    sideOutlinePts,
+    sideThickness,
+    matSide,
+    -innerWidth / 2 - sideThickness
+  );
+*/
+
+/*
+function createTiltedExtrusion(points3D, extrudeVec) {
+  // 1. Convert {x,y,z} objects to THREE.Vector3
+  const vecs = points3D.map(p => new THREE.Vector3(p.x, p.y, p.z));
+  const direction = new THREE.Vector3(extrudeVec.x, extrudeVec.y, extrudeVec.z);
+
+  // 2. Define a local coordinate system (Plane) for the shape
+  // We'll use the first three points to find the plane's orientation
+  const v0 = vecs[0];
+  const v1 = vecs[1];
+  const v2 = vecs[2];
+
+  const xAxis = new THREE.Vector3().subVectors(v1, v0).normalize();
+  const tempVec = new THREE.Vector3().subVectors(v2, v0).normalize();
+  const normal = new THREE.Vector3().crossVectors(xAxis, tempVec).normalize();
+  const yAxis = new THREE.Vector3().crossVectors(normal, xAxis).normalize();
+
+  // 3. Project 3D points to 2D Shape coordinates
+  const shape = new THREE.Shape();
+  vecs.forEach((v, i) => {
+    const localX = v.clone().sub(v0).dot(xAxis);
+    const localY = v.clone().sub(v0).dot(yAxis);
+    if (i === 0) shape.moveTo(localX, localY);
+    else shape.lineTo(localX, localY);
+  });
+  shape.closePath();
+
+  // 4. Create the Extrusion Path
+  // We extrude from 0 to the length of your vector
+  const path = new THREE.LineCurve3(
+    new THREE.Vector3(0, 0, 0),
+    new THREE.Vector3(0, 0, direction.length())
+  );
+
+  const geometry = new THREE.ExtrudeGeometry(shape, {
+    extrudePath: path,
+    steps: 1,
+    bevelEnabled: false
+  });
+
+  // 5. Create Mesh and Orient it
+  const material = new THREE.MeshStandardMaterial({ color: 0x0077ff, side: THREE.DoubleSide });
+  const mesh = new THREE.Mesh(geometry, material);
+
+  // Match the mesh orientation to our local 3D plane
+  const matrix = new THREE.Matrix4().makeBasis(xAxis, yAxis, normal);
+  mesh.applyMatrix4(matrix);
+  mesh.position.copy(v0);
+
+  return mesh;
+}
+*/
+
+function makeExtrudedPanelMesh(
+  points3D,
+  extrudeVec,
+  color = "#00FFFF",
+  opacity = SIDE_OPACITY
+) {
+  // 1. Convert {x,y,z} objects to THREE.Vector3
+  const vecs = points3D.map((p) => new THREE.Vector3(p.x, p.y, p.z));
+  const direction = new THREE.Vector3(extrudeVec.x, extrudeVec.y, extrudeVec.z);
+
+  // 2. Define a local coordinate system (Plane) for the shape
+  // We'll use the first three points to find the plane's orientation
+  const v0 = vecs[0];
+  const v1 = vecs[1];
+  const v2 = vecs[2];
+
+  const xAxis = new THREE.Vector3().subVectors(v1, v0).normalize();
+  const tempVec = new THREE.Vector3().subVectors(v2, v0).normalize();
+  const normal = new THREE.Vector3().crossVectors(xAxis, tempVec).normalize();
+  const yAxis = new THREE.Vector3().crossVectors(normal, xAxis).normalize();
+
+  // 3. Project 3D points to 2D Shape coordinates
+  const shape = new THREE.Shape();
+  vecs.forEach((v, i) => {
+    const localX = v.clone().sub(v0).dot(xAxis);
+    const localY = v.clone().sub(v0).dot(yAxis);
+    if (i === 0) shape.moveTo(localX, localY);
+    else shape.lineTo(localX, localY);
+  });
+  shape.closePath();
+
+  // 4. Create the Extrusion Path
+  // We extrude from 0 to the length of your vector
+  const path = new THREE.LineCurve3(
+    new THREE.Vector3(0, 0, 0),
+    new THREE.Vector3(0, 0, direction.length())
+  );
+
+  const geometry = new THREE.ExtrudeGeometry(shape, {
+    extrudePath: path,
+    steps: 1,
+    bevelEnabled: false,
+  });
+
+  // 5. Create Mesh and Orient it
+  //   const material = new THREE.MeshStandardMaterial({
+  //     color: 0x0077ff,
+  //     side: THREE.DoubleSide,
+  //   });
+  const material = new THREE.MeshLambertMaterial({
+    color,
+    transparent: true,
+    opacity,
+    side: THREE.DoubleSide,
+  });
+  const mesh = new THREE.Mesh(geometry, material);
+
+  // Match the mesh orientation to our local 3D plane
+  const matrix = new THREE.Matrix4().makeBasis(xAxis, yAxis, normal);
+  mesh.applyMatrix4(matrix);
+  mesh.position.copy(v0);
+
+  return mesh;
+}
+
 function makeExtrudedFromPolygon(points2D, depthZ, material) {
   const shape = new THREE.Shape();
   shape.moveTo(points2D[0].x, points2D[0].y);
@@ -121,10 +284,16 @@ function makeBoardMesh(points2D, depthZ, material, zOffset) {
   return mesh;
 }
 
-function makeHorizontalRailMesh(panel, panelIndex, caseWidth, isBottom, totalRows) {
+function makeHorizontalRailMesh(
+  panel,
+  panelIndex,
+  caseWidth,
+  isBottom,
+  totalRows
+) {
   const railLength = caseWidth + 2 * state.caseMaterialThickness; // Full width including side walls
   const railHeight = 15; // 15mm tall
-  const railDepth = 10;  // 10mm deep
+  const railDepth = 10; // 10mm deep
 
   const screws = getScrewHoleCoords(panel, panelIndex);
   const screwPos = isBottom ? screws.bottomScrew : screws.topScrew;
@@ -152,7 +321,7 @@ function makeHorizontalRailMesh(panel, panelIndex, caseWidth, isBottom, totalRow
   const holeMatGeom = new THREE.CylinderGeometry(1.5, 1.5, railLength + 10, 12);
   const holeMat = new THREE.MeshLambertMaterial({ color: 0x222222 });
   const holeVisMesh = new THREE.Mesh(holeMatGeom, holeMat);
-  holeVisMesh.position.set(0, -railHeight/2 + screwOffsetFromBottom, 0);
+  holeVisMesh.position.set(0, -railHeight / 2 + screwOffsetFromBottom, 0);
   holeVisMesh.rotation.x = Math.PI / 2; // Rotate to go through case width (Z direction)
 
   mesh.add(holeVisMesh);
@@ -202,10 +371,6 @@ export function buildScene() {
   const innerWidth = caseWidth;
 
   sceneRoot = new THREE.Group();
-
-  const SIDE_OPACITY = 0.55;
-  const BOTTOM_OPACITY = 0.55;
-  const OTHER_OPACITY = 0.55;
 
   const matBottom = new THREE.MeshLambertMaterial({
     color: COLOR_BOTTOM,
