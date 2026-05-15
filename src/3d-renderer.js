@@ -588,21 +588,14 @@ export function buildScene() {
 //   //}
 
     const topPanelPoints = geom.createTopPanelExtrudableOutline();
-    const extrudeX = state.caseMaterialThickness * Math.cos(rad(geom.shelfAngle));
-    const extrudeY =
-      state.caseMaterialThickness * Math.sin(rad(geom.shelfAngle));
-
-    console.info(
-      "topPanelPoints",
-      topPanelPoints,
-      "state.caseMaterialThickness",
-      state.caseMaterialThickness, "extrudeX", extrudeX, "extrudeY", extrudeY, "geom.shelfAngle", geom.shelfAngle
-    );
+    const t = state.caseMaterialThickness;
+    const inwardX = -Math.sin(rad(geom.shelfAngle));
+    const inwardY =  Math.cos(rad(geom.shelfAngle));
     const topPanelMesh = makeExtrudedPanelMesh(
       topPanelPoints,
-      new THREE.Vector3(-extrudeY, -extrudeX, 0),
-      "#FFFF00", //COLOR_SHELF,
-      0.7, //OTHER_OPACITY
+      new THREE.Vector3(inwardX * t, inwardY * t, 0),
+      COLOR_SHELF,
+      OTHER_OPACITY
     );
     sceneRoot.add(topPanelMesh);
 

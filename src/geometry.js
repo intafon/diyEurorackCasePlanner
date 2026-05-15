@@ -712,9 +712,11 @@ export function calculateCaseGeometry() {
     // top panel has tabs on the sides and notches on the bottom/back
     const { topLeft, topRight, bottomRight, bottomLeft } =
       createTopPanelOutline();
-    const extrudeX = Math.cos(rad(geometry.shelfAngle));
-    const extrudeY = Math.sin(rad(geometry.shelfAngle));
-    const preferredUp = { x: extrudeY, y: extrudeX, z: 0 };
+    const preferredUp = {
+      x: -Math.sin(rad(geometry.shelfAngle)),
+      y:  Math.cos(rad(geometry.shelfAngle)),
+      z: 0,
+    };
 
     // const topJoints = createBoxJoints(
     //   topLeft,
@@ -727,7 +729,7 @@ export function calculateCaseGeometry() {
       topRight,
       bottomRight,
       boxJointType.tab,
-      true /* flip */,
+      false /* flip */,
       preferredUp
     );
     const bottomJoints = createBoxJoints(
@@ -741,7 +743,7 @@ export function calculateCaseGeometry() {
       bottomLeft,
       topLeft,
       boxJointType.tab,
-      true /* flip */,
+      false /* flip */,
       preferredUp
     );
     return [
@@ -947,110 +949,6 @@ function createBoxJoints(
     preferredUp,
     includeEndpoints: false,
   });
-
-  //   const dx = p2.x - p1.x;
-  //   const dy = p2.y - p1.y;
-  //   const dz = p2.z - p1.z;
-  //   const length = Math.sqrt(dx * dx + dy * dy + dz * dz);
-
-  //   // Basic safety check
-  //   if (length < jointWidth * 2) return [p1, p2];
-
-  //   const ux = dx / length;
-  //   const uy = dy / length;
-  //   const uz = dz / length;
-
-  //   // Normal vector (u x Z-axis)
-  //   // 'notch' flips the orientation of the tab height
-  //   const multiplier = type === boxJointType.notch ? -1 : 1;
-  //   const nx = uy * multiplier;
-  //   const ny = -ux * multiplier;
-  //   const nz = 0;
-
-  //   const halfW = jointWidth / 2;
-  //   const mid = length / 2;
-  //   const tabOffsets = [];
-
-  //   // Helper to check if a tab at a specific center point fits the boundary rules
-  //   const fits = (center) => {
-  //     const start = center - halfW;
-  //     const end = center + halfW;
-  //     // Tab must start and end at least jointWidth away from the line endpoints
-  //     return start >= jointWidth && end <= length - jointWidth;
-  //   };
-
-  //   // 1. Center tab
-  //   if (fits(mid)) {
-  //     tabOffsets.push(mid);
-
-  //     // 2. Add outward tabs with a period of 2 * jointWidth (1 tab + 1 gap)
-  //     let step = 1;
-  //     while (true) {
-  //       let added = false;
-  //       const forward = mid + step * (2 * jointWidth);
-  //       const backward = mid - step * (2 * jointWidth);
-
-  //       if (fits(forward)) {
-  //         tabOffsets.push(forward);
-  //         added = true;
-  //       }
-  //       if (fits(backward)) {
-  //         tabOffsets.push(backward);
-  //         added = true;
-  //       }
-
-  //       if (!added) break;
-  //       step++;
-  //     }
-  //   }
-
-  //   // Sort offsets chronologically along the line
-  //   tabOffsets.sort((a, b) => a - b);
-
-  //   const points = [];
-
-  //   if (includeEndpoints) {
-  //     points.push(p1);
-  //   }
-
-  //   tabOffsets.forEach((offset) => {
-  //     const tStart = offset - halfW;
-  //     const tEnd = offset + halfW;
-
-  //     // Move to tab start on the baseline
-  //     points.push({
-  //       x: p1.x + ux * tStart,
-  //       y: p1.y + uy * tStart,
-  //       z: p1.z + uz * tStart,
-  //     });
-
-  //     // Rise
-  //     points.push({
-  //       x: p1.x + ux * tStart + nx * jointHeight,
-  //       y: p1.y + uy * tStart + ny * jointHeight,
-  //       z: p1.z + uz * tStart + nz * jointHeight,
-  //     });
-
-  //     // Span tab width
-  //     points.push({
-  //       x: p1.x + ux * tEnd + nx * jointHeight,
-  //       y: p1.y + uy * tEnd + ny * jointHeight,
-  //       z: p1.z + uz * tEnd + nz * jointHeight,
-  //     });
-
-  //     // Drop back to baseline
-  //     points.push({
-  //       x: p1.x + ux * tEnd,
-  //       y: p1.y + uy * tEnd,
-  //       z: p1.z + uz * tEnd,
-  //     });
-  //   });
-
-  //   if (includeEndpoints) {
-  //     points.push(p2);
-  //   }
-
-  //   return points;
 }
 
 export function flattenXYCoordsToArray(coords) {
