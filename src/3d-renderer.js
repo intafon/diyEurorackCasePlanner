@@ -573,19 +573,38 @@ export function buildScene() {
       COLOR_BACK,
       OTHER_OPACITY
     );
-    sceneRoot.add(backPanelMesh);
+    // sceneRoot.add(backPanelMesh);
 
-  // Always render the "shelf"
-  //if (state.flattenTopShelf && geom.shelfPieceOutline && geom.shelfPieceOutline.length > 0) {
-  const shelfPts = geom.shelfPieceOutline.map((p) => ({ x: p.x, y: p.y }));
-  const shelfMesh = makeBoardMesh(
-    shelfPts,
-    innerWidth,
-    matShelf,
-    -innerWidth / 2
-  );
-  sceneRoot.add(shelfMesh);
-  //}
+//   // Always render the "shelf"
+//   //if (state.flattenTopShelf && geom.shelfPieceOutline && geom.shelfPieceOutline.length > 0) {
+//   const shelfPts = geom.shelfPieceOutline.map((p) => ({ x: p.x, y: p.y }));
+//   const shelfMesh = makeBoardMesh(
+//     shelfPts,
+//     innerWidth,
+//     matShelf,
+//     -innerWidth / 2
+//   );
+//   sceneRoot.add(shelfMesh);
+//   //}
+
+    const topPanelPoints = geom.createTopPanelExtrudableOutline();
+    const extrudeX = state.caseMaterialThickness * Math.cos(rad(geom.shelfAngle));
+    const extrudeY =
+      state.caseMaterialThickness * Math.sin(rad(geom.shelfAngle));
+
+    console.info(
+      "topPanelPoints",
+      topPanelPoints,
+      "state.caseMaterialThickness",
+      state.caseMaterialThickness, "extrudeX", extrudeX, "extrudeY", extrudeY, "geom.shelfAngle", geom.shelfAngle
+    );
+    const topPanelMesh = makeExtrudedPanelMesh(
+      topPanelPoints,
+      new THREE.Vector3(-extrudeY, -extrudeX, 0),
+      "#FFFF00", //COLOR_SHELF,
+      0.7, //OTHER_OPACITY
+    );
+    sceneRoot.add(topPanelMesh);
 
   geom.panels.forEach((panel, i) => {
     // Add horizontal rails that span the full case width (now with holes drilled through them)

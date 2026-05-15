@@ -129,6 +129,7 @@ export function calculateCaseGeometry() {
   let backWallInside, backWallY, backWallOutside;
 
   if (state.flattenTopShelf) {
+    geometry.shelfAngle = 90;
     const shelfStartX =
       lastRowEndX + Math.cos(rad(lastRowAngle)) * state.caseMaterialThickness;
     const shelfStartY =
@@ -183,6 +184,10 @@ export function calculateCaseGeometry() {
       y: backBottomLeftY,
     });
 
+    geometry.shelfPieceOutline.push({
+      x: shelfBottomLeftX,
+      y: shelfBottomLeftY,
+    });
     geometry.shelfPieceOutline.push({ x: shelfTopLeftX, y: shelfTopLeftY });
     geometry.shelfPieceOutline.push({
       x: shelfTopRightX,
@@ -192,11 +197,8 @@ export function calculateCaseGeometry() {
       x: shelfBottomRightX,
       y: shelfBottomRightY,
     });
-    geometry.shelfPieceOutline.push({
-      x: shelfBottomLeftX,
-      y: shelfBottomLeftY,
-    });
   } else {
+    geometry.shelfAngle = lastRowAngle + 90;
     const shelfTopLeftX = lastRowEndX;
     const shelfTopLeftY = lastRowEndY;
     const shelfTopRightX =
@@ -575,7 +577,7 @@ export function calculateCaseGeometry() {
       ...bottomJoints,
       bottomLeft,
       ...leftJoints,
-    //   topLeft,
+      //   topLeft,
     ].reverse();
   };
 
@@ -584,22 +586,22 @@ export function calculateCaseGeometry() {
     const backPieceOutline = geometry.backPieceOutline;
     return {
       topLeft: {
-        z: state.caseWidth/2,
+        z: state.caseWidth / 2,
         y: backPieceOutline[1].y,
         x: backPieceOutline[1].x,
       },
       topRight: {
-        z: -state.caseWidth/2,
+        z: -state.caseWidth / 2,
         y: backPieceOutline[1].y,
         x: backPieceOutline[1].x,
       },
       bottomRight: {
-        z: -state.caseWidth/2,
+        z: -state.caseWidth / 2,
         y: backPieceOutline[2].y,
         x: backPieceOutline[2].x,
       },
       bottomLeft: {
-        z: state.caseWidth/2,
+        z: state.caseWidth / 2,
         y: backPieceOutline[2].y,
         x: backPieceOutline[2].x,
       },
@@ -661,40 +663,99 @@ export function calculateCaseGeometry() {
       ...bottomJoints,
       bottomLeft,
       ...leftJoints,
-    //   topLeft,
+      //   topLeft,
     ].reverse();
   };
 
   const createTopPanelOutline = () => {
     // Creates the back top panel, looking from behind and above
-    const backPieceOutline = geometry.shelfPieceOutline;
+    const topPanelOutline = geometry.shelfPieceOutline;
     return {
       topLeft: {
-    //     z: state.caseWidth / 2,
-    //     y: backPieceOutline[1].y,
-    //     x: backPieceOutline[1].x,
+        z: state.caseWidth / 2,
+        y: topPanelOutline[1].y,
+        x: topPanelOutline[1].x,
       },
       topRight: {
-    //     z: -state.caseWidth / 2,
-    //     y: backPieceOutline[1].y,
-    //     x: backPieceOutline[1].x,
+        z: -state.caseWidth / 2,
+        y: topPanelOutline[1].y,
+        x: topPanelOutline[1].x,
       },
       bottomRight: {
-    //     z: -state.caseWidth / 2,
-    //     y: backPieceOutline[2].y,
-    //     x: backPieceOutline[2].x,
+        z: -state.caseWidth / 2,
+        y: topPanelOutline[2].y,
+        x: topPanelOutline[2].x,
       },
       bottomLeft: {
-    //     z: state.caseWidth / 2,
-    //     y: backPieceOutline[2].y,
-    //     x: backPieceOutline[2].x,
+        z: state.caseWidth / 2,
+        y: topPanelOutline[2].y,
+        x: topPanelOutline[2].x,
       },
     };
   };
 
-  const createTopPanel2dSideOutline = () => {};
+  const createTopPanel2dSideOutline = () => {
+    // need to figure out if we want to change this...
 
-  const createTopPanelExtrudableOutline = () => {};
+    // const { topLeft, topRight, bottomRight, bottomLeft } =
+    //   createTopPanelOutline();
+    // return [
+    //   { x: topLeft.x - state.caseMaterialThickness, y: topLeft.y },
+    //   { x: topLeft.x, y: topLeft.y },
+    //   { x: bottomLeft.x, y: bottomLeft.y },
+    //   { x: bottomLeft.x - state.caseMaterialThickness, y: bottomLeft.y },
+    // ];
+    return geometry.shelfPieceOutline;
+  };
+
+  const createTopPanelExtrudableOutline = () => {
+    // top panel has tabs on the sides and notches on the bottom/back
+    const { topLeft, topRight, bottomRight, bottomLeft } =
+      createTopPanelOutline();
+    const extrudeX = Math.cos(rad(geometry.shelfAngle));
+    const extrudeY = Math.sin(rad(geometry.shelfAngle));
+    const preferredUp = { x: extrudeY, y: extrudeX, z: 0 };
+
+    // const topJoints = createBoxJoints(
+    //   topLeft,
+    //   topRight,
+    //   boxJointType.tab,
+    //   true /* flip */,
+    //   { x: 1, y: 0, z: 0 } /* preferredUp */
+    // );
+    const rightJoints = createBoxJoints(
+      topRight,
+      bottomRight,
+      boxJointType.tab,
+      true /* flip */,
+      preferredUp
+    );
+    const bottomJoints = createBoxJoints(
+      bottomRight,
+      bottomLeft,
+      boxJointType.notch,
+      true /* flip */,
+      preferredUp
+    );
+    const leftJoints = createBoxJoints(
+      bottomLeft,
+      topLeft,
+      boxJointType.tab,
+      true /* flip */,
+      preferredUp
+    );
+    return [
+      topLeft,
+      //   ...topJoints,
+      topRight,
+      ...rightJoints,
+      bottomRight,
+      ...bottomJoints,
+      bottomLeft,
+      ...leftJoints,
+      //   topLeft,
+    ].reverse();
+  };
 
   return {
     ...geometry,
