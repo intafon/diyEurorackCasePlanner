@@ -573,7 +573,7 @@ export function buildScene() {
       COLOR_BACK,
       OTHER_OPACITY
     );
-    // sceneRoot.add(backPanelMesh);
+    sceneRoot.add(backPanelMesh);
 
 //   // Always render the "shelf"
 //   //if (state.flattenTopShelf && geom.shelfPieceOutline && geom.shelfPieceOutline.length > 0) {
@@ -589,11 +589,17 @@ export function buildScene() {
 
     const topPanelPoints = geom.createTopPanelExtrudableOutline();
     const t = state.caseMaterialThickness;
-    const inwardX = -Math.sin(rad(geom.shelfAngle));
-    const inwardY =  Math.cos(rad(geom.shelfAngle));
+    let topPanelExtrudeVec;
+    if (state.flattenTopShelf) {
+      topPanelExtrudeVec = new THREE.Vector3(0, -t, 0);
+    } else {
+      const inwardX = -Math.sin(rad(geom.shelfAngle));
+      const inwardY =  Math.cos(rad(geom.shelfAngle));
+      topPanelExtrudeVec = new THREE.Vector3(inwardX * t, inwardY * t, 0);
+    }
     const topPanelMesh = makeExtrudedPanelMesh(
       topPanelPoints,
-      new THREE.Vector3(inwardX * t, inwardY * t, 0),
+      topPanelExtrudeVec,
       COLOR_SHELF,
       OTHER_OPACITY
     );

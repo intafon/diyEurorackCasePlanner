@@ -670,27 +670,24 @@ export function calculateCaseGeometry() {
   const createTopPanelOutline = () => {
     // Creates the back top panel, looking from behind and above
     const topPanelOutline = geometry.shelfPieceOutline;
+    if (state.flattenTopShelf) {
+      // flat case: [0]=bottomLeft, [1]=topLeft, [2]=topRight, [3]=bottomRight
+      // The outline is viewed from above: front edge runs along Z, side edges run along X.
+      // [1] and [2] share y=shelfTopY; they differ in X (front vs back of shelf).
+      // We keep both left/right at the same X per edge so the polygon lies flat.
+      return {
+        topLeft:     { z:  state.caseWidth / 2, y: topPanelOutline[1].y, x: topPanelOutline[1].x },
+        topRight:    { z: -state.caseWidth / 2, y: topPanelOutline[1].y, x: topPanelOutline[1].x },
+        bottomRight: { z: -state.caseWidth / 2, y: topPanelOutline[2].y, x: topPanelOutline[2].x },
+        bottomLeft:  { z:  state.caseWidth / 2, y: topPanelOutline[2].y, x: topPanelOutline[2].x },
+      };
+    }
+    // angled case: [1]=outer front corner, [2]=outer back corner
     return {
-      topLeft: {
-        z: state.caseWidth / 2,
-        y: topPanelOutline[1].y,
-        x: topPanelOutline[1].x,
-      },
-      topRight: {
-        z: -state.caseWidth / 2,
-        y: topPanelOutline[1].y,
-        x: topPanelOutline[1].x,
-      },
-      bottomRight: {
-        z: -state.caseWidth / 2,
-        y: topPanelOutline[2].y,
-        x: topPanelOutline[2].x,
-      },
-      bottomLeft: {
-        z: state.caseWidth / 2,
-        y: topPanelOutline[2].y,
-        x: topPanelOutline[2].x,
-      },
+      topLeft:     { z:  state.caseWidth / 2, y: topPanelOutline[1].y, x: topPanelOutline[1].x },
+      topRight:    { z: -state.caseWidth / 2, y: topPanelOutline[1].y, x: topPanelOutline[1].x },
+      bottomRight: { z: -state.caseWidth / 2, y: topPanelOutline[2].y, x: topPanelOutline[2].x },
+      bottomLeft:  { z:  state.caseWidth / 2, y: topPanelOutline[2].y, x: topPanelOutline[2].x },
     };
   };
 
@@ -712,11 +709,9 @@ export function calculateCaseGeometry() {
     // top panel has tabs on the sides and notches on the bottom/back
     const { topLeft, topRight, bottomRight, bottomLeft } =
       createTopPanelOutline();
-    const preferredUp = {
-      x: -Math.sin(rad(geometry.shelfAngle)),
-      y:  Math.cos(rad(geometry.shelfAngle)),
-      z: 0,
-    };
+    const preferredUp = state.flattenTopShelf
+      ? { x: 0, y: -1, z: 0 }
+      : { x: -Math.sin(rad(geometry.shelfAngle)), y: Math.cos(rad(geometry.shelfAngle)), z: 0 };
 
     // const topJoints = createBoxJoints(
     //   topLeft,
@@ -736,7 +731,7 @@ export function calculateCaseGeometry() {
       bottomRight,
       bottomLeft,
       boxJointType.notch,
-      true /* flip */,
+      false /* flip */,
       preferredUp
     );
     const leftJoints = createBoxJoints(
