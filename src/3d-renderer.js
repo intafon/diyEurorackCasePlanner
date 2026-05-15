@@ -489,6 +489,7 @@ export function buildScene() {
 
   //   makeExtrudedPanelMesh;
   //createSidePanelExtrudableOutline
+
   const rightSidePoints = geom.createSidePanelExtrudableOutline();
   const rightSideMesh = makeExtrudedPanelMesh(
     rightSidePoints,
@@ -515,19 +516,33 @@ export function buildScene() {
       matBottom,
       -innerWidth / 2 - sideThickness
     );
-    sceneRoot.add(baseMesh);
+    // sceneRoot.add(baseMesh);
   }
 
-  if (geom.frontPieceOutline && geom.frontPieceOutline.length > 0) {
-    const frontPts = geom.frontPieceOutline.map((p) => ({ x: p.x, y: p.y }));
-    const frontMesh = makeBoardMesh(
-      frontPts,
-      innerWidth,
-      matFront,
-      -innerWidth / 2
-    );
-    sceneRoot.add(frontMesh);
-  }
+  console.log("created base panel");
+
+  //   if (geom.frontPieceOutline && geom.frontPieceOutline.length > 0) {
+  //     const frontPts = geom.frontPieceOutline.map((p) => ({ x: p.x, y: p.y }));
+  //     const frontMesh = makeBoardMesh(
+  //       frontPts,
+  //       innerWidth,
+  //       matFront,
+  //       -innerWidth / 2
+  //     );
+  //     sceneRoot.add(frontMesh);
+  //   }
+
+  // createFrontPanelExtrudableOutline;
+
+  const frontPanelPoints = geom.createFrontPanelExtrudableOutline();
+  console.info("frontPanelPoints", frontPanelPoints);
+  const frontPanelMesh = makeExtrudedPanelMesh(
+    frontPanelPoints,
+    new THREE.Vector3(state.caseMaterialThickness, 0, 0),
+    COLOR_FRONT,
+    OTHER_OPACITY
+  );
+  sceneRoot.add(frontPanelMesh);
 
   if (geom.backPieceOutline && geom.backPieceOutline.length > 0) {
     const backPts = geom.backPieceOutline.map((p) => ({ x: p.x, y: p.y }));

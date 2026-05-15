@@ -375,9 +375,13 @@ export function calculateCaseGeometry() {
     const bottomRight = points.pop();
     const backTop = points.pop();
     const frontTop = points.pop();
-    const topJoints = createBoxJoints(frontTop, backTop, boxJointType.tab);
+    const topJoints = createBoxJoints(frontTop, backTop, boxJointType.notch);
     console.info("topJoints", topJoints);
-    const backJoints = createBoxJoints(backTop, bottomRight, boxJointType.tab);
+    const backJoints = createBoxJoints(
+      backTop,
+      bottomRight,
+      boxJointType.notch
+    );
     const bottomJoints = createBoxJoints(
       bottomRight,
       bottomLeft,
@@ -386,9 +390,9 @@ export function calculateCaseGeometry() {
     const frontJoints = createBoxJoints(
       bottomLeft,
       points[0],
-      boxJointType.tab
+      boxJointType.notch
     );
-    return [
+    const allPoints = [
       ...points,
       frontTop,
       ...topJoints,
@@ -400,6 +404,85 @@ export function calculateCaseGeometry() {
       ...frontJoints,
       points[0],
     ];
+    return side === "right" ? allPoints.reverse() : allPoints;
+  };
+
+  const createFrontPanelOutline = () => {
+    return {
+      topLeft: { z: -state.caseWidth / 2, y: getFrontPanelHeight(), x: 0 },
+      topRight: { z: state.caseWidth / 2, y: getFrontPanelHeight(), x: 0 },
+      bottomRight: { z: state.caseWidth / 2, y: 0, x: 0 },
+      bottomLeft: { z: -state.caseWidth / 2, y: 0, x: 0 },
+    };
+  };
+
+  const createFrontPanel2dSideOutline = () => {
+    // This should return the point necessary to create the side view outline of the panel.
+    const { topLeft, topRight, bottomRight, bottomLeft } =
+      createFrontPanelOutline();
+    return [
+      { x: topLeft.x, y: topLeft.y },
+      { x: topLeft.x + state.caseMaterialThickness, y: topLeft.y },
+      { x: bottomLeft.x + state.caseMaterialThickness, y: bottomLeft.y },
+      { x: bottomLeft.x, y: bottomLeft.y },
+    ];
+  };
+
+  const createFrontPanelExtrudableOutline = () => {
+    // Creates the outline for the front panel with the box joint tabs and notches.
+    // Note that the outline will currently be centered at the -caseWidth/2 Z position to match
+    // with the current way the 3d geometry is handled.
+    //
+    // The current center Z point is at state.caseWidth/2, and thus since the front piece goes
+    // between the side panels, its main outline without the box joints will go from -state.caseWidth
+    // to state.caseWidth in the Z direction.
+    //
+    // In the Y direction, the front piece goes from 0 to state.actualPanelDepth not counting the
+    // box joint tabs.
+    const { topLeft, topRight, bottomRight, bottomLeft } =
+      createFrontPanelOutline();
+
+    // Now create outlines with tabs on the left and right sides and the bottom. First create the
+    // center tab, then expend the tabs outward from there.
+    const bottomJoints = createBoxJoints(
+      bottomRight,
+      bottomLeft,
+      boxJointType.notch,
+      false
+    );
+    const leftJoints = createBoxJoints(
+      bottomLeft,
+      topLeft,
+      boxJointType.notch,
+      false
+    );
+    const rightJoints = createBoxJoints(
+      topRight,
+      bottomRight,
+      boxJointType.notch,
+      false
+    );
+    console.info(
+      "frontPanelExtrudableOutline",
+      topLeft,
+      topRight,
+      rightJoints,
+      bottomRight,
+      bottomJoints,
+      bottomLeft,
+      leftJoints,
+      topLeft
+    );
+    return [
+      topLeft,
+      topRight,
+      ...rightJoints,
+      bottomRight,
+      ...bottomJoints,
+      bottomLeft,
+      ...leftJoints,
+      //   topLeft,
+    ].reverse();
   };
 
   return {
@@ -407,6 +490,9 @@ export function calculateCaseGeometry() {
     createSidePanelOutline,
     createSidePanel2dSideOutline,
     createSidePanelExtrudableOutline,
+    createFrontPanelOutline,
+    createFrontPanel2dSideOutline,
+    createFrontPanelExtrudableOutline,
   };
 }
 
@@ -545,73 +631,6 @@ function createBoxJoints(
   }
 
   return points;
-}
-
-function createFrontPanelOutline() {
-  return {
-    topLeft: { z: -state.caseWidth, y: getFrontPanelHeight(), x: 0 },
-    topRight: { z: state.caseWidth, y: getFrontPanelHeight(), x: 0 },
-    bottomRight: { z: state.caseWidth, y: 0, x: 0 },
-    bottomLeft: { z: -state.caseWidth, y: 0, x: 0 },
-  };
-}
-
-function createFrontPanel2dSideOutline() {
-  // This should return the point necessary to create the side view outline of the panel.
-  const { topLeft, topRight, bottomRight, bottomLeft } =
-    createFrontPanelOutline();
-  return [
-    { x: topLeft.x, y: topLeft.y },
-    { x: topLeft.x + state.caseMaterialThickness, y: topLeft.y },
-    { x: bottomLeft.x + state.caseMaterialThickness, y: bottomLeft.y },
-    { x: bottomLeft.x, y: bottomLeft.y },
-  ];
-}
-
-function createFrontPanelExtrudableOutline() {
-  // Creates the outline for the front panel with the box joint tabs and notches.
-  // Note that the outline will currently be centered at the -caseWidth/2 Z position to match
-  // with the current way the 3d geometry is handled.
-  //
-  // The current center Z point is at state.caseWidth/2, and thus since the front piece goes
-  // between the side panels, its main outline without the box joints will go from -state.caseWidth
-  // to state.caseWidth in the Z direction.
-  //
-  // In the Y direction, the front piece goes from 0 to state.actualPanelDepth not counting the
-  // box joint tabs.
-  const { topLeft, topRight, bottomRight, bottomLeft } =
-    createFrontPanelOutline();
-
-  // Now create outlines with tabs on the left and right sides and the bottom. First create the
-  // center tab, then expend the tabs outward from there.
-  const bottomJoints = createBoxJoints(
-    bottomRight,
-    bottomLeft,
-    boxJointType.tab,
-    false
-  );
-  const leftJoints = createBoxJoints(
-    bottomLeft,
-    topLeft,
-    boxJointType.tab,
-    false
-  );
-  const rightJoints = createBoxJoints(
-    topRight,
-    bottomRight,
-    boxJointType.tab,
-    false
-  );
-  return [
-    topLeft,
-    topRight,
-    ...rightJoints,
-    bottomRight,
-    ...bottomJoints,
-    bottomLeft,
-    ...leftJoints,
-    topLeft,
-  ];
 }
 
 function createBackPanelOutline() {
