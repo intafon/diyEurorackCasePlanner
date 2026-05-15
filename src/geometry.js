@@ -384,8 +384,15 @@ export function calculateCaseGeometry() {
       true /* flip */
     );
     console.info("topJoints", topJoints);
+    // In flattenTopShelf mode the top shelf panel occupies the top caseMaterialThickness
+    // of the back edge, so the back panel's side edge is that much shorter at the top.
+    // Shift the notch start point down by caseMaterialThickness so the notch pattern on
+    // the side panel matches the tab pattern on the back panel's side edges exactly.
+    const backJointsStart = state.flattenTopShelf
+      ? { ...backTop, y: backTop.y - state.caseMaterialThickness }
+      : backTop;
     const backJoints = createBoxJoints(
-      backTop,
+      backJointsStart,
       bottomRight,
       boxJointType.notch,
       true /* flip */
@@ -407,6 +414,8 @@ export function calculateCaseGeometry() {
       frontTop,
       ...topJoints,
       backTop,
+      // In flattenTopShelf mode, plain step down to where the joinable region starts
+      ...(state.flattenTopShelf ? [backJointsStart] : []),
       ...backJoints,
       bottomRight,
       ...bottomJoints,
