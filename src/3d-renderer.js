@@ -554,16 +554,26 @@ export function buildScene() {
   );
   sceneRoot.add(frontPanelMesh);
 
-  if (geom.backPieceOutline && geom.backPieceOutline.length > 0) {
-    const backPts = geom.backPieceOutline.map((p) => ({ x: p.x, y: p.y }));
-    const backMesh = makeBoardMesh(
-      backPts,
-      innerWidth,
-      matBack,
-      -innerWidth / 2
+//   if (geom.backPieceOutline && geom.backPieceOutline.length > 0) {
+//     const backPts = geom.backPieceOutline.map((p) => ({ x: p.x, y: p.y }));
+//     const backMesh = makeBoardMesh(
+//       backPts,
+//       innerWidth,
+//       matBack,
+//       -innerWidth / 2
+//     );
+//     sceneRoot.add(backMesh);
+//   }
+
+    const backPanelPoints = geom.createBackPanelExtrudableOutline();
+    console.info("backPanelPoints", backPanelPoints);
+    const backPanelMesh = makeExtrudedPanelMesh(
+      backPanelPoints,
+      new THREE.Vector3(-state.caseMaterialThickness, 0,0),
+      COLOR_BACK,
+      OTHER_OPACITY
     );
-    sceneRoot.add(backMesh);
-  }
+    sceneRoot.add(backPanelMesh);
 
   // Always render the "shelf"
   //if (state.flattenTopShelf && geom.shelfPieceOutline && geom.shelfPieceOutline.length > 0) {
