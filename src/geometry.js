@@ -581,7 +581,7 @@ export function calculateCaseGeometry() {
 
   const createBackPanelOutline = () => {
     // Creates the back panel, looking from the back at the back face of it.
-    const backPieceOutline = calculateCaseGeometry().backPieceOutline;
+    const backPieceOutline = geometry.backPieceOutline;
     return {
       topLeft: {
         z: state.caseWidth/2,
@@ -665,7 +665,32 @@ export function calculateCaseGeometry() {
     ].reverse();
   };
 
-  const createTopPanelOutline = () => {};
+  const createTopPanelOutline = () => {
+    // Creates the back top panel, looking from behind and above
+    const backPieceOutline = geometry.shelfPieceOutline;
+    return {
+      topLeft: {
+    //     z: state.caseWidth / 2,
+    //     y: backPieceOutline[1].y,
+    //     x: backPieceOutline[1].x,
+      },
+      topRight: {
+    //     z: -state.caseWidth / 2,
+    //     y: backPieceOutline[1].y,
+    //     x: backPieceOutline[1].x,
+      },
+      bottomRight: {
+    //     z: -state.caseWidth / 2,
+    //     y: backPieceOutline[2].y,
+    //     x: backPieceOutline[2].x,
+      },
+      bottomLeft: {
+    //     z: state.caseWidth / 2,
+    //     y: backPieceOutline[2].y,
+    //     x: backPieceOutline[2].x,
+      },
+    };
+  };
 
   const createTopPanel2dSideOutline = () => {};
 
