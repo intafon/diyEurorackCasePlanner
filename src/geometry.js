@@ -375,22 +375,30 @@ export function calculateCaseGeometry() {
     const bottomRight = points.pop();
     const backTop = points.pop();
     const frontTop = points.pop();
-    const topJoints = createBoxJoints(frontTop, backTop, boxJointType.notch);
+    const topJoints = createBoxJoints(
+      frontTop,
+      backTop,
+      boxJointType.notch,
+      true /* flip */
+    );
     console.info("topJoints", topJoints);
     const backJoints = createBoxJoints(
       backTop,
       bottomRight,
-      boxJointType.notch
+      boxJointType.notch,
+      true /* flip */
     );
     const bottomJoints = createBoxJoints(
       bottomRight,
       bottomLeft,
-      boxJointType.notch
+      boxJointType.tab,
+      true /* flip */
     );
     const frontJoints = createBoxJoints(
       bottomLeft,
       points[0],
-      boxJointType.notch
+      boxJointType.notch,
+      true /* flip */
     );
     const allPoints = [
       ...points,
@@ -402,7 +410,7 @@ export function calculateCaseGeometry() {
       ...bottomJoints,
       bottomLeft,
       ...frontJoints,
-      points[0],
+      //   points[0],
     ];
     return side === "right" ? allPoints.reverse() : allPoints;
   };
@@ -447,20 +455,23 @@ export function calculateCaseGeometry() {
     const bottomJoints = createBoxJoints(
       bottomRight,
       bottomLeft,
-      boxJointType.notch,
-      false
+      boxJointType.tab,
+      false /* flip */,
+      { x: 1, y: 0, z: 0 } /* preferredUp */
     );
     const leftJoints = createBoxJoints(
       bottomLeft,
       topLeft,
-      boxJointType.notch,
-      false
+      boxJointType.tab,
+      false /* flip */,
+      { x: 1, y: 0, z: 0 } /* preferredUp */
     );
     const rightJoints = createBoxJoints(
       topRight,
       bottomRight,
-      boxJointType.notch,
-      false
+      boxJointType.tab,
+      false /* flip */,
+      { x: 1, y: 0, z: 0 } /* preferredUp */
     );
     console.info(
       "frontPanelExtrudableOutline",
@@ -516,60 +527,84 @@ function findCenterPoint(point1, point2) {
   };
 }
 
-function createBoxJoints(
-  point1,
-  point2,
-  type = boxJointType.tab,
-  includeEndpoints = false
-) {
-  // ensure that we have all the point values for the case where z might be missing
-  const p1 = { x: 0, y: 0, z: 0, ...point1 };
-  const p2 = { x: 0, y: 0, z: 0, ...point2 };
-  const jointHeight = state.caseMaterialThickness;
-  const jointWidth = BOX_JOINT_TAB_WIDTH;
-
+/**
+ * Generates points for a line with tabs or notches in 3D.
+ * @param {Object} options Configuration object
+ * @param {Object} options.p1 {x, y, z} Start point
+ * @param {Object} options.p2 {x, y, z} End point
+ * @param {number} options.jointWidth Width of each tab and gap
+ * @param {number} options.jointHeight Height of the tab/notch
+ * @param {string} options.type 'tab' or 'notch'
+ * @param {boolean} options.flip Flip the normal calculation
+ * @param {Object} options.preferredUp {x, y, z} growth direction reference
+ * @param {boolean} options.includeEndpoints Include original p1/p2 in result
+ */
+function generateTabbedLine({
+  p1,
+  p2,
+  jointWidth,
+  jointHeight,
+  type = "tab",
+  flip = false,
+  preferredUp = { x: 0, y: 0, z: 1 },
+  includeEndpoints = false,
+}) {
   const dx = p2.x - p1.x;
   const dy = p2.y - p1.y;
   const dz = p2.z - p1.z;
   const length = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
-  // Basic safety check
-  if (length < jointWidth * 2) return [p1, p2];
+  if (length < jointWidth * 2) {
+    return includeEndpoints ? [p1, p2] : [];
+  }
 
   const ux = dx / length;
   const uy = dy / length;
   const uz = dz / length;
 
-  // Normal vector (u x Z-axis)
-  // 'notch' flips the orientation of the tab height
-  const multiplier = type === boxJointType.notch ? -1 : 1;
-  const nx = uy * multiplier;
-  const ny = -ux * multiplier;
-  const nz = 0;
+  // Calculate Normal (Side vector)
+  let nx = uy * preferredUp.z - uz * preferredUp.y;
+  let ny = uz * preferredUp.x - ux * preferredUp.z;
+  let nz = ux * preferredUp.y - uy * preferredUp.x;
+
+  let nLen = Math.sqrt(nx * nx + ny * ny + nz * nz);
+  if (nLen < 0.0001) {
+    const fallback =
+      Math.abs(ux) > 0.9 ? { x: 0, y: 1, z: 0 } : { x: 1, y: 0, z: 0 };
+    nx = uy * fallback.z - uz * fallback.y;
+    ny = uz * fallback.x - ux * fallback.z;
+    nz = ux * fallback.y - uy * fallback.x;
+    nLen = Math.sqrt(nx * nx + ny * ny + nz * nz);
+  }
+
+  nx /= nLen;
+  ny /= nLen;
+  nz /= nLen;
+
+  let multiplier = type === "notch" ? -1 : 1;
+  if (flip) multiplier *= -1;
+
+  nx *= multiplier;
+  ny *= multiplier;
+  nz *= multiplier;
 
   const halfW = jointWidth / 2;
   const mid = length / 2;
   const tabOffsets = [];
 
-  // Helper to check if a tab at a specific center point fits the boundary rules
   const fits = (center) => {
     const start = center - halfW;
     const end = center + halfW;
-    // Tab must start and end at least jointWidth away from the line endpoints
     return start >= jointWidth && end <= length - jointWidth;
   };
 
-  // 1. Center tab
   if (fits(mid)) {
     tabOffsets.push(mid);
-
-    // 2. Add outward tabs with a period of 2 * jointWidth (1 tab + 1 gap)
     let step = 1;
     while (true) {
       let added = false;
       const forward = mid + step * (2 * jointWidth);
       const backward = mid - step * (2 * jointWidth);
-
       if (fits(forward)) {
         tabOffsets.push(forward);
         added = true;
@@ -578,47 +613,33 @@ function createBoxJoints(
         tabOffsets.push(backward);
         added = true;
       }
-
       if (!added) break;
       step++;
     }
   }
-
-  // Sort offsets chronologically along the line
   tabOffsets.sort((a, b) => a - b);
 
-  const points = [];
-
-  if (includeEndpoints) {
-    points.push(p1);
-  }
+  const points = includeEndpoints ? [p1] : [];
 
   tabOffsets.forEach((offset) => {
     const tStart = offset - halfW;
     const tEnd = offset + halfW;
 
-    // Move to tab start on the baseline
     points.push({
       x: p1.x + ux * tStart,
       y: p1.y + uy * tStart,
       z: p1.z + uz * tStart,
     });
-
-    // Rise
     points.push({
       x: p1.x + ux * tStart + nx * jointHeight,
       y: p1.y + uy * tStart + ny * jointHeight,
       z: p1.z + uz * tStart + nz * jointHeight,
     });
-
-    // Span tab width
     points.push({
       x: p1.x + ux * tEnd + nx * jointHeight,
       y: p1.y + uy * tEnd + ny * jointHeight,
       z: p1.z + uz * tEnd + nz * jointHeight,
     });
-
-    // Drop back to baseline
     points.push({
       x: p1.x + ux * tEnd,
       y: p1.y + uy * tEnd,
@@ -631,6 +652,135 @@ function createBoxJoints(
   }
 
   return points;
+}
+
+function createBoxJoints(
+  point1,
+  point2,
+  type = boxJointType.tab,
+  flip = false,
+  preferredUp = { x: 0, y: 0, z: 1 }
+) {
+  // ensure that we have all the point values for the case where z might be missing
+  const p1 = { x: 0, y: 0, z: 0, ...point1 };
+  const p2 = { x: 0, y: 0, z: 0, ...point2 };
+  const jointHeight = state.caseMaterialThickness;
+  const jointWidth = BOX_JOINT_TAB_WIDTH;
+
+  return generateTabbedLine({
+    p1,
+    p2,
+    jointWidth,
+    jointHeight,
+    type,
+    flip,
+    preferredUp,
+    includeEndpoints: false,
+  });
+
+  //   const dx = p2.x - p1.x;
+  //   const dy = p2.y - p1.y;
+  //   const dz = p2.z - p1.z;
+  //   const length = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+  //   // Basic safety check
+  //   if (length < jointWidth * 2) return [p1, p2];
+
+  //   const ux = dx / length;
+  //   const uy = dy / length;
+  //   const uz = dz / length;
+
+  //   // Normal vector (u x Z-axis)
+  //   // 'notch' flips the orientation of the tab height
+  //   const multiplier = type === boxJointType.notch ? -1 : 1;
+  //   const nx = uy * multiplier;
+  //   const ny = -ux * multiplier;
+  //   const nz = 0;
+
+  //   const halfW = jointWidth / 2;
+  //   const mid = length / 2;
+  //   const tabOffsets = [];
+
+  //   // Helper to check if a tab at a specific center point fits the boundary rules
+  //   const fits = (center) => {
+  //     const start = center - halfW;
+  //     const end = center + halfW;
+  //     // Tab must start and end at least jointWidth away from the line endpoints
+  //     return start >= jointWidth && end <= length - jointWidth;
+  //   };
+
+  //   // 1. Center tab
+  //   if (fits(mid)) {
+  //     tabOffsets.push(mid);
+
+  //     // 2. Add outward tabs with a period of 2 * jointWidth (1 tab + 1 gap)
+  //     let step = 1;
+  //     while (true) {
+  //       let added = false;
+  //       const forward = mid + step * (2 * jointWidth);
+  //       const backward = mid - step * (2 * jointWidth);
+
+  //       if (fits(forward)) {
+  //         tabOffsets.push(forward);
+  //         added = true;
+  //       }
+  //       if (fits(backward)) {
+  //         tabOffsets.push(backward);
+  //         added = true;
+  //       }
+
+  //       if (!added) break;
+  //       step++;
+  //     }
+  //   }
+
+  //   // Sort offsets chronologically along the line
+  //   tabOffsets.sort((a, b) => a - b);
+
+  //   const points = [];
+
+  //   if (includeEndpoints) {
+  //     points.push(p1);
+  //   }
+
+  //   tabOffsets.forEach((offset) => {
+  //     const tStart = offset - halfW;
+  //     const tEnd = offset + halfW;
+
+  //     // Move to tab start on the baseline
+  //     points.push({
+  //       x: p1.x + ux * tStart,
+  //       y: p1.y + uy * tStart,
+  //       z: p1.z + uz * tStart,
+  //     });
+
+  //     // Rise
+  //     points.push({
+  //       x: p1.x + ux * tStart + nx * jointHeight,
+  //       y: p1.y + uy * tStart + ny * jointHeight,
+  //       z: p1.z + uz * tStart + nz * jointHeight,
+  //     });
+
+  //     // Span tab width
+  //     points.push({
+  //       x: p1.x + ux * tEnd + nx * jointHeight,
+  //       y: p1.y + uy * tEnd + ny * jointHeight,
+  //       z: p1.z + uz * tEnd + nz * jointHeight,
+  //     });
+
+  //     // Drop back to baseline
+  //     points.push({
+  //       x: p1.x + ux * tEnd,
+  //       y: p1.y + uy * tEnd,
+  //       z: p1.z + uz * tEnd,
+  //     });
+  //   });
+
+  //   if (includeEndpoints) {
+  //     points.push(p2);
+  //   }
+
+  //   return points;
 }
 
 function createBackPanelOutline() {

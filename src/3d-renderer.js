@@ -516,7 +516,7 @@ export function buildScene() {
       matBottom,
       -innerWidth / 2 - sideThickness
     );
-    // sceneRoot.add(baseMesh);
+    sceneRoot.add(baseMesh);
   }
 
   console.log("created base panel");
