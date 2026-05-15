@@ -496,6 +496,89 @@ export function calculateCaseGeometry() {
     ].reverse();
   };
 
+  const createBottomPanelOutline = () => {
+    // Creates the bottom up view of the bottom panel, as if you were looking at the case from the
+    // front and lifted the front to look at the bottom (so the front is at the top)
+    const bottomPanelOutline = geometry.baseBoardOutline;
+    return {
+      topLeft: {
+        z: -(state.caseWidth/2 + state.caseMaterialThickness),
+        y: -state.caseMaterialThickness,
+        x: 0,
+      },
+      topRight: {
+        z: state.caseWidth/2 + state.caseMaterialThickness,
+        y: -state.caseMaterialThickness,
+        x: 0,
+      },
+      bottomRight: {
+        z: state.caseWidth/2 + state.caseMaterialThickness,
+        y: -state.caseMaterialThickness,
+        x: bottomPanelOutline[1].x,
+      },
+      bottomLeft: {
+        z: -(state.caseWidth/2 + state.caseMaterialThickness),
+        y: -state.caseMaterialThickness,
+        x: bottomPanelOutline[1].x,
+      },
+    };
+  };
+
+  const createBottomPanel2dSideOutline = () => {
+    const { topLeft, topRight, bottomRight, bottomLeft } =
+      createBottomPanelOutline();
+    return [
+      { x: topLeft.x, y: 0 },
+      { x: bottomLeft.x, y: 0 },
+      { x: bottomLeft.x, y: -state.caseMaterialThickness },
+      { x: topLeft.x, y: -state.caseMaterialThickness },
+    ];
+  };
+
+  const createBottomPanelExtrudableOutline = () => {
+    const { topLeft, topRight, bottomRight, bottomLeft } =
+      createBottomPanelOutline();
+    const topJoints = createBoxJoints(
+      topLeft,
+      topRight,
+      boxJointType.notch,
+      false, /* flip */
+      { x: 0, y: 1, z: 0 } /* preferredUp */
+    );
+    const rightJoints = createBoxJoints(
+      topRight,
+      bottomRight,
+      boxJointType.notch,
+      false /* flip */,
+      { x: 0, y: 1, z: 0 } /* preferredUp */
+    );
+    const bottomJoints = createBoxJoints(
+      bottomRight,
+      bottomLeft,
+      boxJointType.notch,
+      false /* flip */,
+      { x: 0, y: 1, z: 0 } /* preferredUp */
+    );
+    const leftJoints = createBoxJoints(
+      bottomLeft,
+      topLeft,
+      boxJointType.notch,
+      false /* flip */,
+      { x: 0, y: 1, z: 0 } /* preferredUp */
+    );
+    return [
+      topLeft,
+      ...topJoints,
+      topRight,
+      ...rightJoints,
+      bottomRight,
+      ...bottomJoints,
+      bottomLeft,
+      ...leftJoints,
+      topLeft,
+    ];
+  };
+
   return {
     ...geometry,
     createSidePanelOutline,
@@ -504,6 +587,9 @@ export function calculateCaseGeometry() {
     createFrontPanelOutline,
     createFrontPanel2dSideOutline,
     createFrontPanelExtrudableOutline,
+    createBottomPanelOutline,
+    createBottomPanel2dSideOutline,
+    createBottomPanelExtrudableOutline,
   };
 }
 
@@ -845,85 +931,6 @@ function createBackPanelExtrudableOutline() {
     bottomLeft,
     topLeft,
     boxJointType.tab,
-    false
-  );
-  return [
-    topLeft,
-    ...topJoints,
-    topRight,
-    ...rightJoints,
-    bottomRight,
-    ...bottomJoints,
-    bottomLeft,
-    ...leftJoints,
-    topLeft,
-  ];
-}
-
-function createBottomPanelOutline() {
-  // Creates the bottom up view of the bottom panel, as if you were looking at the case from the
-  // front and lifted the front to look at the bottom (so the front is at the top)
-  const bottomPanelOutline = calculateCaseGeometry().baseBoardOutline;
-  return {
-    topLeft: {
-      z: -(state.caseWidth + state.caseMaterialThickness),
-      y: -state.caseMaterialThickness,
-      x: 0,
-    },
-    topRight: {
-      z: state.caseWidth + state.caseMaterialThickness,
-      y: -state.caseMaterialThickness,
-      x: 0,
-    },
-    bottomRight: {
-      z: state.caseWidth + state.caseMaterialThickness,
-      y: -state.caseMaterialThickness,
-      x: bottomPanelOutline[1].x,
-    },
-    bottomLeft: {
-      z: -(state.caseWidth + state.caseMaterialThickness),
-      y: -state.caseMaterialThickness,
-      x: bottomPanelOutline[1].x,
-    },
-  };
-}
-
-function createBottomPanel2dSideOutline() {
-  const { topLeft, topRight, bottomRight, bottomLeft } =
-    createBottomPanelOutline();
-  return [
-    { x: topLeft.x, y: 0 },
-    { x: bottomLeft.x, y: 0 },
-    { x: bottomLeft.x, y: -state.caseMaterialThickness },
-    { x: topLeft.x, y: -state.caseMaterialThickness },
-  ];
-}
-
-function createBottomPanelExtrudableOutline() {
-  const { topLeft, topRight, bottomRight, bottomLeft } =
-    createBottomPanelOutline();
-  const topJoints = createBoxJoints(
-    topLeft,
-    topRight,
-    boxJointType.notch,
-    false
-  );
-  const rightJoints = createBoxJoints(
-    topRight,
-    bottomRight,
-    boxJointType.notch,
-    false
-  );
-  const bottomJoints = createBoxJoints(
-    bottomRight,
-    bottomLeft,
-    boxJointType.notch,
-    false
-  );
-  const leftJoints = createBoxJoints(
-    bottomLeft,
-    topLeft,
-    boxJointType.notch,
     false
   );
   return [

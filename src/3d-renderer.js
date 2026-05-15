@@ -508,16 +508,26 @@ export function buildScene() {
   );
   sceneRoot.add(leftSideMesh);
 
-  if (geom.baseBoardOutline && geom.baseBoardOutline.length > 0) {
-    const basePts = geom.baseBoardOutline.map((p) => ({ x: p.x, y: p.y }));
-    const baseMesh = makeBoardMesh(
-      basePts,
-      innerWidth + 2 * sideThickness,
-      matBottom,
-      -innerWidth / 2 - sideThickness
+//   if (geom.baseBoardOutline && geom.baseBoardOutline.length > 0) {
+//     const basePts = geom.baseBoardOutline.map((p) => ({ x: p.x, y: p.y }));
+//     const baseMesh = makeBoardMesh(
+//       basePts,
+//       innerWidth + 2 * sideThickness,
+//       matBottom,
+//       -innerWidth / 2 - sideThickness
+//     );
+//     sceneRoot.add(baseMesh);
+//   }
+
+    const bottomPanelPoints = geom.createBottomPanelExtrudableOutline();
+    console.info("bottomPanelPoints", bottomPanelPoints);
+    const bottomPanelMesh = makeExtrudedPanelMesh(
+      bottomPanelPoints,
+      new THREE.Vector3(0, state.caseMaterialThickness, 0),
+      COLOR_BOTTOM,
+      OTHER_OPACITY
     );
-    sceneRoot.add(baseMesh);
-  }
+    sceneRoot.add(bottomPanelMesh);
 
   console.log("created base panel");
 
