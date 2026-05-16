@@ -51,4 +51,4 @@ export const COLORS = {
 };
 
 export const DRILL_HOLE_2D_RADIUS = 3;
-export const BOX_JOINT_TAB_WIDTH = 30;
+export const BOX_JOINT_TAB_WIDTH = 25;

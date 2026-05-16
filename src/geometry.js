@@ -877,7 +877,10 @@ function generateTabbedLine({
   const fits = (center) => {
     const start = center - halfW;
     const end = center + halfW;
-    return start >= (jointWidth*1.5) && end <= length - (jointWidth*1.5);
+    return (
+      start >= jointWidth + state.caseMaterialThickness &&
+      end <= length - (jointWidth + state.caseMaterialThickness)
+    );
   };
 
   if (fits(mid)) {
