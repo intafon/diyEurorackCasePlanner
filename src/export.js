@@ -232,28 +232,23 @@ function buildExportLayout(geometry) {
   }
   const lowerRowTotalWidth = lowerRowX + lowerRowPanels[lowerRowPanels.length - 1].bounds.width;
 
-  // Calculate lower row Y position first (it will be at the bottom)
-  // We need to determine total layout height to position everything correctly
-  const lowerRowY = Math.max(
-    bottomBounds.height + PANEL_SPACING + topBounds.height + PANEL_SPACING,
-    bottomBounds.height + PANEL_SPACING
-  );
-
-  // Top/shelf panel: interleaved with back panel's top edge
+  // Top/shelf panel: positioned above the back panel with spacing (not interleaved)
   // The back panel is the last in the lower row.
   const backPanelPosition = lowerRowPositions[3];
   const backPanelCenterX = backPanelPosition.x + backBounds.width / 2;
   const topPanelX = backPanelCenterX - topBounds.width / 2;
-  
-  // Position top shelf so its bottom edge overlaps back panel's top edge by caseMaterialThickness
-  const backPanelTopY = lowerRowY + backPanelPosition.y; // Top edge of back panel
-  const topPanelY = backPanelTopY - topBounds.height + overlap; // Bottom edge overlaps by overlap amount
 
-  // Bottom panel: position above everything with spacing, centered over front panel
+  // Bottom panel: position at top, centered over front panel
   const frontPanelPosition = lowerRowPositions[1]; // Front is index 1 in [Left, Front, Right, Back]
   const frontPanelCenterX = frontPanelPosition.x + frontBounds.width / 2;
   const bottomPanelX = frontPanelCenterX - bottomBounds.width / 2;
   const bottomPanelY = 0;
+
+  // Top/shelf panel goes between bottom panel and lower row with spacing
+  const topPanelY = bottomPanelY + bottomBounds.height + PANEL_SPACING;
+
+  // Lower row goes below the top/shelf panel with spacing
+  const lowerRowY = topPanelY + topBounds.height + PANEL_SPACING;
 
   // --- Build final panel list with absolute positions ---
   panels.push({
