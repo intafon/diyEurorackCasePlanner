@@ -3,6 +3,8 @@ import { calculateCaseGeometry } from "./geometry.js";
 import { state } from "./state.js";
 import { HP_TO_MM } from "./constants.js";
 
+const SVG_STROKE_WIDTH = "0.01";
+
 let includeCutPanels = true;
 
 /**
@@ -171,7 +173,7 @@ export function generateSVG() {
       svg += `
   
   <!-- ${shape.name} - Cut lines (outline) -->
-  <g id="${shape.name.toLowerCase().replace(/\s+/g, '-')}-outline" stroke="#FF0000" stroke-width="0.01" fill="none">
+  <g id="${shape.name.toLowerCase().replace(/\s+/g, '-')}-outline" stroke="#FF0000" stroke-width="${SVG_STROKE_WIDTH}" fill="none">
     <path d="`;
 
       const outline = shape.outline;
@@ -183,7 +185,7 @@ export function generateSVG() {
   </g>
   
   <!-- ${shape.name} - Drill holes -->
-  <g id="${shape.name.toLowerCase().replace(/\s+/g, '-')}-drill-holes" stroke="#FF0000" stroke-width="0.01" fill="none">`;
+  <g id="${shape.name.toLowerCase().replace(/\s+/g, '-')}-drill-holes" stroke="#FF0000" stroke-width="${SVG_STROKE_WIDTH}" fill="none">`;
 
       const drillRadius = 2.1;
       shape.drillHoles.forEach((hole) => {
@@ -198,7 +200,7 @@ export function generateSVG() {
       svg += `
   
   <!-- ${shape.name} Panel -->
-  <g id="${shape.name.toLowerCase().replace(/\s+/g, '-')}-panel" stroke="#FF0000" stroke-width="0.01" fill="none">
+  <g id="${shape.name.toLowerCase().replace(/\s+/g, '-')}-panel" stroke="#FF0000" stroke-width="${SVG_STROKE_WIDTH}" fill="none">
     <rect x="${tx(shape.x)}" y="${ty(shape.y + shape.height)}" width="${shape.width}" height="${shape.height}" />
   </g>`;
     }
