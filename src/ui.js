@@ -126,7 +126,7 @@ export function setupHpWidthInput() {
     hpWidthInput.setAttribute("data-listener-added", "true");
     hpWidthInput.value = state.caseWidthHP;
     hpWidthInput.addEventListener("input", (event) => {
-      state.caseWidthHP = parseFloat(event.target.value) || 0;
+      state.setHpWidth(parseFloat(event.target.value) || 0);
       updateHpWidthReadouts();
       triggerRedraw();
     });
