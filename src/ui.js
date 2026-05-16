@@ -1,7 +1,7 @@
 import { state } from "./state.js";
 import { oneUFormats, HP_TO_MM } from "./constants.js";
 import { actualDistance, roundToPlace } from "./geometry.js";
-import { downloadSVG, downloadDXF, setIncludeCutPanels } from "./export.js";
+import { downloadSVG, downloadDXF } from "./export.js";
 
 let drawSideCallback = null;
 
@@ -243,10 +243,7 @@ export function writeSummary(width, height, outlinePoints, railScrewCoords, cutP
     '" readonly style="width: 80px;" />';
   summaryHtml += '&nbsp;<span class="input-span unit">mm (bottom/base)</span>';
 
-  summaryHtml += '<br/><br/><div class="export-options">';
-  summaryHtml += '<label><input type="checkbox" id="include-cut-panels" checked /> Include front, bottom, back, and top panels in export</label>';
-  summaryHtml += '</div>';
-  summaryHtml += '<br/><div class="export-buttons">';
+  summaryHtml += '<br/><br/><div class="export-buttons">';
   summaryHtml += '<button type="button" id="download-svg-btn">Download SVG</button>';
   summaryHtml += '&nbsp;&nbsp;<button type="button" id="download-dxf-btn">Download DXF</button>';
   summaryHtml += "</div>";
@@ -260,17 +257,14 @@ export function writeSummary(width, height, outlinePoints, railScrewCoords, cutP
 function setupExportButtons() {
   const svgBtn = document.getElementById("download-svg-btn");
   const dxfBtn = document.getElementById("download-dxf-btn");
-  const includeCutPanelsCb = document.getElementById("include-cut-panels");
 
   if (svgBtn) {
     svgBtn.addEventListener("click", () => {
-      setIncludeCutPanels(includeCutPanelsCb.checked);
       downloadSVG();
     });
   }
   if (dxfBtn) {
     dxfBtn.addEventListener("click", () => {
-      setIncludeCutPanels(includeCutPanelsCb.checked);
       downloadDXF();
     });
   }

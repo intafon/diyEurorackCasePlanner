@@ -2,209 +2,336 @@ import DxfWriter from "dxf-writer";
 import { calculateCaseGeometry } from "./geometry.js";
 import { state } from "./state.js";
 import { HP_TO_MM } from "./constants.js";
+import { rad } from "./geometry.js";
 
-const SVG_STROKE_WIDTH = "0.01";
-
-let includeCutPanels = true;
+const SVG_STROKE_WIDTH = "1pt";
+const PANEL_SPACING = 15;
 
 /**
- * Creates a horizontally mirrored version of the side panel
- * @param {Object} geometry - The case geometry object
- * @returns {Object} - Mirrored geometry with outline and drill holes
+ * Projects a 3D extrudable outline to 2D based on panel type.
+ * Each panel type uses different axes for its face.
  */
-function createMirroredPanel(geometry) {
-  const maxX = geometry.maxX;
-  
-  // Mirror the outline by flipping X coordinates
-  const mirroredOutline = geometry.outline.map(point => ({
-    x: maxX - point.x,
-    y: point.y,
-    marker: point.marker
-  }));
+function projectTo2D(points, panelType, geometry) {
+  switch (panelType) {
+    case "side":
+      return points.map((p) => ({ x: p.x, y: p.y }));
 
-  // Mirror the drill holes by flipping X coordinates
-  const mirroredDrillHoles = geometry.drillHoles.map(hole => ({
-    x: maxX - hole.x,
-    y: hole.y
-  }));
+    case "front":
+      // Front panel face: z is horizontal, y is vertical
+      return points.map((p) => ({ x: p.z, y: p.y }));
 
-  return {
-    outline: mirroredOutline,
-    drillHoles: mirroredDrillHoles
-  };
+    case "back":
+      // Back panel face: z is horizontal (but mirrored since looking from back), y is vertical
+      return points.map((p) => ({ x: -p.z, y: p.y }));
+
+    case "bottom":
+      // Bottom panel face: z is horizontal, x is vertical (depth)
+      return points.map((p) => ({ x: p.z, y: p.x }));
+
+    case "top":
+      // Top/shelf panel: needs rotation to flat when angled
+      return flattenTopPanel(points, geometry);
+
+    default:
+      return points.map((p) => ({ x: p.x, y: p.y }));
+  }
 }
 
 /**
- * Simple shape packing algorithm to optimize space usage
- * @param {Array} shapes - Array of shape objects with width and height
- * @returns {Object} - Packed layout with positions and total dimensions
+ * Flattens the top/shelf panel outline to 2D.
+ * In flattenTopShelf mode it's already flat (z horizontal, x vertical).
+ * In angled mode, we project along the shelf's angled plane.
  */
-function packShapes(shapes) {
-  if (shapes.length === 0) return { shapes: [], totalWidth: 0, totalHeight: 0 };
-  
-  // Simple bin packing: try to arrange shapes to minimize total area
-  const packedShapes = [];
-  let currentX = 0;
-  let currentY = 0;
-  let maxWidth = 0;
-  let maxHeight = 0;
-  
-  // Sort shapes by area (largest first) for better packing
-  const sortedShapes = [...shapes].sort((a, b) => (b.width * b.height) - (a.width * a.height));
-  
-  // First, place all side panels side by side
-  const sidePanels = sortedShapes.filter(s => s.type === 'sidePanel');
-  sidePanels.forEach((shape, index) => {
-    const packedShape = {
-      ...shape,
-      x: currentX,
-      y: currentY
-    };
-    
-    packedShapes.push(packedShape);
-    currentX += shape.width + 15; // 15mm spacing
-    maxHeight = Math.max(maxHeight, shape.height);
+function flattenTopPanel(points, geometry) {
+  if (state.flattenTopShelf) {
+    // Flat shelf: z is horizontal, x is vertical (depth from front edge to back)
+    return points.map((p) => ({ x: p.z, y: p.x }));
+  }
+
+  // Angled shelf: the panel lies along the shelf angle.
+  // We need to project the points onto the plane of the shelf.
+  // The shelf runs from the top of the last row towards the back wall.
+  // Its "depth" direction is along the angle (shelfAngle from geometry).
+  // Its "width" direction is along Z.
+  // We compute the position along the shelf's depth axis by projecting x,y onto the shelf direction.
+  const shelfAngle = geometry.shelfAngle;
+  const dirX = Math.cos(rad(shelfAngle));
+  const dirY = Math.sin(rad(shelfAngle));
+
+  // Find a reference point (first point of the outline)
+  const ref = points[0];
+
+  return points.map((p) => {
+    // Width is along Z axis
+    const width = p.z;
+    // Depth is the projection of (p - ref) onto the shelf direction vector
+    const dx = p.x - ref.x;
+    const dy = p.y - ref.y;
+    const depth = dx * dirX + dy * dirY;
+    return { x: width, y: depth };
   });
-  
-  // Update maxWidth for side panels
-  if (sidePanels.length > 0) {
-    maxWidth = Math.max(maxWidth, currentX - 15); // Subtract the last spacing
-  }
-  
-  // Place cut panels below side panels if they exist
-  const cutPanels = sortedShapes.filter(s => s.type === 'cutPanel');
-  if (cutPanels.length > 0) {
-    let cutPanelX = 0;
-    const cutPanelY = maxHeight + 15; // 15mm spacing below side panels
-    let cutPanelsMaxHeight = 0;
-    
-    cutPanels.forEach(panel => {
-      const packedShape = {
-        ...panel,
-        x: cutPanelX,
-        y: cutPanelY
-      };
-      
-      packedShapes.push(packedShape);
-      cutPanelX += panel.width + 15; // 15mm spacing between panels
-      cutPanelsMaxHeight = Math.max(cutPanelsMaxHeight, panel.height);
-    });
-    
-    // Update total dimensions including cut panels
-    maxWidth = Math.max(maxWidth, cutPanelX - 15); // Subtract the last spacing
-    maxHeight = cutPanelY + cutPanelsMaxHeight;
-  }
-  
-  return {
-    shapes: packedShapes,
-    totalWidth: Math.max(maxWidth, 0),
-    totalHeight: Math.max(maxHeight, 0)
-  };
 }
 
-export function setIncludeCutPanels(value) {
-  includeCutPanels = value;
+/**
+ * Computes bounding box of a 2D point array.
+ */
+function getBounds(points) {
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const p of points) {
+    if (p.x < minX) minX = p.x;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.y > maxY) maxY = p.y;
+  }
+  return { minX, maxX, minY, maxY, width: maxX - minX, height: maxY - minY };
+}
+
+/**
+ * Normalizes points so that the bounding box starts at (0, 0).
+ * Accepts an optional offset {minX, minY} to apply the same shift used on a related point set.
+ */
+function normalizePoints(points, offset = null) {
+  const { minX, minY } = offset || getBounds(points);
+  return points.map((p) => ({ x: p.x - minX, y: p.y - minY }));
+}
+
+/**
+ * Returns the normalization offset (minX, minY) for a set of points without moving them.
+ */
+function getNormalizationOffset(points) {
+  const bounds = getBounds(points);
+  return { minX: bounds.minX, minY: bounds.minY };
+}
+
+/**
+ * Flips points vertically (mirrors about horizontal center).
+ */
+function flipVertical(points) {
+  const bounds = getBounds(points);
+  return points.map((p) => ({ x: p.x, y: bounds.maxY - (p.y - bounds.minY) + bounds.minY }));
+}
+
+/**
+ * Flips points horizontally (mirrors about vertical center).
+ */
+function flipHorizontal(points) {
+  const bounds = getBounds(points);
+  return points.map((p) => ({ x: bounds.maxX - (p.x - bounds.minX) + bounds.minX, y: p.y }));
+}
+
+/**
+ * Builds the layout of all panels for export.
+ * Returns an array of panel objects with their outlines positioned in the layout.
+ *
+ * Layout (Y increases upward in the coordinate system, but in the export
+ * we'll flip so Y increases downward for SVG):
+ *
+ * Top of output: Bottom panel (front edge at top)
+ * Middle: Top/shelf panel centered above the back panel
+ * Lower row: Left | Front | Right | Back, bottom-aligned
+ */
+function buildExportLayout(geometry) {
+  const panels = [];
+
+  // --- Get all extrudable outlines and project to 2D ---
+
+  // Side panels (left outer face, right outer face)
+  const leftOutline3D = geometry.createSidePanelExtrudableOutline("left");
+  const rightOutline3D = geometry.createSidePanelExtrudableOutline("right");
+
+  // Drill holes are in the same x,y space as the side panel outline.
+  const drillHoles2D = geometry.drillHoles.map((h) => ({ x: h.x, y: h.y }));
+
+  // For the left panel outer face: use the right outline mirrored horizontally.
+  // Apply identical transforms to drill holes.
+  let leftPanel2D = projectTo2D(rightOutline3D, "side", geometry);
+  leftPanel2D = flipHorizontal(leftPanel2D);
+  const leftOffset = getNormalizationOffset(leftPanel2D);
+  leftPanel2D = normalizePoints(leftPanel2D, leftOffset);
+  // Mirror drill holes the same way the right outline was mirrored for the left panel display.
+  const rightOutlineBounds = getBounds(projectTo2D(rightOutline3D, "side", geometry));
+  let leftDrillHoles2D = drillHoles2D.map((h) => ({
+    x: rightOutlineBounds.maxX - (h.x - rightOutlineBounds.minX) + rightOutlineBounds.minX,
+    y: h.y,
+  }));
+  leftDrillHoles2D = normalizePoints(leftDrillHoles2D, leftOffset);
+
+  // For the right panel outer face: use the left outline as-is.
+  const rightOffset = getNormalizationOffset(projectTo2D(leftOutline3D, "side", geometry));
+  let rightPanel2D = projectTo2D(leftOutline3D, "side", geometry);
+  rightPanel2D = normalizePoints(rightPanel2D, rightOffset);
+  let rightDrillHoles2D = normalizePoints(drillHoles2D, rightOffset);
+
+  // Front panel
+  const frontOutline3D = geometry.createFrontPanelExtrudableOutline();
+  let frontPanel2D = projectTo2D(frontOutline3D, "front", geometry);
+  frontPanel2D = normalizePoints(frontPanel2D);
+
+  // Back panel
+  const backOutline3D = geometry.createBackPanelExtrudableOutline();
+  let backPanel2D = projectTo2D(backOutline3D, "back", geometry);
+  backPanel2D = normalizePoints(backPanel2D);
+
+  // Bottom panel (front edge at top means we need front edge = max Y after normalization)
+  const bottomOutline3D = geometry.createBottomPanelExtrudableOutline();
+  let bottomPanel2D = projectTo2D(bottomOutline3D, "bottom", geometry);
+  // The bottom panel's "front" edge (x=0 in 3D, which becomes y=0 after projection) should be at top.
+  // After projection, smaller x values (front) map to smaller y. We want front at top (high y),
+  // so flip vertically.
+  bottomPanel2D = flipVertical(bottomPanel2D);
+  bottomPanel2D = normalizePoints(bottomPanel2D);
+
+  // Top/shelf panel (back edge at bottom)
+  const topOutline3D = geometry.createTopPanelExtrudableOutline();
+  let topPanel2D = projectTo2D(topOutline3D, "top", geometry);
+  // After flattening, the "back" edge (connecting to back panel) should be at the bottom (y=0).
+  // The top panel outline goes topLeft->topRight->bottomRight->bottomLeft where "bottom" is the
+  // back-connecting edge. After projection the back edge should already be at low y values.
+  // Let's normalize first and check.
+  topPanel2D = normalizePoints(topPanel2D);
+
+  // --- Compute bounds ---
+  const leftBounds = getBounds(leftPanel2D);
+  const rightBounds = getBounds(rightPanel2D);
+  const frontBounds = getBounds(frontPanel2D);
+  const backBounds = getBounds(backPanel2D);
+  const bottomBounds = getBounds(bottomPanel2D);
+  const topBounds = getBounds(topPanel2D);
+
+  // --- Layout positioning ---
+  // All positions are in a coordinate system where Y increases downward (SVG-style).
+
+  // Lower row: Left | Front | Right | Back, all bottom-aligned
+  // The "bottom" of each panel shape = the lowest edge, which after normalization is y=0.
+  // In SVG (y-down), bottom-aligned means their max-Y values are at the same position.
+  const lowerRowPanels = [
+    { name: "Left Side Panel", points: leftPanel2D, bounds: leftBounds, drillHoles: leftDrillHoles2D },
+    { name: "Front Panel", points: frontPanel2D, bounds: frontBounds },
+    { name: "Right Side Panel", points: rightPanel2D, bounds: rightBounds, drillHoles: rightDrillHoles2D },
+    { name: "Back Panel", points: backPanel2D, bounds: backBounds },
+  ];
+
+  const lowerRowMaxHeight = Math.max(
+    leftBounds.height,
+    frontBounds.height,
+    rightBounds.height,
+    backBounds.height
+  );
+
+  // Position lower row panels side by side, bottom-aligned
+  let lowerRowX = 0;
+  const lowerRowPositions = [];
+  for (const panel of lowerRowPanels) {
+    const yOffset = lowerRowMaxHeight - panel.bounds.height; // top-align offset for bottom-alignment in y-down
+    lowerRowPositions.push({ x: lowerRowX, y: yOffset });
+    lowerRowX += panel.bounds.width + PANEL_SPACING;
+  }
+  const lowerRowTotalWidth = lowerRowX - PANEL_SPACING;
+
+  // Top/shelf panel: centered above the back panel (between bottom panel row and lower row)
+  // "Above" in y-down means lower Y value.
+  // The back panel is the last in the lower row.
+  const backPanelPosition = lowerRowPositions[3];
+  const backPanelCenterX = backPanelPosition.x + backBounds.width / 2;
+  const topPanelX = backPanelCenterX - topBounds.width / 2;
+
+  // Bottom panel: at the very top of the output, front edge at top (already handled by flip)
+  // Center it horizontally relative to the overall layout
+  const totalLayoutWidth = Math.max(lowerRowTotalWidth, bottomBounds.width);
+
+  const bottomPanelX = (totalLayoutWidth - bottomBounds.width) / 2;
+  const bottomPanelY = 0;
+
+  // Top/shelf panel goes between bottom panel and lower row
+  const topPanelY = bottomPanelY + bottomBounds.height + PANEL_SPACING;
+
+  // Lower row goes below the top/shelf panel
+  const lowerRowY = topPanelY + topBounds.height + PANEL_SPACING;
+
+  // --- Build final panel list with absolute positions ---
+  panels.push({
+    name: "Bottom Panel",
+    points: bottomPanel2D,
+    x: bottomPanelX,
+    y: bottomPanelY,
+    bounds: bottomBounds,
+  });
+
+  panels.push({
+    name: "Top Shelf Panel",
+    points: topPanel2D,
+    x: topPanelX,
+    y: topPanelY,
+    bounds: topBounds,
+  });
+
+  for (let i = 0; i < lowerRowPanels.length; i++) {
+    panels.push({
+      name: lowerRowPanels[i].name,
+      points: lowerRowPanels[i].points,
+      drillHoles: lowerRowPanels[i].drillHoles || [],
+      x: lowerRowPositions[i].x,
+      y: lowerRowY + lowerRowPositions[i].y,
+      bounds: lowerRowPanels[i].bounds,
+    });
+  }
+
+  const totalHeight = lowerRowY + lowerRowMaxHeight;
+
+  return { panels, totalWidth: totalLayoutWidth, totalHeight };
 }
 
 export function generateSVG() {
   const geometry = calculateCaseGeometry();
-  const mirroredPanel = createMirroredPanel(geometry);
   const padding = 10;
-  const scale = 1;
 
-  // Prepare shapes for packing
-  const shapes = [];
-  
-  // Add both side panels
-  shapes.push({
-    type: 'sidePanel',
-    name: 'Right Side Panel',
-    width: geometry.maxX,
-    height: geometry.maxY,
-    outline: geometry.outline,
-    drillHoles: geometry.drillHoles
-  });
-  
-  shapes.push({
-    type: 'sidePanel', 
-    name: 'Left Side Panel',
-    width: geometry.maxX,
-    height: geometry.maxY,
-    outline: mirroredPanel.outline,
-    drillHoles: mirroredPanel.drillHoles
-  });
+  const layout = buildExportLayout(geometry);
 
-  // Add cut panels if included
-  if (includeCutPanels) {
-    geometry.cutPanels.forEach(panel => {
-      shapes.push({
-        type: 'cutPanel',
-        name: panel.name,
-        width: panel.height, // Note: swapped because panels are rotated 90°
-        height: panel.width
-      });
-    });
-  }
-
-  // Pack shapes for optimal layout
-  const packedLayout = packShapes(shapes);
-  
-  const totalWidth = packedLayout.totalWidth;
-  const totalHeight = packedLayout.totalHeight;
-
-  const width = (totalWidth + padding * 2) * scale;
-  const height = (totalHeight + padding * 2) * scale;
-
-  function tx(x) {
-    return (x + padding) * scale;
-  }
-  function ty(y) {
-    return (totalHeight - y + padding) * scale;
-  }
+  const width = layout.totalWidth + padding * 2;
+  const height = layout.totalHeight + padding * 2;
 
   let svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${width}mm" height="${height}mm" viewBox="0 0 ${width} ${height}">
-  <title>Eurorack Case Panels - Left and Right Sides</title>
+  <title>Eurorack Case Panels - Laser Cut Layout</title>
   <desc>Generated by DIY Eurorack Case Planner</desc>`;
 
-  // Render each packed shape
-  packedLayout.shapes.forEach((shape, shapeIndex) => {
-    if (shape.type === 'sidePanel') {
-      svg += `
-  
-  <!-- ${shape.name} - Cut lines (outline) -->
-  <g id="${shape.name.toLowerCase().replace(/\s+/g, '-')}-outline" stroke="#FF0000" stroke-width="${SVG_STROKE_WIDTH}" fill="none">
+  for (const panel of layout.panels) {
+    const id = panel.name.toLowerCase().replace(/\s+/g, "-");
+    svg += `
+
+  <!-- ${panel.name} -->
+  <g id="${id}" stroke="#FF0000" stroke-width="${SVG_STROKE_WIDTH}" fill="none">
     <path d="`;
 
-      const outline = shape.outline;
-      svg += `M ${tx(outline[0].x + shape.x)} ${ty(outline[0].y + shape.y)}`;
-      for (let i = 1; i < outline.length; i++) {
-        svg += ` L ${tx(outline[i].x + shape.x)} ${ty(outline[i].y + shape.y)}`;
-      }
-      svg += ` Z" />
-  </g>
-  
-  <!-- ${shape.name} - Drill holes -->
-  <g id="${shape.name.toLowerCase().replace(/\s+/g, '-')}-drill-holes" stroke="#FF0000" stroke-width="${SVG_STROKE_WIDTH}" fill="none">`;
+    const points = panel.points;
+    const ox = panel.x + padding;
+    const oy = panel.y + padding;
 
-      const drillRadius = 2.1;
-      shape.drillHoles.forEach((hole) => {
-        svg += `
-    <circle cx="${tx(hole.x + shape.x)}" cy="${ty(hole.y + shape.y)}" r="${drillRadius}" />`;
-      });
+    // In SVG, y increases downward. Our points are normalized with y=0 at bottom.
+    // We need to flip y so that y=0 is at top within the panel's local space.
+    const panelHeight = panel.bounds.height;
 
-      svg += `
+    svg += `M ${ox + points[0].x} ${oy + (panelHeight - points[0].y)}`;
+    for (let i = 1; i < points.length; i++) {
+      svg += ` L ${ox + points[i].x} ${oy + (panelHeight - points[i].y)}`;
+    }
+    svg += ` Z" />
   </g>`;
 
-    } else if (shape.type === 'cutPanel') {
+    if (panel.drillHoles && panel.drillHoles.length > 0) {
       svg += `
-  
-  <!-- ${shape.name} Panel -->
-  <g id="${shape.name.toLowerCase().replace(/\s+/g, '-')}-panel" stroke="#FF0000" stroke-width="${SVG_STROKE_WIDTH}" fill="none">
-    <rect x="${tx(shape.x)}" y="${ty(shape.y + shape.height)}" width="${shape.width}" height="${shape.height}" />
+
+  <!-- ${panel.name} - Drill holes -->
+  <g id="${id}-drill-holes" stroke="#FF0000" stroke-width="${SVG_STROKE_WIDTH}" fill="none">`;
+      const drillRadius = 2.1;
+      for (const hole of panel.drillHoles) {
+        svg += `
+    <circle cx="${ox + hole.x}" cy="${oy + (panelHeight - hole.y)}" r="${drillRadius}" />`;
+      }
+      svg += `
   </g>`;
     }
-  });
+  }
 
   svg += `
 </svg>`;
@@ -214,105 +341,63 @@ export function generateSVG() {
 
 export function generateDXF() {
   const geometry = calculateCaseGeometry();
-  const mirroredPanel = createMirroredPanel(geometry);
+
+  const layout = buildExportLayout(geometry);
+
   const dxf = new DxfWriter();
-
-  dxf.addLayer("RIGHT_SIDE_PANEL", DxfWriter.ACI.RED, "CONTINUOUS");
+  dxf.addLayer("BOTTOM_PANEL", DxfWriter.ACI.RED, "CONTINUOUS");
+  dxf.addLayer("TOP_SHELF_PANEL", DxfWriter.ACI.RED, "CONTINUOUS");
   dxf.addLayer("LEFT_SIDE_PANEL", DxfWriter.ACI.RED, "CONTINUOUS");
-  dxf.addLayer("RIGHT_DRILL_HOLES", DxfWriter.ACI.RED, "CONTINUOUS");
   dxf.addLayer("LEFT_DRILL_HOLES", DxfWriter.ACI.RED, "CONTINUOUS");
-  if (includeCutPanels) {
-    dxf.addLayer("CUT_PANELS", DxfWriter.ACI.RED, "CONTINUOUS");
-  }
+  dxf.addLayer("FRONT_PANEL", DxfWriter.ACI.RED, "CONTINUOUS");
+  dxf.addLayer("RIGHT_SIDE_PANEL", DxfWriter.ACI.RED, "CONTINUOUS");
+  dxf.addLayer("RIGHT_DRILL_HOLES", DxfWriter.ACI.RED, "CONTINUOUS");
+  dxf.addLayer("BACK_PANEL", DxfWriter.ACI.RED, "CONTINUOUS");
 
-  // Prepare shapes for packing
-  const shapes = [];
-  
-  // Add both side panels
-  shapes.push({
-    type: 'sidePanel',
-    name: 'Right Side Panel',
-    width: geometry.maxX,
-    height: geometry.maxY,
-    outline: geometry.outline,
-    drillHoles: geometry.drillHoles
-  });
-  
-  shapes.push({
-    type: 'sidePanel',
-    name: 'Left Side Panel', 
-    width: geometry.maxX,
-    height: geometry.maxY,
-    outline: mirroredPanel.outline,
-    drillHoles: mirroredPanel.drillHoles
-  });
+  const layerMap = {
+    "Bottom Panel": "BOTTOM_PANEL",
+    "Top Shelf Panel": "TOP_SHELF_PANEL",
+    "Left Side Panel": "LEFT_SIDE_PANEL",
+    "Front Panel": "FRONT_PANEL",
+    "Right Side Panel": "RIGHT_SIDE_PANEL",
+    "Back Panel": "BACK_PANEL",
+  };
 
-  // Add cut panels if included
-  if (includeCutPanels) {
-    geometry.cutPanels.forEach(panel => {
-      shapes.push({
-        type: 'cutPanel',
-        name: panel.name,
-        width: panel.height, // Note: swapped because panels are rotated 90°
-        height: panel.width
-      });
-    });
-  }
-
-  // Pack shapes for optimal layout
-  const packedLayout = packShapes(shapes);
+  const drillLayerMap = {
+    "Left Side Panel": "LEFT_DRILL_HOLES",
+    "Right Side Panel": "RIGHT_DRILL_HOLES",
+  };
 
   const drillRadius = 2.1;
 
-  // Draw each packed shape
-  packedLayout.shapes.forEach((shape, shapeIndex) => {
-    if (shape.type === 'sidePanel') {
-      const isRightPanel = shape.name.includes('Right');
-      const panelLayerName = isRightPanel ? "RIGHT_SIDE_PANEL" : "LEFT_SIDE_PANEL";
-      const drillLayerName = isRightPanel ? "RIGHT_DRILL_HOLES" : "LEFT_DRILL_HOLES";
+  for (const panel of layout.panels) {
+    const layerName = layerMap[panel.name] || "0";
+    dxf.setActiveLayer(layerName);
 
-      // Draw side panel outline
-      dxf.setActiveLayer(panelLayerName);
-      const outline = shape.outline;
-      for (let i = 0; i < outline.length - 1; i++) {
-        dxf.drawLine(
-          outline[i].x + shape.x,
-          outline[i].y + shape.y,
-          outline[i + 1].x + shape.x,
-          outline[i + 1].y + shape.y
-        );
-      }
-      
-      // Close the outline by connecting last point to first
-      if (outline.length > 2) {
-        dxf.drawLine(
-          outline[outline.length - 1].x + shape.x,
-          outline[outline.length - 1].y + shape.y,
-          outline[0].x + shape.x,
-          outline[0].y + shape.y
-        );
-      }
+    const points = panel.points;
+    const ox = panel.x;
+    const oy = panel.y;
 
-      // Draw drill holes
-      dxf.setActiveLayer(drillLayerName);
-      shape.drillHoles.forEach((hole) => {
-        dxf.drawCircle(hole.x + shape.x, hole.y + shape.y, drillRadius);
-      });
-
-    } else if (shape.type === 'cutPanel') {
-      // Draw cut panels
-      dxf.setActiveLayer("CUT_PANELS");
-      const x1 = shape.x;
-      const y1 = shape.y;
-      const x2 = shape.x + shape.width;
-      const y2 = shape.y + shape.height;
-      
-      dxf.drawLine(x1, y1, x2, y1);
-      dxf.drawLine(x2, y1, x2, y2);
-      dxf.drawLine(x2, y2, x1, y2);
-      dxf.drawLine(x1, y2, x1, y1);
+    for (let i = 0; i < points.length; i++) {
+      const next = (i + 1) % points.length;
+      dxf.drawLine(
+        ox + points[i].x,
+        oy + points[i].y,
+        ox + points[next].x,
+        oy + points[next].y
+      );
     }
-  });
+
+    if (panel.drillHoles && panel.drillHoles.length > 0) {
+      const drillLayer = drillLayerMap[panel.name];
+      if (drillLayer) {
+        dxf.setActiveLayer(drillLayer);
+        for (const hole of panel.drillHoles) {
+          dxf.drawCircle(ox + hole.x, oy + hole.y, drillRadius);
+        }
+      }
+    }
+  }
 
   return dxf.toDxfString();
 }
@@ -331,10 +416,10 @@ export function downloadFile(content, filename, mimeType) {
 
 export function downloadSVG() {
   const svg = generateSVG();
-  downloadFile(svg, "eurorack-case-both-sides.svg", "image/svg+xml");
+  downloadFile(svg, "eurorack-case-panels.svg", "image/svg+xml");
 }
 
 export function downloadDXF() {
   const dxf = generateDXF();
-  downloadFile(dxf, "eurorack-case-both-sides.dxf", "application/dxf");
+  downloadFile(dxf, "eurorack-case-panels.dxf", "application/dxf");
 }
