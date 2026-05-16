@@ -408,7 +408,7 @@ export function calculateCaseGeometry() {
 
     const frontBoxJointWidth = Math.min(
       BOX_JOINT_TAB_WIDTH,
-      (points[0].y - bottomLeft.y) / 3
+      (points[0].y - bottomLeft.y - 1) / 3
     );
     const frontJoints = createBoxJoints({
       point1: bottomLeft,
@@ -480,7 +480,7 @@ export function calculateCaseGeometry() {
     });
     const sideBoxJointWidth = Math.min(
       BOX_JOINT_TAB_WIDTH,
-      (topLeft.y - bottomLeft.y) / 3
+      (topLeft.y - bottomLeft.y - 1) / 3
     );
     const leftJoints = createBoxJoints({
       point1: bottomLeft,
