@@ -221,7 +221,7 @@ export function calculateCaseGeometry() {
       state.caseMaterialThickness * Math.sin(rad(lastRowAngle));
     // shelfTopLeftY - Math.cos(rad(lastRowAngle)) * state.actualPanelDepth;
 
-    backWallY = shelfBottomLeftY;//shelfBottomRightY;
+    backWallY = shelfBottomLeftY; //shelfBottomRightY;
     backWallOutside = shelfBottomRightX;
     backWallInside = backWallOutside - state.caseMaterialThickness;
 
@@ -378,13 +378,18 @@ export function calculateCaseGeometry() {
     const bottomRight = points.pop();
     const backTop = points.pop();
     const frontTop = points.pop();
+    const topBoxJointWidth = Math.min(
+      BOX_JOINT_TAB_WIDTH,
+      (Math.sqrt(Math.pow(distance(frontTop, backTop), 2)) - 1) / 3
+    );
     const topJoints = createBoxJoints({
       point1: frontTop,
       point2: backTop,
       type: boxJointType.notch,
       flip: true,
+      jointWidth: topBoxJointWidth,
     });
-    console.info("topJoints", topJoints);
+    console.info("topBoxJointWidth", topBoxJointWidth, "topJoints", topJoints);
     // In flattenTopShelf mode the top shelf panel occupies the top caseMaterialThickness
     // of the back edge, so the back panel's side edge is that much shorter at the top.
     // Shift the notch start point down by caseMaterialThickness so the notch pattern on
@@ -703,18 +708,50 @@ export function calculateCaseGeometry() {
       // [1] and [2] share y=shelfTopY; they differ in X (front vs back of shelf).
       // We keep both left/right at the same X per edge so the polygon lies flat.
       return {
-        topLeft:     { z:  state.caseWidth / 2, y: topPanelOutline[1].y, x: topPanelOutline[1].x },
-        topRight:    { z: -state.caseWidth / 2, y: topPanelOutline[1].y, x: topPanelOutline[1].x },
-        bottomRight: { z: -state.caseWidth / 2, y: topPanelOutline[2].y, x: topPanelOutline[2].x },
-        bottomLeft:  { z:  state.caseWidth / 2, y: topPanelOutline[2].y, x: topPanelOutline[2].x },
+        topLeft: {
+          z: state.caseWidth / 2,
+          y: topPanelOutline[1].y,
+          x: topPanelOutline[1].x,
+        },
+        topRight: {
+          z: -state.caseWidth / 2,
+          y: topPanelOutline[1].y,
+          x: topPanelOutline[1].x,
+        },
+        bottomRight: {
+          z: -state.caseWidth / 2,
+          y: topPanelOutline[2].y,
+          x: topPanelOutline[2].x,
+        },
+        bottomLeft: {
+          z: state.caseWidth / 2,
+          y: topPanelOutline[2].y,
+          x: topPanelOutline[2].x,
+        },
       };
     }
     // angled case: [1]=outer front corner, [2]=outer back corner
     return {
-      topLeft:     { z:  state.caseWidth / 2, y: topPanelOutline[1].y, x: topPanelOutline[1].x },
-      topRight:    { z: -state.caseWidth / 2, y: topPanelOutline[1].y, x: topPanelOutline[1].x },
-      bottomRight: { z: -state.caseWidth / 2, y: topPanelOutline[2].y, x: topPanelOutline[2].x },
-      bottomLeft:  { z:  state.caseWidth / 2, y: topPanelOutline[2].y, x: topPanelOutline[2].x },
+      topLeft: {
+        z: state.caseWidth / 2,
+        y: topPanelOutline[1].y,
+        x: topPanelOutline[1].x,
+      },
+      topRight: {
+        z: -state.caseWidth / 2,
+        y: topPanelOutline[1].y,
+        x: topPanelOutline[1].x,
+      },
+      bottomRight: {
+        z: -state.caseWidth / 2,
+        y: topPanelOutline[2].y,
+        x: topPanelOutline[2].x,
+      },
+      bottomLeft: {
+        z: state.caseWidth / 2,
+        y: topPanelOutline[2].y,
+        x: topPanelOutline[2].x,
+      },
     };
   };
 
@@ -738,7 +775,11 @@ export function calculateCaseGeometry() {
       createTopPanelOutline();
     const preferredUp = state.flattenTopShelf
       ? { x: 0, y: -1, z: 0 }
-      : { x: -Math.sin(rad(geometry.shelfAngle)), y: Math.cos(rad(geometry.shelfAngle)), z: 0 };
+      : {
+          x: -Math.sin(rad(geometry.shelfAngle)),
+          y: Math.cos(rad(geometry.shelfAngle)),
+          z: 0,
+        };
 
     // const topJoints = createBoxJoints(
     //   topLeft,
@@ -747,12 +788,17 @@ export function calculateCaseGeometry() {
     //   true /* flip */,
     //   { x: 1, y: 0, z: 0 } /* preferredUp */
     // );
+    const leftRightBoxJointWidth = Math.min(
+      BOX_JOINT_TAB_WIDTH,
+      (Math.sqrt(Math.pow(distance(topRight, bottomRight), 2)) - 1) / 3
+    );
     const rightJoints = createBoxJoints({
       point1: topRight,
       point2: bottomRight,
       type: boxJointType.tab,
       flip: false,
       preferredUp,
+      jointWidth: leftRightBoxJointWidth,
     });
     const bottomJoints = createBoxJoints({
       point1: bottomRight,
@@ -767,6 +813,7 @@ export function calculateCaseGeometry() {
       type: boxJointType.tab,
       flip: false,
       preferredUp,
+      jointWidth: leftRightBoxJointWidth,
     });
     return [
       topLeft,
@@ -889,10 +936,7 @@ function generateTabbedLine({
   const fits = (center) => {
     const start = center - halfW;
     const end = center + halfW;
-    return (
-      start >= jointWidth + 0 &&
-      end <= length - (jointWidth + 0)
-    );
+    return start >= jointWidth + 0 && end <= length - (jointWidth + 0);
     // return (
     //   start >= jointWidth + state.caseMaterialThickness &&
     //   end <= length - (jointWidth + state.caseMaterialThickness)
@@ -986,4 +1030,10 @@ export function flattenXYCoordsToArray(coords) {
     acc.push(coord.x, coord.y);
     return acc;
   }, []);
+}
+
+function distance(p1, p2) {
+  const dx = p2.x - p1.x;
+  const dy = p2.y - p1.y;
+  return Math.sqrt(dx * dx + dy * dy);
 }
