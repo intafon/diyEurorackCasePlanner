@@ -378,12 +378,12 @@ export function calculateCaseGeometry() {
     const bottomRight = points.pop();
     const backTop = points.pop();
     const frontTop = points.pop();
-    const topJoints = createBoxJoints(
-      frontTop,
-      backTop,
-      boxJointType.notch,
-      true /* flip */
-    );
+    const topJoints = createBoxJoints({
+      point1: frontTop,
+      point2: backTop,
+      type: boxJointType.notch,
+      flip: true,
+    });
     console.info("topJoints", topJoints);
     // In flattenTopShelf mode the top shelf panel occupies the top caseMaterialThickness
     // of the back edge, so the back panel's side edge is that much shorter at the top.
@@ -393,24 +393,24 @@ export function calculateCaseGeometry() {
     const backJointsStart = state.flattenTopShelf
       ? { ...backTop, y: backTop.y - state.caseMaterialThickness }
       : { ...backTop, y: backPanelPoints.topLeft.y };
-    const backJoints = createBoxJoints(
-      backJointsStart,
-      bottomRight,
-      boxJointType.notch,
-      true /* flip */
-    );
-    const bottomJoints = createBoxJoints(
-      bottomRight,
-      bottomLeft,
-      boxJointType.tab,
-      true /* flip */
-    );
-    const frontJoints = createBoxJoints(
-      bottomLeft,
-      points[0],
-      boxJointType.notch,
-      true /* flip */
-    );
+    const backJoints = createBoxJoints({
+      point1: backJointsStart,
+      point2: bottomRight,
+      type: boxJointType.notch,
+      flip: true,
+    });
+    const bottomJoints = createBoxJoints({
+      point1: bottomRight,
+      point2: bottomLeft,
+      type: boxJointType.tab,
+      flip: true,
+    });
+    const frontJoints = createBoxJoints({
+      point1: bottomLeft,
+      point2: points[0],
+      type: boxJointType.notch,
+      flip: true,
+    });
     const allPoints = [
       ...points,
       frontTop,
@@ -465,27 +465,27 @@ export function calculateCaseGeometry() {
 
     // Now create outlines with tabs on the left and right sides and the bottom. First create the
     // center tab, then expend the tabs outward from there.
-    const bottomJoints = createBoxJoints(
-      bottomRight,
-      bottomLeft,
-      boxJointType.tab,
-      false /* flip */,
-      { x: 1, y: 0, z: 0 } /* preferredUp */
-    );
-    const leftJoints = createBoxJoints(
-      bottomLeft,
-      topLeft,
-      boxJointType.tab,
-      false /* flip */,
-      { x: 1, y: 0, z: 0 } /* preferredUp */
-    );
-    const rightJoints = createBoxJoints(
-      topRight,
-      bottomRight,
-      boxJointType.tab,
-      false /* flip */,
-      { x: 1, y: 0, z: 0 } /* preferredUp */
-    );
+    const bottomJoints = createBoxJoints({
+      point1: bottomRight,
+      point2: bottomLeft,
+      type: boxJointType.tab,
+      flip: false,
+      preferredUp: { x: 1, y: 0, z: 0 },
+    });
+    const leftJoints = createBoxJoints({
+      point1: bottomLeft,
+      point2: topLeft,
+      type: boxJointType.tab,
+      flip: false,
+      preferredUp: { x: 1, y: 0, z: 0 },
+    });
+    const rightJoints = createBoxJoints({
+      point1: topRight,
+      point2: bottomRight,
+      type: boxJointType.tab,
+      flip: false,
+      preferredUp: { x: 1, y: 0, z: 0 },
+    });
     console.info(
       "frontPanelExtrudableOutline",
       topLeft,
@@ -551,34 +551,34 @@ export function calculateCaseGeometry() {
   const createBottomPanelExtrudableOutline = () => {
     const { topLeft, topRight, bottomRight, bottomLeft } =
       createBottomPanelOutline();
-    const topJoints = createBoxJoints(
-      topLeft,
-      topRight,
-      boxJointType.notch,
-      false /* flip */,
-      { x: 0, y: 1, z: 0 } /* preferredUp */
-    );
-    const rightJoints = createBoxJoints(
-      topRight,
-      bottomRight,
-      boxJointType.notch,
-      false /* flip */,
-      { x: 0, y: 1, z: 0 } /* preferredUp */
-    );
-    const bottomJoints = createBoxJoints(
-      bottomRight,
-      bottomLeft,
-      boxJointType.notch,
-      false /* flip */,
-      { x: 0, y: 1, z: 0 } /* preferredUp */
-    );
-    const leftJoints = createBoxJoints(
-      bottomLeft,
-      topLeft,
-      boxJointType.notch,
-      false /* flip */,
-      { x: 0, y: 1, z: 0 } /* preferredUp */
-    );
+    const topJoints = createBoxJoints({
+      point1: topLeft,
+      point2: topRight,
+      type: boxJointType.notch,
+      flip: false,
+      preferredUp: { x: 0, y: 1, z: 0 },
+    });
+    const rightJoints = createBoxJoints({
+      point1: topRight,
+      point2: bottomRight,
+      type: boxJointType.notch,
+      flip: false,
+      preferredUp: { x: 0, y: 1, z: 0 },
+    });
+    const bottomJoints = createBoxJoints({
+      point1: bottomRight,
+      point2: bottomLeft,
+      type: boxJointType.notch,
+      flip: false,
+      preferredUp: { x: 0, y: 1, z: 0 },
+    });
+    const leftJoints = createBoxJoints({
+      point1: bottomLeft,
+      point2: topLeft,
+      type: boxJointType.notch,
+      flip: false,
+      preferredUp: { x: 0, y: 1, z: 0 },
+    });
     return [
       topLeft,
       ...topJoints,
@@ -641,34 +641,34 @@ export function calculateCaseGeometry() {
 
     // Now create outlines with tabs on the left and right sides and the bottom. First create the
     // center tab, then expend the tabs outward from there.
-    const topJoints = createBoxJoints(
-      topLeft,
-      topRight,
-      boxJointType.tab,
-      true /* flip */,
-      { x: 1, y: 0, z: 0 } /* preferredUp */
-    );
-    const rightJoints = createBoxJoints(
-      topRight,
-      bottomRight,
-      boxJointType.tab,
-      true /* flip */,
-      { x: 1, y: 0, z: 0 } /* preferredUp */
-    );
-    const bottomJoints = createBoxJoints(
-      bottomRight,
-      bottomLeft,
-      boxJointType.tab,
-      true /* flip */,
-      { x: 1, y: 0, z: 0 } /* preferredUp */
-    );
-    const leftJoints = createBoxJoints(
-      bottomLeft,
-      topLeft,
-      boxJointType.tab,
-      true /* flip */,
-      { x: 1, y: 0, z: 0 } /* preferredUp */
-    );
+    const topJoints = createBoxJoints({
+      point1: topLeft,
+      point2: topRight,
+      type: boxJointType.tab,
+      flip: true,
+      preferredUp: { x: 1, y: 0, z: 0 },
+    });
+    const rightJoints = createBoxJoints({
+      point1: topRight,
+      point2: bottomRight,
+      type: boxJointType.tab,
+      flip: true,
+      preferredUp: { x: 1, y: 0, z: 0 },
+    });
+    const bottomJoints = createBoxJoints({
+      point1: bottomRight,
+      point2: bottomLeft,
+      type: boxJointType.tab,
+      flip: true,
+      preferredUp: { x: 1, y: 0, z: 0 },
+    });
+    const leftJoints = createBoxJoints({
+      point1: bottomLeft,
+      point2: topLeft,
+      type: boxJointType.tab,
+      flip: true,
+      preferredUp: { x: 1, y: 0, z: 0 },
+    });
     return [
       topLeft,
       ...topJoints,
@@ -735,27 +735,27 @@ export function calculateCaseGeometry() {
     //   true /* flip */,
     //   { x: 1, y: 0, z: 0 } /* preferredUp */
     // );
-    const rightJoints = createBoxJoints(
-      topRight,
-      bottomRight,
-      boxJointType.tab,
-      false /* flip */,
-      preferredUp
-    );
-    const bottomJoints = createBoxJoints(
-      bottomRight,
-      bottomLeft,
-      boxJointType.notch,
-      false /* flip */,
-      preferredUp
-    );
-    const leftJoints = createBoxJoints(
-      bottomLeft,
-      topLeft,
-      boxJointType.tab,
-      false /* flip */,
-      preferredUp
-    );
+    const rightJoints = createBoxJoints({
+      point1: topRight,
+      point2: bottomRight,
+      type: boxJointType.tab,
+      flip: false,
+      preferredUp,
+    });
+    const bottomJoints = createBoxJoints({
+      point1: bottomRight,
+      point2: bottomLeft,
+      type: boxJointType.notch,
+      flip: false,
+      preferredUp,
+    });
+    const leftJoints = createBoxJoints({
+      point1: bottomLeft,
+      point2: topLeft,
+      type: boxJointType.tab,
+      flip: false,
+      preferredUp,
+    });
     return [
       topLeft,
       //   ...topJoints,
@@ -878,9 +878,13 @@ function generateTabbedLine({
     const start = center - halfW;
     const end = center + halfW;
     return (
-      start >= jointWidth + state.caseMaterialThickness &&
-      end <= length - (jointWidth + state.caseMaterialThickness)
+      start >= jointWidth + 0 &&
+      end <= length - (jointWidth + 0)
     );
+    // return (
+    //   start >= jointWidth + state.caseMaterialThickness &&
+    //   end <= length - (jointWidth + state.caseMaterialThickness)
+    // );
   };
 
   if (fits(mid)) {
@@ -939,13 +943,13 @@ function generateTabbedLine({
   return points;
 }
 
-function createBoxJoints(
+function createBoxJoints({
   point1,
   point2,
   type = boxJointType.tab,
   flip = false,
-  preferredUp = { x: 0, y: 0, z: 1 }
-) {
+  preferredUp = { x: 0, y: 0, z: 1 },
+}) {
   // ensure that we have all the point values for the case where z might be missing
   const p1 = { x: 0, y: 0, z: 0, ...point1 };
   const p2 = { x: 0, y: 0, z: 0, ...point2 };
