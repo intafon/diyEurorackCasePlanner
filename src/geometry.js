@@ -405,11 +405,17 @@ export function calculateCaseGeometry() {
       type: boxJointType.tab,
       flip: true,
     });
+
+    const frontBoxJointWidth = Math.min(
+      BOX_JOINT_TAB_WIDTH,
+      (points[0].y - bottomLeft.y) / 3
+    );
     const frontJoints = createBoxJoints({
       point1: bottomLeft,
       point2: points[0],
       type: boxJointType.notch,
       flip: true,
+      jointWidth: frontBoxJointWidth,
     });
     const allPoints = [
       ...points,
@@ -472,12 +478,17 @@ export function calculateCaseGeometry() {
       flip: false,
       preferredUp: { x: 1, y: 0, z: 0 },
     });
+    const sideBoxJointWidth = Math.min(
+      BOX_JOINT_TAB_WIDTH,
+      (topLeft.y - bottomLeft.y) / 3
+    );
     const leftJoints = createBoxJoints({
       point1: bottomLeft,
       point2: topLeft,
       type: boxJointType.tab,
       flip: false,
       preferredUp: { x: 1, y: 0, z: 0 },
+      jointWidth: sideBoxJointWidth,
     });
     const rightJoints = createBoxJoints({
       point1: topRight,
@@ -485,6 +496,7 @@ export function calculateCaseGeometry() {
       type: boxJointType.tab,
       flip: false,
       preferredUp: { x: 1, y: 0, z: 0 },
+      jointWidth: sideBoxJointWidth,
     });
     console.info(
       "frontPanelExtrudableOutline",
@@ -949,12 +961,13 @@ function createBoxJoints({
   type = boxJointType.tab,
   flip = false,
   preferredUp = { x: 0, y: 0, z: 1 },
+  jointWidth = BOX_JOINT_TAB_WIDTH,
 }) {
   // ensure that we have all the point values for the case where z might be missing
   const p1 = { x: 0, y: 0, z: 0, ...point1 };
   const p2 = { x: 0, y: 0, z: 0, ...point2 };
   const jointHeight = state.caseMaterialThickness;
-  const jointWidth = BOX_JOINT_TAB_WIDTH;
+  // const jointWidth = BOX_JOINT_TAB_WIDTH;
 
   return generateTabbedLine({
     p1,
