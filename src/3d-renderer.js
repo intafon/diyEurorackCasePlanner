@@ -27,6 +27,7 @@ const COLOR_BG = 0xf2f2f2;
 const SIDE_OPACITY = 0.55;
 const BOTTOM_OPACITY = 0.55;
 const OTHER_OPACITY = 0.55;
+const BACK_OPACITY = 1;
 
 export function initThreeRenderer(canvas) {
   canvasEl = canvas;
@@ -569,9 +570,9 @@ export function buildScene() {
     console.info("backPanelPoints", backPanelPoints);
     const backPanelMesh = makeExtrudedPanelMesh(
       backPanelPoints,
-      new THREE.Vector3(-state.caseMaterialThickness, 0,0),
+      new THREE.Vector3(-state.caseMaterialThickness, 0, 0),
       COLOR_BACK,
-      OTHER_OPACITY
+      BACK_OPACITY,//OTHER_OPACITY
     );
     sceneRoot.add(backPanelMesh);
 

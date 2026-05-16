@@ -633,6 +633,10 @@ export function calculateCaseGeometry() {
     const { topLeft, topRight, bottomRight, bottomLeft } =
       createBackPanelOutline();
 
+    // fix it so that the tabs make the back the right height, and otherwise shorten it
+    // topLeft.y = topLeft.y - state.caseMaterialThickness;
+    // topRight.y = topRight.y - state.caseMaterialThickness;
+
     // Now create outlines with tabs on the left and right sides and the bottom. First create the
     // center tab, then expend the tabs outward from there.
     const topJoints = createBoxJoints(

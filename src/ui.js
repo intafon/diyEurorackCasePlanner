@@ -23,6 +23,7 @@ export function createRowInput(i, value) {
   el.innerHTML = `Row ${i + 1} angle:&nbsp;`;
 
   const inp = document.createElement("input");
+  inp.type = "number";
   inp.value = value;
   inp.id = `${inputIdPrefix}${i}`;
   const onChange = (event) => {
