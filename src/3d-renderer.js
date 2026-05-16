@@ -27,7 +27,7 @@ const COLOR_BG = 0xf2f2f2;
 const SIDE_OPACITY = 0.55;
 const BOTTOM_OPACITY = 0.55;
 const OTHER_OPACITY = 0.55;
-const BACK_OPACITY = 1;
+const BACK_OPACITY = 0.55;
 
 export function initThreeRenderer(canvas) {
   canvasEl = canvas;
