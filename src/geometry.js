@@ -221,7 +221,7 @@ export function calculateCaseGeometry() {
       state.caseMaterialThickness * Math.sin(rad(lastRowAngle));
     // shelfTopLeftY - Math.cos(rad(lastRowAngle)) * state.actualPanelDepth;
 
-    backWallY = shelfBottomRightY;
+    backWallY = shelfBottomLeftY;//shelfBottomRightY;
     backWallOutside = shelfBottomRightX;
     backWallInside = backWallOutside - state.caseMaterialThickness;
 
@@ -257,7 +257,8 @@ export function calculateCaseGeometry() {
     });
 
     addPoint(shelfTopRightX, shelfTopRightY);
-    addPoint(backWallOutside, backWallY);
+    // addPoint(backWallOutside, backWallY);
+    addPoint(shelfBottomRightX, shelfBottomRightY);
     addPoint(backWallOutside, 0, "nowrite");
   }
 
@@ -388,9 +389,10 @@ export function calculateCaseGeometry() {
     // of the back edge, so the back panel's side edge is that much shorter at the top.
     // Shift the notch start point down by caseMaterialThickness so the notch pattern on
     // the side panel matches the tab pattern on the back panel's side edges exactly.
+    const backPanelPoints = createBackPanelOutline();
     const backJointsStart = state.flattenTopShelf
       ? { ...backTop, y: backTop.y - state.caseMaterialThickness }
-      : backTop;
+      : { ...backTop, y: backPanelPoints.topLeft.y };
     const backJoints = createBoxJoints(
       backJointsStart,
       bottomRight,
