@@ -527,18 +527,18 @@ export function calculateCaseGeometry() {
     const bottomLeft = points.pop();
     const bottomRight = points.pop();
     const backTop = points.pop();
-    const frontTop = points.pop();
-    const topBoxJointWidth = Math.min(
+    const frontTop = geometry.hasShelfTop ? points.pop() : null;
+    const topBoxJointWidth = frontTop ? Math.min(
       BOX_JOINT_TAB_WIDTH,
       (Math.sqrt(Math.pow(distance(frontTop, backTop), 2)) - 1) / 3
-    );
-    const topJoints = createBoxJoints({
+    ) : 0;
+    const topJoints = frontTop ?[frontTop, ...createBoxJoints({
       point1: frontTop,
       point2: backTop,
       type: boxJointType.notch,
       flip: true,
       jointWidth: topBoxJointWidth,
-    });
+    })] : [];
     console.info("topBoxJointWidth", topBoxJointWidth, "topJoints", topJoints);
     // In flattenTopShelf mode the top shelf panel occupies the top caseMaterialThickness
     // of the back edge, so the back panel's side edge is that much shorter at the top.
@@ -548,9 +548,12 @@ export function calculateCaseGeometry() {
     const backJointsStart = state.flattenTopShelf
       ? { ...backTop, y: backTop.y - state.caseMaterialThickness }
       : { ...backTop, y: backPanelPoints.topLeft.y };
+    const backJointsEnd = false //geometry.hasShelfTop
+      ? bottomRight
+      : { x: backPanelPoints.bottomLeft.x, y: backPanelPoints.bottomLeft.y };
     const backJoints = createBoxJoints({
       point1: backJointsStart,
-      point2: bottomRight,
+      point2: backJointsEnd,
       type: boxJointType.notch,
       flip: true,
     });
@@ -574,7 +577,7 @@ export function calculateCaseGeometry() {
     });
     const allPoints = [
       ...points,
-      frontTop,
+    //   frontTop ? frontTop : ...[],
       ...topJoints,
       backTop,
       // In flattenTopShelf mode, plain step down to where the joinable region starts
@@ -808,13 +811,15 @@ export function calculateCaseGeometry() {
 
     // Now create outlines with tabs on the left and right sides and the bottom. First create the
     // center tab, then expend the tabs outward from there.
-    const topJoints = createBoxJoints({
-      point1: topLeft,
-      point2: topRight,
-      type: boxJointType.tab,
-      flip: true,
-      preferredUp: { x: 1, y: 0, z: 0 },
-    });
+    const topJoints = geometry.hasShelfTop
+      ? createBoxJoints({
+          point1: topLeft,
+          point2: topRight,
+          type: boxJointType.tab,
+          flip: true,
+          preferredUp: { x: 1, y: 0, z: 0 },
+        })
+      : [];
     const rightJoints = createBoxJoints({
       point1: topRight,
       point2: bottomRight,

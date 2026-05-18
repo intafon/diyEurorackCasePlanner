@@ -15,11 +15,11 @@ let sceneRoot = null;
 let preservedCameraState = null;
 let isFirstBuild = true;
 
-const COLOR_BOTTOM = 0x8b6f47;  // Keep existing brown
-const COLOR_FRONT = 0x4a90e2;   // Blue
-const COLOR_BACK = 0x27ae60;    // Green (back wall)
-const COLOR_SHELF = 0xe74c3c;   // Red (top shelf)
-const COLOR_SIDE = 0x9b59b6;    // Purple
+const COLOR_BOTTOM = 0x8b6f47; // Keep existing brown
+const COLOR_FRONT = 0x4a90e2; // Blue
+const COLOR_BACK = 0x27ae60; // Green (back wall)
+const COLOR_SHELF = 0xe74c3c; // Red (top shelf)
+const COLOR_SIDE = 0x9b59b6; // Purple
 const COLOR_RAIL = 0xb0b0b0;
 const COLOR_SCREW = 0x444444;
 const COLOR_BG = 0xf2f2f2;
@@ -509,26 +509,26 @@ export function buildScene() {
   );
   sceneRoot.add(leftSideMesh);
 
-//   if (geom.baseBoardOutline && geom.baseBoardOutline.length > 0) {
-//     const basePts = geom.baseBoardOutline.map((p) => ({ x: p.x, y: p.y }));
-//     const baseMesh = makeBoardMesh(
-//       basePts,
-//       innerWidth + 2 * sideThickness,
-//       matBottom,
-//       -innerWidth / 2 - sideThickness
-//     );
-//     sceneRoot.add(baseMesh);
-//   }
+  //   if (geom.baseBoardOutline && geom.baseBoardOutline.length > 0) {
+  //     const basePts = geom.baseBoardOutline.map((p) => ({ x: p.x, y: p.y }));
+  //     const baseMesh = makeBoardMesh(
+  //       basePts,
+  //       innerWidth + 2 * sideThickness,
+  //       matBottom,
+  //       -innerWidth / 2 - sideThickness
+  //     );
+  //     sceneRoot.add(baseMesh);
+  //   }
 
-    const bottomPanelPoints = geom.createBottomPanelExtrudableOutline();
-    console.info("bottomPanelPoints", bottomPanelPoints);
-    const bottomPanelMesh = makeExtrudedPanelMesh(
-      bottomPanelPoints,
-      new THREE.Vector3(0, state.caseMaterialThickness, 0),
-      COLOR_BOTTOM,
-      OTHER_OPACITY
-    );
-    sceneRoot.add(bottomPanelMesh);
+  const bottomPanelPoints = geom.createBottomPanelExtrudableOutline();
+  console.info("bottomPanelPoints", bottomPanelPoints);
+  const bottomPanelMesh = makeExtrudedPanelMesh(
+    bottomPanelPoints,
+    new THREE.Vector3(0, state.caseMaterialThickness, 0),
+    COLOR_BOTTOM,
+    OTHER_OPACITY
+  );
+  sceneRoot.add(bottomPanelMesh);
 
   console.log("created base panel");
 
@@ -555,39 +555,40 @@ export function buildScene() {
   );
   sceneRoot.add(frontPanelMesh);
 
-//   if (geom.backPieceOutline && geom.backPieceOutline.length > 0) {
-//     const backPts = geom.backPieceOutline.map((p) => ({ x: p.x, y: p.y }));
-//     const backMesh = makeBoardMesh(
-//       backPts,
-//       innerWidth,
-//       matBack,
-//       -innerWidth / 2
-//     );
-//     sceneRoot.add(backMesh);
-//   }
+  //   if (geom.backPieceOutline && geom.backPieceOutline.length > 0) {
+  //     const backPts = geom.backPieceOutline.map((p) => ({ x: p.x, y: p.y }));
+  //     const backMesh = makeBoardMesh(
+  //       backPts,
+  //       innerWidth,
+  //       matBack,
+  //       -innerWidth / 2
+  //     );
+  //     sceneRoot.add(backMesh);
+  //   }
 
-    const backPanelPoints = geom.createBackPanelExtrudableOutline();
-    console.info("backPanelPoints", backPanelPoints);
-    const backPanelMesh = makeExtrudedPanelMesh(
-      backPanelPoints,
-      new THREE.Vector3(-state.caseMaterialThickness, 0, 0),
-      COLOR_BACK,
-      BACK_OPACITY,//OTHER_OPACITY
-    );
-    sceneRoot.add(backPanelMesh);
+  const backPanelPoints = geom.createBackPanelExtrudableOutline();
+  console.info("backPanelPoints", backPanelPoints);
+  const backPanelMesh = makeExtrudedPanelMesh(
+    backPanelPoints,
+    new THREE.Vector3(-state.caseMaterialThickness, 0, 0),
+    COLOR_BACK,
+    BACK_OPACITY //OTHER_OPACITY
+  );
+  sceneRoot.add(backPanelMesh);
 
-//   // Always render the "shelf"
-//   //if (state.flattenTopShelf && geom.shelfPieceOutline && geom.shelfPieceOutline.length > 0) {
-//   const shelfPts = geom.shelfPieceOutline.map((p) => ({ x: p.x, y: p.y }));
-//   const shelfMesh = makeBoardMesh(
-//     shelfPts,
-//     innerWidth,
-//     matShelf,
-//     -innerWidth / 2
-//   );
-//   sceneRoot.add(shelfMesh);
-//   //}
+  //   // Always render the "shelf"
+  //   //if (state.flattenTopShelf && geom.shelfPieceOutline && geom.shelfPieceOutline.length > 0) {
+  //   const shelfPts = geom.shelfPieceOutline.map((p) => ({ x: p.x, y: p.y }));
+  //   const shelfMesh = makeBoardMesh(
+  //     shelfPts,
+  //     innerWidth,
+  //     matShelf,
+  //     -innerWidth / 2
+  //   );
+  //   sceneRoot.add(shelfMesh);
+  //   //}
 
+  if (geom.hasShelfTop) {
     const topPanelPoints = geom.createTopPanelExtrudableOutline();
     const t = state.caseMaterialThickness;
     let topPanelExtrudeVec;
@@ -595,7 +596,7 @@ export function buildScene() {
       topPanelExtrudeVec = new THREE.Vector3(0, -t, 0);
     } else {
       const inwardX = -Math.sin(rad(geom.shelfAngle));
-      const inwardY =  Math.cos(rad(geom.shelfAngle));
+      const inwardY = Math.cos(rad(geom.shelfAngle));
       topPanelExtrudeVec = new THREE.Vector3(inwardX * t, inwardY * t, 0);
     }
     const topPanelMesh = makeExtrudedPanelMesh(
@@ -605,6 +606,7 @@ export function buildScene() {
       OTHER_OPACITY
     );
     sceneRoot.add(topPanelMesh);
+  }
 
   geom.panels.forEach((panel, i) => {
     // Add horizontal rails that span the full case width (now with holes drilled through them)
