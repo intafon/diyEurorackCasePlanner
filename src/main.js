@@ -199,15 +199,15 @@ function drawSide() {
 
   const caseGeometry = calculateCaseGeometry();
 
-  console.info("createSidePanelOutline", caseGeometry.createSidePanelOutline());
-  console.info(
-    "createSidePanel2dSideOutline",
-    caseGeometry.createSidePanel2dSideOutline()
-  );
-  console.info(
-    "createSidePanelExtrudableOutline",
-    caseGeometry.createSidePanelExtrudableOutline()
-  );
+//   console.info("createSidePanelOutline", caseGeometry.createSidePanelOutline());
+//   console.info(
+//     "createSidePanel2dSideOutline",
+//     caseGeometry.createSidePanel2dSideOutline()
+//   );
+//   console.info(
+//     "createSidePanelExtrudableOutline",
+//     caseGeometry.createSidePanelExtrudableOutline()
+//   );
 
   ctx.setLineDash([]);
   // const railScrewCoords = drawPanelRails(state.panels);

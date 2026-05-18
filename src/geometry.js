@@ -118,7 +118,7 @@ export function calculateCaseGeometry() {
 
   const lastRowEndX = x;
   const lastRowEndY = y;
-  const lastRowAngle = state.getActualRowAngle();
+  const lastRowAngle = Math.max(state.getActualRowAngle(), 0);
   // Inner back wall should allow for module depth to be that specified by user.
   const backInnerWallX =
     maxScrewX +
@@ -127,6 +127,8 @@ export function calculateCaseGeometry() {
   const backOuterWallX = backInnerWallX + state.caseMaterialThickness;
 
   let backWallInside, backWallY, backWallOutside;
+
+  geometry.hasShelfTop = true;
 
   if (state.flattenTopShelf) {
     geometry.shelfAngle = 90;
@@ -197,6 +199,7 @@ export function calculateCaseGeometry() {
       x: shelfBottomRightX,
       y: shelfBottomRightY,
     });
+    geometry.backPanelHeight = backTopRightY;
   } else {
     geometry.shelfAngle = lastRowAngle + 90;
     const shelfTopLeftX = lastRowEndX;
@@ -221,50 +224,197 @@ export function calculateCaseGeometry() {
       state.caseMaterialThickness * Math.sin(rad(lastRowAngle));
     // shelfTopLeftY - Math.cos(rad(lastRowAngle)) * state.actualPanelDepth;
 
-    backWallY = shelfBottomLeftY; //shelfBottomRightY;
-    backWallOutside = shelfBottomRightX;
-    backWallInside = backWallOutside - state.caseMaterialThickness;
+    // If the top shelf is negative in height and angle < 90 or the topshelf is really short, then
+    // lets just have the back panel with no top shelf. The negative angle is the result of the
+    // way we are calculating things, but in this case the need for the top shelf is really
+    // non-existent as it would be so short.
+    if (
+      (shelfBottomLeftY - shelfTopLeftY > 0 && lastRowAngle < 90) ||
+      distance(
+        {
+          x: shelfTopRightX,
+          y: shelfTopRightY,
+        },
+        {
+          x: shelfBottomRightX,
+          y: shelfBottomRightY,
+        }
+      ) < 30 /* if topshelf is less than 30mm long*/
+    ) {
+      geometry.hasShelfTop = false;
+    }
 
-    geometry.shelfPieceOutline.push({ x: lastRowEndX, y: lastRowEndY });
-    geometry.shelfPieceOutline.push({
-      x: shelfTopRightX,
-      y: shelfTopRightY,
-    });
-    geometry.shelfPieceOutline.push({
-      x: shelfBottomRightX,
-      y: shelfBottomRightY,
-    });
-    geometry.shelfPieceOutline.push({
-      x: shelfBottomLeftX,
-      y: shelfBottomLeftY,
-    });
+    console.info(
+      "shelfTopLeftY",
+      shelfTopLeftY,
+      "shelfTopRightY",
+      shelfTopRightY,
 
-    geometry.backPieceOutline.push({
-      x: backWallInside,
-      y: backWallY,
-    });
-    geometry.backPieceOutline.push({
-      x: backWallOutside,
-      y: backWallY,
-    });
-    geometry.backPieceOutline.push({
-      x: backWallOutside,
-      y: 0,
-    });
-    geometry.backPieceOutline.push({
-      x: backWallInside,
-      y: 0,
-    });
+      "shelfBottomRightY",
+      shelfBottomRightY,
+      "shelfBottomLeftY",
+      shelfBottomLeftY,
+      "geometry.hasShelfTop",
+      geometry.hasShelfTop
+    );
 
-    addPoint(shelfTopRightX, shelfTopRightY);
-    // addPoint(backWallOutside, backWallY);
-    addPoint(shelfBottomRightX, shelfBottomRightY);
-    addPoint(backWallOutside, 0, "nowrite");
+    if (geometry.hasShelfTop) {
+      backWallY = shelfBottomLeftY; //shelfBottomRightY;
+      backWallOutside = shelfBottomRightX;
+      backWallInside = backWallOutside - state.caseMaterialThickness;
+
+      geometry.shelfPieceOutline.push({ x: lastRowEndX, y: lastRowEndY });
+      geometry.shelfPieceOutline.push({
+        x: shelfTopRightX,
+        y: shelfTopRightY,
+      });
+      geometry.shelfPieceOutline.push({
+        x: shelfBottomRightX,
+        y: shelfBottomRightY,
+      });
+      geometry.shelfPieceOutline.push({
+        x: shelfBottomLeftX,
+        y: shelfBottomLeftY,
+      });
+
+      geometry.backPieceOutline.push({
+        x: backWallInside,
+        y: backWallY,
+      });
+      geometry.backPieceOutline.push({
+        x: backWallOutside,
+        y: backWallY,
+      });
+      geometry.backPieceOutline.push({
+        x: backWallOutside,
+        y: 0,
+      });
+      geometry.backPieceOutline.push({
+        x: backWallInside,
+        y: 0,
+      });
+
+      addPoint(shelfTopRightX, shelfTopRightY);
+      // addPoint(backWallOutside, backWallY);
+      addPoint(shelfBottomRightX, shelfBottomRightY);
+      addPoint(backWallOutside, 0, "nowrite");
+
+      geometry.backWallInside = backWallInside;
+      geometry.backPanelHeight = backWallY;
+    } else {
+      geometry.shelfAngle = lastRowAngle + 90;
+
+      // }
+
+      const backPanelAngle = lastRowAngle + 90;
+      const backTopLeftX = lastRowEndX;
+      const backTopLeftY = lastRowEndY;
+      const backTopRightX =
+        lastRowEndX + Math.cos(rad(lastRowAngle)) * state.caseMaterialThickness;
+      const backTopRightY =
+        backTopLeftY +
+        Math.sin(rad(lastRowAngle)) * state.caseMaterialThickness;
+      const backBottomLeftY = 0;
+      const backBottomLeftX =
+        backTopLeftX - backTopLeftY / Math.tan(rad(backPanelAngle));
+      const backPanelLen = distance(
+        {
+          x: backTopLeftX,
+          y: backTopLeftY,
+        },
+        {
+          x: backBottomLeftX,
+          y: backBottomLeftY,
+        }
+      );
+      const backBottomRightX =
+        backBottomLeftX +
+        Math.cos(rad(lastRowAngle)) * state.caseMaterialThickness;
+      const backBottomRightY =
+        backBottomLeftY +
+        Math.sin(rad(lastRowAngle)) * state.caseMaterialThickness;
+      const backBottomEndX =
+        backTopRightX - backTopRightY / Math.tan(rad(backPanelAngle));
+      // const backBottomRightX = backOuterWallX;
+      // const backBottomRightY = backTopRightY - state.caseMaterialThickness;
+      // const backBottomLeftX = backTopLeftX;
+
+      geometry.backPieceOutline.push({
+        x: backTopLeftX,
+        y: backTopLeftY,
+      });
+      geometry.backPieceOutline.push({
+        x: backTopRightX,
+        y: backTopRightY,
+      });
+      geometry.backPieceOutline.push({
+        x: backBottomRightX,
+        y: backBottomRightY,
+      });
+      geometry.backPieceOutline.push({
+        x: backBottomLeftX,
+        y: backBottomLeftY,
+      });
+
+      addPoint(backTopRightX, backTopRightY);
+      // addPoint(backWallOutside, backWallY);
+      //   addPoint(shelfBottomRightX, shelfBottomRightY);
+      addPoint(backBottomEndX, 0, "nowrite");
+
+      geometry.backWallInside = backBottomLeftX;
+      geometry.backPanelHeight = distance(
+        {
+          x: backTopLeftX,
+          y: backTopLeftY,
+        },
+        {
+          x: backBottomLeftX,
+          y: backBottomLeftY,
+        }
+      );
+    }
+    // backWallY = shelfBottomLeftY; //shelfBottomRightY;
+    // backWallOutside = shelfBottomRightX;
+    // backWallInside = backWallOutside - state.caseMaterialThickness;
+
+    // geometry.shelfPieceOutline.push({ x: lastRowEndX, y: lastRowEndY });
+    // geometry.shelfPieceOutline.push({
+    //   x: shelfTopRightX,
+    //   y: shelfTopRightY,
+    // });
+    // geometry.shelfPieceOutline.push({
+    //   x: shelfBottomRightX,
+    //   y: shelfBottomRightY,
+    // });
+    // geometry.shelfPieceOutline.push({
+    //   x: shelfBottomLeftX,
+    //   y: shelfBottomLeftY,
+    // });
+
+    // geometry.backPieceOutline.push({
+    //   x: backWallInside,
+    //   y: backWallY,
+    // });
+    // geometry.backPieceOutline.push({
+    //   x: backWallOutside,
+    //   y: backWallY,
+    // });
+    // geometry.backPieceOutline.push({
+    //   x: backWallOutside,
+    //   y: 0,
+    // });
+    // geometry.backPieceOutline.push({
+    //   x: backWallInside,
+    //   y: 0,
+    // });
+
+    // addPoint(shelfTopRightX, shelfTopRightY);
+    // // addPoint(backWallOutside, backWallY);
+    // addPoint(shelfBottomRightX, shelfBottomRightY);
+    // addPoint(backWallOutside, 0, "nowrite");
   }
 
   addPoint(0, 0);
-
-  geometry.backWallInside = backWallInside;
 
   geometry.baseBoardOutline = [
     { x: 0, y: 0 },
@@ -330,7 +480,7 @@ export function calculateCaseGeometry() {
     {
       name: "Back",
       width: panelWidth,
-      height: backHeight,
+      height: geometry.backPanelHeight, //backHeight,
     },
   ];
 

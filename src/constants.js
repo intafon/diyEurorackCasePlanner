@@ -31,7 +31,7 @@ export const oneUFormats = {
 export const DEFAULTS = {
   rowCounts: [1, 2, 3, 4, 5],
   rowCount: 3,
-  rowAngles: [5, 10, 10],
+  rowAngles: [0, 0, 1], //[5, 10, 10],
   defaultAngle: 5,
   // Note, this actualPanelHeight is actually top of top rail to bottom of bottom rail for 3U.
   actualPanelHeight: SPEC_3U_HEIGHT,
