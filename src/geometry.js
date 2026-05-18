@@ -548,7 +548,7 @@ export function calculateCaseGeometry() {
     const backJointsStart = state.flattenTopShelf
       ? { ...backTop, y: backTop.y - state.caseMaterialThickness }
       : { ...backTop, y: backPanelPoints.topLeft.y };
-    const backJointsEnd = false //geometry.hasShelfTop
+    const backJointsEnd = geometry.hasShelfTop
       ? bottomRight
       : { x: backPanelPoints.bottomLeft.x, y: backPanelPoints.bottomLeft.y };
     const backJoints = createBoxJoints({
