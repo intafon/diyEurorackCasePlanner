@@ -51,4 +51,5 @@ export const COLORS = {
 };
 
 export const DRILL_HOLE_2D_RADIUS = 3;
-export const BOX_JOINT_TAB_WIDTH = 25;
+export const BOX_JOINT_DEFAULT_TAB_WIDTH = 25;
+export const BOX_JOINT_MINIMUM_TAB_WIDTH = 10 * 0.635; // quarter inch is minimum for now
