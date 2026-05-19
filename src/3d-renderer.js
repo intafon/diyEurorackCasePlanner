@@ -216,6 +216,12 @@ function makeExtrudedPanelMesh(
   const edge2 = new THREE.Vector3().subVectors(v2, v0);
   const normal = new THREE.Vector3().crossVectors(edge1, edge2).normalize();
 
+  // Check for degenerate normal (all points are collinear)
+  if (normal.length() < 0.001) {
+    console.warn("Degenerate normal detected for panel", points3D.slice(0, 3));
+    return new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ visible: false }));
+  }
+
   // 2. Build a STABLE Basis
   // Instead of using the first edge as X, we pick a global "up"
   // and derive X and Y from the plane's normal.
@@ -223,6 +229,11 @@ function makeExtrudedPanelMesh(
   // If the normal is already pointing UP, use Forward as a reference instead
   if (Math.abs(normal.dot(worldUp)) > 0.99) {
     worldUp.set(0, 0, 1);
+  }
+
+  // Ensure the normal points in a consistent direction relative to the extrusion
+  if (normal.dot(direction) < 0) {
+    normal.negate();
   }
 
   const xAxis = new THREE.Vector3().crossVectors(worldUp, normal).normalize();
@@ -239,9 +250,11 @@ function makeExtrudedPanelMesh(
   shape.closePath();
 
   // 4. Create Extrusion
-  // We use the length of the extrudeVec, but we need to find
-  // its projection relative to our plane's normal
-  const distance = direction.dot(normal);
+  // Since we've aligned the normal with the extrusion direction above,
+  // we can now safely use the dot product
+  const distance = Math.abs(direction.dot(normal));
+
+  console.log("Panel extrusion - distance:", distance, "normal:", normal, "direction:", direction);
 
   // Note: Standard ExtrudeGeometry extrudes along the Z axis (the normal)
   const geometry = new THREE.ExtrudeGeometry(shape, {
@@ -492,22 +505,32 @@ export function buildScene() {
   //createSidePanelExtrudableOutline
 
   const rightSidePoints = geom.createSidePanelExtrudableOutline();
-  const rightSideMesh = makeExtrudedPanelMesh(
-    rightSidePoints,
-    new THREE.Vector3(0, 0, -state.caseMaterialThickness),
-    COLOR_SIDE,
-    SIDE_OPACITY
-  );
-  sceneRoot.add(rightSideMesh);
+  console.log("Right side points:", rightSidePoints);
+  if (rightSidePoints && rightSidePoints.length > 2) {
+    const rightSideMesh = makeExtrudedPanelMesh(
+      rightSidePoints,
+      new THREE.Vector3(0, 0, -state.caseMaterialThickness),
+      COLOR_SIDE,
+      SIDE_OPACITY
+    );
+    if (rightSideMesh) {
+      sceneRoot.add(rightSideMesh);
+    }
+  }
 
   const leftSidePoints = geom.createSidePanelExtrudableOutline("left");
-  const leftSideMesh = makeExtrudedPanelMesh(
-    leftSidePoints,
-    new THREE.Vector3(0, 0, state.caseMaterialThickness),
-    COLOR_SIDE,
-    SIDE_OPACITY
-  );
-  sceneRoot.add(leftSideMesh);
+  console.log("Left side points:", leftSidePoints);
+  if (leftSidePoints && leftSidePoints.length > 2) {
+    const leftSideMesh = makeExtrudedPanelMesh(
+      leftSidePoints,
+      new THREE.Vector3(0, 0, state.caseMaterialThickness),
+      COLOR_SIDE,
+      SIDE_OPACITY
+    );
+    if (leftSideMesh) {
+      sceneRoot.add(leftSideMesh);
+    }
+  }
 
   //   if (geom.baseBoardOutline && geom.baseBoardOutline.length > 0) {
   //     const basePts = geom.baseBoardOutline.map((p) => ({ x: p.x, y: p.y }));

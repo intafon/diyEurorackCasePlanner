@@ -591,7 +591,8 @@ export function calculateCaseGeometry() {
       ...frontJoints,
       //   points[0],
     ];
-    return side === "right" ? allPoints.reverse() : allPoints;
+    //return side === "left" ? allPoints.reverse() : allPoints;
+    return allPoints.reverse();
   };
 
   const createFrontPanelOutline = () => {
@@ -678,7 +679,7 @@ export function calculateCaseGeometry() {
       bottomLeft,
       ...leftJoints,
       //   topLeft,
-    ].reverse();
+    ];//.reverse();
   };
 
   const createBottomPanelOutline = () => {
@@ -807,6 +808,8 @@ export function calculateCaseGeometry() {
     const { topLeft, topRight, bottomRight, bottomLeft } =
       createBackPanelOutline();
 
+    console.info("createBackPanelOutline()", createBackPanelOutline());
+
     // fix it so that the tabs make the back the right height, and otherwise shorten it
     // topLeft.y = topLeft.y - state.caseMaterialThickness;
     // topRight.y = topRight.y - state.caseMaterialThickness;
@@ -834,7 +837,7 @@ export function calculateCaseGeometry() {
       point2: bottomLeft,
       type: boxJointType.tab,
       flip: true,
-      preferredUp: { x: 1, y: 0, z: 0 },
+    //   preferredUp: { x: 1, y: 0, z: 0 },
     });
     const leftJoints = createBoxJoints({
       point1: bottomLeft,
@@ -843,6 +846,13 @@ export function calculateCaseGeometry() {
       flip: true,
       preferredUp: { x: 1, y: 0, z: 0 },
     });
+    console.info("createBackPanelExtrudableOutline", [
+      topLeft,
+      topRight,
+      bottomRight,
+      ...bottomJoints,
+      bottomLeft,
+    ]);
     return [
       topLeft,
       ...topJoints,
@@ -852,8 +862,7 @@ export function calculateCaseGeometry() {
       ...bottomJoints,
       bottomLeft,
       ...leftJoints,
-      //   topLeft,
-    ].reverse();
+    ];
   };
 
   const createTopPanelOutline = () => {
