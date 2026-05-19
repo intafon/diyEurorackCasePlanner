@@ -38,6 +38,8 @@ export function getScrewHoleCoords(panel, panelIndex) {
   };
 }
 
+// const currentGeometry = {timestamp};
+
 export function calculateCaseGeometry() {
   const geometry = {
     outline: [],

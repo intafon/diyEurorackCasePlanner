@@ -377,8 +377,12 @@ function init() {
   flattenTopShelfCb.checked = state.flattenTopShelf;
   flattenTopShelfCb.addEventListener("change", (event) => {
     state.flattenTopShelf = event.target.checked;
-    drawSide();
-    buildScene();
+    // drawSide();
+    if (view === "3d") {
+     buildScene();
+    } else {
+        drawSide();
+    }
   });
 
   canvasDiv = document.getElementById("canvas-div");

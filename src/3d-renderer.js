@@ -521,7 +521,7 @@ export function buildScene() {
   //   }
 
   const bottomPanelPoints = geom.createBottomPanelExtrudableOutline();
-  console.info("bottomPanelPoints", bottomPanelPoints);
+//   console.info("bottomPanelPoints", bottomPanelPoints);
   const bottomPanelMesh = makeExtrudedPanelMesh(
     bottomPanelPoints,
     new THREE.Vector3(0, state.caseMaterialThickness, 0),
@@ -530,7 +530,7 @@ export function buildScene() {
   );
   sceneRoot.add(bottomPanelMesh);
 
-  console.log("created base panel");
+//   console.log("created base panel");
 
   //   if (geom.frontPieceOutline && geom.frontPieceOutline.length > 0) {
   //     const frontPts = geom.frontPieceOutline.map((p) => ({ x: p.x, y: p.y }));
@@ -546,7 +546,7 @@ export function buildScene() {
   // createFrontPanelExtrudableOutline;
 
   const frontPanelPoints = geom.createFrontPanelExtrudableOutline();
-  console.info("frontPanelPoints", frontPanelPoints);
+//   console.info("frontPanelPoints", frontPanelPoints);
   const frontPanelMesh = makeExtrudedPanelMesh(
     frontPanelPoints,
     new THREE.Vector3(state.caseMaterialThickness, 0, 0),
@@ -567,7 +567,7 @@ export function buildScene() {
   //   }
 
   const backPanelPoints = geom.createBackPanelExtrudableOutline();
-  console.info("backPanelPoints", backPanelPoints);
+//   console.info("backPanelPoints", backPanelPoints);
   const backPanelMesh = makeExtrudedPanelMesh(
     backPanelPoints,
     new THREE.Vector3(-state.caseMaterialThickness, 0, 0),
