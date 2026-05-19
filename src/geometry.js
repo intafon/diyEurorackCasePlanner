@@ -554,11 +554,11 @@ export function calculateCaseGeometry() {
     // the side panel matches the tab pattern on the back panel's side edges exactly.
     const backPanelPoints = createBackPanelOutline();
     const backJointsStart = state.flattenTopShelf
-      ? { ...backTop, y: backTop.y - state.caseMaterialThickness }
-      : { ...backTop, y: backPanelPoints.topLeft.y };
+      ? { ...backTop, y: backTop.y - state.caseMaterialThickness, z:0 }
+      : { ...backTop, y: backPanelPoints.topLeft.y, z:0 };
     const backJointsEnd = geometry.hasShelfTop
-      ? bottomRight
-      : { x: backPanelPoints.bottomLeft.x, y: backPanelPoints.bottomLeft.y };
+      ? {...bottomRight, z: 0}
+      : { x: backPanelPoints.bottomLeft.x, y: backPanelPoints.bottomLeft.y, z:0 };
     // const backBoxJointWidth = Math.min(
     //   BOX_JOINT_DEFAULT_TAB_WIDTH,
     //   (distance(backJointsStart, backJointsEnd) - 1) / 3
@@ -568,12 +568,16 @@ export function calculateCaseGeometry() {
       backJointsEnd
     );
     console.info(
-      "backBoxJointWidth",
+      "backBoxJointWidth for sidepanel",
       backBoxJointWidth,
       "BOX_JOINT_TAB_WIDTH",
       BOX_JOINT_DEFAULT_TAB_WIDTH,
       "(distance(backJointsStart, backJointsEnd) - 1) / 3",
-      (distance(backJointsStart, backJointsEnd) - 1) / 3
+      (distance3d(backJointsStart, backJointsEnd) - 1) / 3,
+      "point distance",
+      distance3d(backJointsStart, backJointsEnd),
+      "start point",
+      backJointsStart,"end point", backJointsEnd,
     );
     const backJoints = createBoxJoints({
       point1: backJointsStart,
@@ -857,6 +861,21 @@ export function calculateCaseGeometry() {
           preferredUp: { x: 1, y: 0, z: 0 },
         })
       : [];
+
+    /*
+          const backPanelPoints = createBackPanelOutline();
+    const backJointsStart = state.flattenTopShelf
+      ? { ...backTop, y: backTop.y - state.caseMaterialThickness }
+      : { ...backTop, y: backPanelPoints.topLeft.y };
+    const backJointsEnd = geometry.hasShelfTop
+      ? bottomRight
+      : { x: backPanelPoints.bottomLeft.x, y: backPanelPoints.bottomLeft.y };
+    const backBoxJointWidth = calculateCustomBoxJointWidth(
+      backJointsStart,
+      backJointsEnd
+    );
+      */
+
     const rightJoints = createBoxJoints({
       point1: topRight,
       point2: bottomRight,
@@ -865,21 +884,53 @@ export function calculateCaseGeometry() {
       preferredUp: { x: 1, y: 0, z: 0 },
       jointWidth: calculateCustomBoxJointWidth(topRight, bottomRight),
     });
+
     const bottomJoints = createBoxJoints({
       point1: bottomRight,
       point2: bottomLeft,
       type: boxJointType.tab,
       flip: true,
-    //   preferredUp: { x: 1, y: 0, z: 0 },
+      //   preferredUp: { x: 1, y: 0, z: 0 },
     });
+
+    /*
+          const backPanelPoints = createBackPanelOutline();
+    const backJointsStart = state.flattenTopShelf
+      ? { ...backTop, y: backTop.y - state.caseMaterialThickness }
+      : { ...backTop, y: backPanelPoints.topLeft.y };
+    const backJointsEnd = geometry.hasShelfTop
+      ? bottomRight
+      : { x: backPanelPoints.bottomLeft.x, y: backPanelPoints.bottomLeft.y };
+    const backBoxJointWidth = calculateCustomBoxJointWidth(
+      backJointsStart,
+      backJointsEnd
+    );
+      */
+    const leftSideJointWidth = calculateCustomBoxJointWidth(bottomLeft, topLeft);
     const leftJoints = createBoxJoints({
       point1: bottomLeft,
       point2: topLeft,
       type: boxJointType.tab,
       flip: true,
       preferredUp: { x: 1, y: 0, z: 0 },
-      jointWidth: calculateCustomBoxJointWidth(bottomLeft, topLeft),
+      jointWidth: leftSideJointWidth,
     });
+
+    console.info(
+      "backBoxJointWidth for left side of back panel",
+      leftSideJointWidth,
+      "BOX_JOINT_TAB_WIDTH",
+      BOX_JOINT_DEFAULT_TAB_WIDTH,
+      "(distance(bottomLeft, topLeft) - 1) / 3",
+      (distance3d(bottomLeft, topLeft) - 1) / 3,
+      "point distance",
+      distance3d(bottomLeft, topLeft),
+      "start point",
+      bottomLeft,
+      "end point",
+      topLeft
+    );
+
     console.info("createBackPanelExtrudableOutline", [
       topLeft,
       topRight,
