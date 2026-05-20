@@ -22,6 +22,10 @@ function projectTo2D(points, panelType, geometry) {
 
     case "back":
       // Back panel face: z is horizontal (but mirrored since looking from back), y is vertical
+      // When there's no top shelf, the back panel is angled and needs flattening
+      if (!geometry.hasShelfTop) {
+        return flattenBackPanel(points, geometry);
+      }
       return points.map((p) => ({ x: -p.z, y: p.y }));
 
     case "bottom":
@@ -69,6 +73,37 @@ function flattenTopPanel(points, geometry) {
     const dy = p.y - ref.y;
     const depth = dx * dirX + dy * dirY;
     return { x: width, y: depth };
+  });
+}
+
+/**
+ * Flattens the back panel outline to 2D when it's angled (no top shelf).
+ * The back panel lies along an angle from the last row to the bottom.
+ */
+function flattenBackPanel(points, geometry) {
+  // When there's no top shelf, the back panel is angled.
+  // We need to project the points onto the plane of the back panel.
+  // The back panel angle is typically lastRowAngle + 90 degrees.
+  
+  // Get the last row angle to determine the back panel orientation
+  const lastRowAngle = Math.max(state.getActualRowAngle(), 0);
+  const backPanelAngle = lastRowAngle + 90;
+  
+  // Direction vector along the back panel's "height" (from top to bottom)
+  const dirX = Math.cos(rad(backPanelAngle));
+  const dirY = Math.sin(rad(backPanelAngle));
+  
+  // Find reference point (first point of the outline)
+  const ref = points[0];
+  
+  return points.map((p) => {
+    // Width is along Z axis (mirrored since we're looking from back)
+    const width = -p.z;
+    // Height is the projection of (p - ref) onto the back panel direction vector
+    const dx = p.x - ref.x;
+    const dy = p.y - ref.y;
+    const height = dx * dirX + dy * dirY;
+    return { x: width, y: height };
   });
 }
 
