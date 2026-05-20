@@ -182,13 +182,21 @@ function buildExportLayout(geometry) {
   bottomPanel2D = normalizePoints(bottomPanel2D);
 
   // Top/shelf panel (back edge at bottom)
-  const topOutline3D = geometry.createTopPanelExtrudableOutline();
-  let topPanel2D = projectTo2D(topOutline3D, "top", geometry);
-  // After flattening, the "back" edge (connecting to back panel) should be at the bottom (y=0).
-  // The top panel outline goes topLeft->topRight->bottomRight->bottomLeft where "bottom" is the
-  // back-connecting edge. After projection the back edge should already be at low y values.
-  // Let's normalize first and check.
-  topPanel2D = normalizePoints(topPanel2D);
+  let topOutline3D, topPanel2D;
+  if (geometry.hasShelfTop) {
+    topOutline3D = geometry.createTopPanelExtrudableOutline();
+    topPanel2D = projectTo2D(topOutline3D, "top", geometry);
+    // After flattening, the "back" edge (connecting to back panel) should be at the bottom (y=0).
+    // The top panel outline goes topLeft->topRight->bottomRight->bottomLeft where "bottom" is the
+    // back-connecting edge. After projection the back edge should already be at low y values.
+    // Let's normalize first and check.
+    topPanel2D = normalizePoints(topPanel2D);
+  } else {
+    // Set top panel to back panel coords for now
+    // TODO: fix this later...
+    topOutline3D = backOutline3D;
+    topPanel2D = backPanel2D;
+  }
 
   // --- Compute bounds ---
   const leftBounds = getBounds(leftPanel2D);
@@ -259,13 +267,15 @@ function buildExportLayout(geometry) {
     bounds: bottomBounds,
   });
 
-  panels.push({
-    name: "Top Shelf Panel",
-    points: topPanel2D,
-    x: topPanelX,
-    y: topPanelY,
-    bounds: topBounds,
-  });
+  if (geometry.hasShelfTop) {
+    panels.push({
+      name: "Top Shelf Panel",
+      points: topPanel2D,
+      x: topPanelX,
+      y: topPanelY,
+      bounds: topBounds,
+    });
+  }
 
   for (let i = 0; i < lowerRowPanels.length; i++) {
     panels.push({
@@ -279,7 +289,7 @@ function buildExportLayout(geometry) {
   }
 
   const totalHeight = lowerRowY + lowerRowMaxHeight;
-  
+
   // Calculate total width based on the actual layout (bottom panel vs lower row width)
   const totalLayoutWidth = Math.max(lowerRowTotalWidth, bottomBounds.width);
 

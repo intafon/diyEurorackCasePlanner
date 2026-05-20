@@ -844,7 +844,12 @@ export function calculateCaseGeometry() {
     const { topLeft, topRight, bottomRight, bottomLeft } =
       createBackPanelOutline();
 
-    console.info("createBackPanelOutline()", createBackPanelOutline());
+    console.info(
+      "createBackPanelOutline()",
+      createBackPanelOutline(),
+      "flat height",
+      distance3d(topLeft, bottomLeft)
+    );
 
     // fix it so that the tabs make the back the right height, and otherwise shorten it
     // topLeft.y = topLeft.y - state.caseMaterialThickness;
@@ -1024,6 +1029,15 @@ export function calculateCaseGeometry() {
     // top panel has tabs on the sides and notches on the bottom/back
     const { topLeft, topRight, bottomRight, bottomLeft } =
       createTopPanelOutline();
+
+
+    console.info(
+      "createTopPanelOutline()",
+      createTopPanelOutline(),
+      "flat height",
+      distance3d(topLeft, bottomLeft)
+    );
+
     const preferredUp = state.flattenTopShelf
       ? { x: 0, y: -1, z: 0 }
       : {
