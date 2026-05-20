@@ -181,14 +181,19 @@ function buildExportLayout(geometry) {
   bottomPanel2D = flipVertical(bottomPanel2D);
   bottomPanel2D = normalizePoints(bottomPanel2D);
 
-  // Top/shelf panel (back edge at bottom)
-  const topOutline3D = geometry.createTopPanelExtrudableOutline();
-  let topPanel2D = projectTo2D(topOutline3D, "top", geometry);
-  // After flattening, the "back" edge (connecting to back panel) should be at the bottom (y=0).
-  // The top panel outline goes topLeft->topRight->bottomRight->bottomLeft where "bottom" is the
-  // back-connecting edge. After projection the back edge should already be at low y values.
-  // Let's normalize first and check.
-  topPanel2D = normalizePoints(topPanel2D);
+  // Top/shelf panel (back edge at bottom) - only if hasShelfTop is true
+  let topPanel2D = [];
+  let topBounds = { width: 0, height: 0 };
+  if (geometry.hasShelfTop) {
+    const topOutline3D = geometry.createTopPanelExtrudableOutline();
+    topPanel2D = projectTo2D(topOutline3D, "top", geometry);
+    // After flattening, the "back" edge (connecting to back panel) should be at the bottom (y=0).
+    // The top panel outline goes topLeft->topRight->bottomRight->bottomLeft where "bottom" is the
+    // back-connecting edge. After projection the back edge should already be at low y values.
+    // Let's normalize first and check.
+    topPanel2D = normalizePoints(topPanel2D);
+    topBounds = getBounds(topPanel2D);
+  }
 
   // --- Compute bounds ---
   const leftBounds = getBounds(leftPanel2D);
@@ -196,7 +201,7 @@ function buildExportLayout(geometry) {
   const frontBounds = getBounds(frontPanel2D);
   const backBounds = getBounds(backPanel2D);
   const bottomBounds = getBounds(bottomPanel2D);
-  const topBounds = getBounds(topPanel2D);
+  // topBounds already computed above (conditional on hasShelfTop)
 
   // --- Layout positioning ---
   // All positions are in a coordinate system where Y increases downward (SVG-style).
@@ -244,11 +249,17 @@ function buildExportLayout(geometry) {
   const bottomPanelX = frontPanelCenterX - bottomBounds.width / 2;
   const bottomPanelY = 0;
 
-  // Top/shelf panel goes between bottom panel and lower row with spacing
-  const topPanelY = bottomPanelY + bottomBounds.height + PANEL_SPACING;
-
-  // Lower row goes below the top/shelf panel with spacing
-  const lowerRowY = topPanelY + topBounds.height + PANEL_SPACING;
+  // Top/shelf panel goes between bottom panel and lower row with spacing (if it exists)
+  let topPanelY = 0;
+  let lowerRowY = 0;
+  
+  if (geometry.hasShelfTop) {
+    topPanelY = bottomPanelY + bottomBounds.height + PANEL_SPACING;
+    lowerRowY = topPanelY + topBounds.height + PANEL_SPACING;
+  } else {
+    // No top shelf, so lower row goes directly below bottom panel
+    lowerRowY = bottomPanelY + bottomBounds.height + PANEL_SPACING;
+  }
 
   // --- Build final panel list with absolute positions ---
   panels.push({
@@ -259,13 +270,16 @@ function buildExportLayout(geometry) {
     bounds: bottomBounds,
   });
 
-  panels.push({
-    name: "Top Shelf Panel",
-    points: topPanel2D,
-    x: topPanelX,
-    y: topPanelY,
-    bounds: topBounds,
-  });
+  // Only add top shelf panel if it exists
+  if (geometry.hasShelfTop) {
+    panels.push({
+      name: "Top Shelf Panel",
+      points: topPanel2D,
+      x: topPanelX,
+      y: topPanelY,
+      bounds: topBounds,
+    });
+  }
 
   for (let i = 0; i < lowerRowPanels.length; i++) {
     panels.push({

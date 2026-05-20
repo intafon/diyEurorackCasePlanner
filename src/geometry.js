@@ -804,28 +804,59 @@ export function calculateCaseGeometry() {
   const createBackPanelOutline = () => {
     // Creates the back panel, looking from the back at the back face of it.
     const backPieceOutline = geometry.backPieceOutline;
-    return {
-      topLeft: {
-        z: state.caseWidth / 2,
-        y: backPieceOutline[1].y,
-        x: backPieceOutline[1].x,
-      },
-      topRight: {
-        z: -state.caseWidth / 2,
-        y: backPieceOutline[1].y,
-        x: backPieceOutline[1].x,
-      },
-      bottomRight: {
-        z: -state.caseWidth / 2,
-        y: backPieceOutline[2].y,
-        x: backPieceOutline[2].x,
-      },
-      bottomLeft: {
-        z: state.caseWidth / 2,
-        y: backPieceOutline[2].y,
-        x: backPieceOutline[2].x,
-      },
-    };
+    
+    if (geometry.hasShelfTop) {
+      // When hasShelfTop is true, back panel is rectangular
+      // backPieceOutline format: [backWallInside_top, backWallOutside_top, backWallOutside_bottom, backWallInside_bottom]
+      return {
+        topLeft: {
+          z: state.caseWidth / 2,
+          y: backPieceOutline[1].y,
+          x: backPieceOutline[1].x,
+        },
+        topRight: {
+          z: -state.caseWidth / 2,
+          y: backPieceOutline[1].y,
+          x: backPieceOutline[1].x,
+        },
+        bottomRight: {
+          z: -state.caseWidth / 2,
+          y: backPieceOutline[2].y,
+          x: backPieceOutline[2].x,
+        },
+        bottomLeft: {
+          z: state.caseWidth / 2,
+          y: backPieceOutline[2].y,
+          x: backPieceOutline[2].x,
+        },
+      };
+    } else {
+      // When hasShelfTop is false, back panel follows the angled geometry
+      // backPieceOutline format: [topLeft, topRight, bottomRight, bottomLeft]
+      // For the face, we use the actual X,Y coordinates from each corner to maintain the angled shape
+      return {
+        topLeft: {
+          z: state.caseWidth / 2,
+          y: backPieceOutline[0].y,
+          x: backPieceOutline[0].x,
+        },
+        topRight: {
+          z: -state.caseWidth / 2,
+          y: backPieceOutline[1].y,
+          x: backPieceOutline[1].x,
+        },
+        bottomRight: {
+          z: -state.caseWidth / 2,
+          y: backPieceOutline[2].y,
+          x: backPieceOutline[2].x,
+        },
+        bottomLeft: {
+          z: state.caseWidth / 2,
+          y: backPieceOutline[3].y,
+          x: backPieceOutline[3].x,
+        },
+      };
+    }
   };
 
   const createBackPanel2dSideOutline = () => {
