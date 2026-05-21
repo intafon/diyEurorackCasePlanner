@@ -10,6 +10,9 @@ class AppState {
     this.rowCount = DEFAULTS.rowCount;
     this.rowAngles = [...DEFAULTS.rowAngles];
     this.rowIs1U = [false, false, false];
+    DEFAULTS.default1URows.forEach((row) => {
+      this.rowIs1U[row] = true;
+    });
     this.defaultAngle = DEFAULTS.defaultAngle;
     this.selected1UFormat = "intellijel";
 

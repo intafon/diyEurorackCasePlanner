@@ -32,6 +32,7 @@ export const DEFAULTS = {
   rowCounts: [1, 2, 3, 4, 5],
   rowCount: 3,
   rowAngles: [5, 10, 10],
+  default1URows: [2], // Top row is 1U by default
   defaultAngle: 5,
   // Note, this actualPanelHeight is actually top of top rail to bottom of bottom rail for 3U.
   actualPanelHeight: SPEC_3U_HEIGHT,
