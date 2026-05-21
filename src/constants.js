@@ -31,7 +31,7 @@ export const oneUFormats = {
 export const DEFAULTS = {
   rowCounts: [1, 2, 3, 4, 5],
   rowCount: 3,
-  rowAngles: [0,0,14],//[0, 0, 1], //[5, 10, 10],
+  rowAngles: [5, 10, 10],
   defaultAngle: 5,
   // Note, this actualPanelHeight is actually top of top rail to bottom of bottom rail for 3U.
   actualPanelHeight: SPEC_3U_HEIGHT,
@@ -39,8 +39,8 @@ export const DEFAULTS = {
   actualRailSeparation: SPEC_3U_RAIL_HOLE_SPACING,
   actual1URailSeparation: SPEC_1U_INTELLIJEL_RAIL_HOLE_SPACING,
   actualRailDepth: 14,
-  actualPanelDepth: 39,//60,
-  caseMaterialThickness: 14, //3.175, // 1/8"
+  actualPanelDepth: 39, //60,
+  caseMaterialThickness: 3.175, // 1/8"
   caseWidthHP: 84,
 };
 

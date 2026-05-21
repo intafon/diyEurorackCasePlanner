@@ -424,11 +424,27 @@ function initVersionDisplay() {
 function initVersionPopup() {
   const popup = document.getElementById("version-popup");
   const closeBtn = document.getElementById("popup-close-btn");
+  const currentVersion = packageJson.version;
+  
+  // Check if we should show the popup for this version
+  const seenVersion = localStorage.getItem("diy-eurorack-planner-version");
+  const shouldShowPopup = seenVersion !== currentVersion;
+  
+  // Show or hide popup based on version check
+  if (popup) {
+    if (shouldShowPopup) {
+      popup.classList.remove("hidden");
+    } else {
+      popup.classList.add("hidden");
+    }
+  }
   
   if (closeBtn) {
     closeBtn.addEventListener("click", () => {
       if (popup) {
         popup.classList.add("hidden");
+        // Save the current version to localStorage when popup is closed
+        localStorage.setItem("diy-eurorack-planner-version", currentVersion);
       }
     });
   }
@@ -438,6 +454,8 @@ function initVersionPopup() {
     popup.addEventListener("click", (event) => {
       if (event.target === popup) {
         popup.classList.add("hidden");
+        // Save the current version to localStorage when popup is closed
+        localStorage.setItem("diy-eurorack-planner-version", currentVersion);
       }
     });
   }
@@ -446,6 +464,8 @@ function initVersionPopup() {
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && popup && !popup.classList.contains("hidden")) {
       popup.classList.add("hidden");
+      // Save the current version to localStorage when popup is closed
+      localStorage.setItem("diy-eurorack-planner-version", currentVersion);
     }
   });
 }
