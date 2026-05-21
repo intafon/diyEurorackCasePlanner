@@ -45,6 +45,7 @@ export function initThreeRenderer(canvas) {
   const h = canvas.clientHeight || 400;
   camera = new THREE.PerspectiveCamera(40, w / h, 1, 5000);
   camera.position.set(350, 250, 450);
+  // camera.zoom = 1;
 
   controls = new OrbitControls(camera, canvas);
   controls.enableDamping = true;
@@ -219,7 +220,10 @@ function makeExtrudedPanelMesh(
   // Check for degenerate normal (all points are collinear)
   if (normal.length() < 0.001) {
     console.warn("Degenerate normal detected for panel", points3D.slice(0, 3));
-    return new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ visible: false }));
+    return new THREE.Mesh(
+      new THREE.BufferGeometry(),
+      new THREE.MeshBasicMaterial({ visible: false })
+    );
   }
 
   // 2. Build a STABLE Basis
@@ -254,7 +258,14 @@ function makeExtrudedPanelMesh(
   // we can now safely use the dot product
   const distance = Math.abs(direction.dot(normal));
 
-  console.log("Panel extrusion - distance:", distance, "normal:", normal, "direction:", direction);
+  console.log(
+    "Panel extrusion - distance:",
+    distance,
+    "normal:",
+    normal,
+    "direction:",
+    direction
+  );
 
   // Note: Standard ExtrudeGeometry extrudes along the Z axis (the normal)
   const geometry = new THREE.ExtrudeGeometry(shape, {
@@ -544,7 +555,7 @@ export function buildScene() {
   //   }
 
   const bottomPanelPoints = geom.createBottomPanelExtrudableOutline();
-//   console.info("bottomPanelPoints", bottomPanelPoints);
+  //   console.info("bottomPanelPoints", bottomPanelPoints);
   const bottomPanelMesh = makeExtrudedPanelMesh(
     bottomPanelPoints,
     new THREE.Vector3(0, state.caseMaterialThickness, 0),
@@ -553,7 +564,7 @@ export function buildScene() {
   );
   sceneRoot.add(bottomPanelMesh);
 
-//   console.log("created base panel");
+  //   console.log("created base panel");
 
   //   if (geom.frontPieceOutline && geom.frontPieceOutline.length > 0) {
   //     const frontPts = geom.frontPieceOutline.map((p) => ({ x: p.x, y: p.y }));
@@ -569,7 +580,7 @@ export function buildScene() {
   // createFrontPanelExtrudableOutline;
 
   const frontPanelPoints = geom.createFrontPanelExtrudableOutline();
-//   console.info("frontPanelPoints", frontPanelPoints);
+  //   console.info("frontPanelPoints", frontPanelPoints);
   const frontPanelMesh = makeExtrudedPanelMesh(
     frontPanelPoints,
     new THREE.Vector3(state.caseMaterialThickness, 0, 0),
@@ -590,7 +601,7 @@ export function buildScene() {
   //   }
 
   const backPanelPoints = geom.createBackPanelExtrudableOutline();
-//   console.info("backPanelPoints", backPanelPoints);
+  //   console.info("backPanelPoints", backPanelPoints);
   const backPanelMesh = makeExtrudedPanelMesh(
     backPanelPoints,
     new THREE.Vector3(-state.caseMaterialThickness, 0, 0),
@@ -677,6 +688,10 @@ export function buildScene() {
     controls.update();
   }
 
+  if (isFirstBuild) {
+    zoomToFitScene(camera, sceneRoot); //, controls = null) {
+  }
+
   // Mark that we've completed the first build
   isFirstBuild = false;
 }
@@ -742,4 +757,45 @@ export function resizeThreeCanvas(w, h) {
 
 export function isThreeRunning() {
   return isRunning;
+}
+
+function zoomToFitScene(camera, sceneRoot, controls = null) {
+  // 1. Compute a bounding box that encompasses all children of sceneRoot
+  const box = new THREE.Box3().setFromObject(sceneRoot);
+
+  // Safety check: if sceneRoot is completely empty, exit early
+  if (box.isEmpty()) return;
+
+  const size = new THREE.Vector3();
+  const center = new THREE.Vector3();
+  box.getSize(size);
+  box.getCenter(center);
+
+  // 2. Find the largest dimension (width, height, or depth)
+  const maxDim = Math.max(size.x, size.y, size.z);
+
+  // 3. Calculate distance using camera Field Of View (FOV)
+  const fovInRadians = (camera.fov * Math.PI) / 180;
+
+  // Calculate required distance and apply a 15% margin (0.85)
+  let distance = maxDim / 2 / Math.tan(fovInRadians / 2);
+  distance = distance / 0.85;
+
+  // 4. Reposition camera along its current angle relative to the center
+  const direction = new THREE.Vector3()
+    .subVectors(camera.position, center)
+    .normalize();
+
+  camera.position.copy(direction.multiplyScalar(distance).add(center));
+
+  // 5. Update camera and control targets
+  camera.lookAt(center);
+  camera.updateProjectionMatrix();
+
+  console.log("zoomToFitScene", camera.position, center, distance);
+
+  if (controls) {
+    controls.target.copy(center);
+    controls.update();
+  }
 }
