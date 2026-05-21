@@ -410,12 +410,48 @@ function init() {
 
 function initVersionDisplay() {
   const versionTextEl = document.getElementById("version-text");
+  const popupVersionTextEl = document.getElementById("popup-version-text");
+  
   if (versionTextEl && packageJson.version) {
     versionTextEl.textContent = packageJson.version;
   }
+  
+  if (popupVersionTextEl && packageJson.version) {
+    popupVersionTextEl.textContent = packageJson.version;
+  }
+}
+
+function initVersionPopup() {
+  const popup = document.getElementById("version-popup");
+  const closeBtn = document.getElementById("popup-close-btn");
+  
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => {
+      if (popup) {
+        popup.classList.add("hidden");
+      }
+    });
+  }
+  
+  // Close popup when clicking outside the content area
+  if (popup) {
+    popup.addEventListener("click", (event) => {
+      if (event.target === popup) {
+        popup.classList.add("hidden");
+      }
+    });
+  }
+  
+  // Close popup with Escape key
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && popup && !popup.classList.contains("hidden")) {
+      popup.classList.add("hidden");
+    }
+  });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   initVersionDisplay();
+  initVersionPopup();
   init();
 });

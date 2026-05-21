@@ -4,8 +4,141 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DIY Eurorack Case Planner Tool</title>
+    <style>
+      /* Popup styles matching the app's dark theme */
+      .popup-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(10px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+      }
+
+      .popup-content {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 24px;
+        border-radius: 3px;
+        max-width: 480px;
+        width: 90%;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        text-align: center;
+        font-family: Helvetica, Arial, sans-serif;
+        font-size: 11px;
+        font-weight: 300;
+        color: #fff;
+        letter-spacing: 0.02rem;
+        backdrop-filter: blur(10px);
+      }
+
+      .popup-title {
+        font-size: 14px;
+        font-weight: 400;
+        margin-bottom: 12px;
+        color: rgba(255, 255, 255, 0.95);
+        letter-spacing: 0.05rem;
+      }
+
+      .popup-version {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.8);
+        margin-bottom: 16px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 8px 12px;
+        border-radius: 2px;
+        font-weight: 300;
+      }
+
+      .popup-warning {
+        background-color: rgba(255, 193, 7, 0.1);
+        border: 1px solid rgba(255, 193, 7, 0.3);
+        padding: 12px;
+        border-radius: 2px;
+        margin-bottom: 16px;
+        text-align: left;
+      }
+
+      .popup-warning-title {
+        font-weight: 400;
+        color: rgba(255, 193, 7, 0.9);
+        margin-bottom: 6px;
+        font-size: 11px;
+        text-align: center;
+      }
+
+      .popup-warning-text {
+        color: rgba(255, 255, 255, 0.85);
+        line-height: 1.4;
+        font-size: 11px;
+      }
+
+      .popup-close-btn {
+        background-color: rgba(171, 171, 171, 0.2);
+        color: #fff;
+        border: 1px solid rgba(171, 171, 171, 0.4);
+        padding: 6px 16px;
+        border-radius: 2px;
+        font-size: 11px;
+        cursor: pointer;
+        font-family: inherit;
+        font-weight: 300;
+        letter-spacing: 0.02rem;
+        transition: all 0.2s ease;
+      }
+
+      .popup-close-btn:hover {
+        background-color: rgba(171, 171, 171, 0.3);
+        border-color: rgba(171, 171, 171, 0.6);
+      }
+
+      .popup-close-btn:active {
+        background-color: rgba(171, 171, 171, 0.4);
+        transform: translateY(1px);
+      }
+
+      .hidden {
+        display: none;
+      }
+    </style>
   </head>
   <body>
+    <!-- Version Info Popup -->
+    <div id="version-popup" class="popup-overlay">
+      <div class="popup-content">
+        <div class="popup-title">DIY Eurorack Case Planner</div>
+        <div class="popup-version">
+          Version: <span id="popup-version-text">loading...</span>
+        </div>
+        <div class="popup-warning">
+          <div class="popup-warning-title">⚠️ Alpha Software Warning</div>
+          <div class="popup-warning-text">
+            This application is currently in alpha stage and the exported SVG
+            shapes have not been verified to work using a laser cutter. (this is
+            planned soon) Multiple cardboard and handcut thin wood models have
+            been built by hand using the planner listed dimensions and cut
+            points.
+          </div>
+          <div><br /></div>
+          <div class="popup-warning-text">
+            Please verify all measurements and cut patterns in the SVG file; you
+            will need to rearrange the panels to fit on the material of your
+            choosing anyway in a vector drawing program. Use at your own
+            discretion and always double-check exported files. Have fun!
+          </div>
+        </div>
+        <button id="popup-close-btn" class="popup-close-btn">
+          OK! Allons-y!
+        </button>
+      </div>
+    </div>
+
     <header id="app-header">
       <div id="version-display">
         intafon case build v.<span id="version-text">loading...</span>
