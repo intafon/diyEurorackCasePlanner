@@ -128,6 +128,8 @@ export function calculateCaseGeometry() {
       (state.actualPanelDepth - state.actualRailDepth);
   const backOuterWallX = backInnerWallX + state.caseMaterialThickness;
 
+  console.info("calculateCaseGeometry: ", "backInnerWallX", backInnerWallX);
+
   let backWallInside, backWallY, backWallOutside;
 
   geometry.hasShelfTop = true;
@@ -146,6 +148,7 @@ export function calculateCaseGeometry() {
     const shelfEndY = shelfStartY;
 
     backWallInside = shelfEndX - state.caseMaterialThickness;
+    geometry.backWallInside = backWallInside;
     backWallOutside = shelfEndX;
 
     const shelfTopLeftX =

@@ -224,7 +224,7 @@ function drawSide() {
       return acc;
     }, [])
   );
-
+  console.info("drawSide", state, caseGeometry);
   drawJointDistanceIndicators(state.panels, caseGeometry.backWallInside);
 
   writeSummary(maxX, maxY, pathCoords, railScrewCoords, bounds.cutPanels);
@@ -378,11 +378,11 @@ function init() {
   flattenTopShelfCb.addEventListener("change", (event) => {
     state.flattenTopShelf = event.target.checked;
     drawSide();
-    if (view === "3d") {
-     buildScene();
-    // } else {
-    //     drawSide();
-    }
+    // if (view === "3d") {
+    //  buildScene();
+    // // } else {
+    // //     drawSide();
+    // }
   });
 
   canvasDiv = document.getElementById("canvas-div");
@@ -411,11 +411,11 @@ function init() {
 function initVersionDisplay() {
   const versionTextEl = document.getElementById("version-text");
   const popupVersionTextEl = document.getElementById("popup-version-text");
-  
+
   if (versionTextEl && packageJson.version) {
     versionTextEl.textContent = packageJson.version;
   }
-  
+
   if (popupVersionTextEl && packageJson.version) {
     popupVersionTextEl.textContent = packageJson.version;
   }
@@ -425,11 +425,11 @@ function initVersionPopup() {
   const popup = document.getElementById("version-popup");
   const closeBtn = document.getElementById("popup-close-btn");
   const currentVersion = packageJson.version;
-  
+
   // Check if we should show the popup for this version
   const seenVersion = localStorage.getItem("diy-eurorack-planner-version");
   const shouldShowPopup = seenVersion !== currentVersion;
-  
+
   // Show or hide popup based on version check
   if (popup) {
     if (shouldShowPopup) {
@@ -438,7 +438,7 @@ function initVersionPopup() {
       popup.classList.add("hidden");
     }
   }
-  
+
   if (closeBtn) {
     closeBtn.addEventListener("click", () => {
       if (popup) {
@@ -448,7 +448,7 @@ function initVersionPopup() {
       }
     });
   }
-  
+
   // Close popup when clicking outside the content area
   if (popup) {
     popup.addEventListener("click", (event) => {
@@ -459,7 +459,7 @@ function initVersionPopup() {
       }
     });
   }
-  
+
   // Close popup with Escape key
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && popup && !popup.classList.contains("hidden")) {
