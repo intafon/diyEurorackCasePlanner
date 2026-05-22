@@ -1,7 +1,8 @@
-import { state } from "./state.js";
-import { oneUFormats, HP_TO_MM } from "./constants.js";
+import { HP_TO_MM, oneUFormats } from "./constants.js";
 import { actualDistance, roundToPlace } from "./geometry.js";
-import { downloadSVG, downloadDXF } from "./export.js";
+import { downloadDXF, downloadSVG } from "./export.js";
+
+import { state } from "./state.js";
 
 let drawSideCallback = null;
 
@@ -134,7 +135,13 @@ export function setupHpWidthInput() {
   updateHpWidthReadouts();
 }
 
-export function writeSummary(width, height, outlinePoints, railScrewCoords, cutPanels) {
+export function writeSummary(
+  width,
+  height,
+  outlinePoints,
+  railScrewCoords,
+  cutPanels
+) {
   const cabinetInfo = [
     "Cabinet depth and height: ",
     actualDistance(width, true) + " x " + actualDistance(height, true),
@@ -156,6 +163,10 @@ export function writeSummary(width, height, outlinePoints, railScrewCoords, cutP
   const panelDepthInfo = [
     "Panel depth used: ",
     actualDistance(state.actualPanelDepth, true),
+  ];
+  const panelBackDepthInfo = [
+    "Panel back depth used: ",
+    actualDistance(state.actualPanelBackDepth, true),
   ];
   const railDepthInfo = [
     "Rails depth inset: ",
@@ -180,6 +191,7 @@ export function writeSummary(width, height, outlinePoints, railScrewCoords, cutP
     cabinetInfo,
     panelHeightInfo,
     panelDepthInfo,
+    panelBackDepthInfo,
     railDepthInfo,
     railSpacingInfo,
     totalRowtation,
@@ -225,7 +237,8 @@ export function writeSummary(width, height, outlinePoints, railScrewCoords, cutP
     .join("<br/>");
 
   if (cutPanels && cutPanels.length > 0) {
-    summaryHtml += "<br/><br/><b>Cut panel dimensions (depth x width):</b><br/>";
+    summaryHtml +=
+      "<br/><br/><b>Cut panel dimensions (depth x width):</b><br/>";
     cutPanels.forEach((panel) => {
       summaryHtml += `&nbsp;&nbsp;${panel.name}: <b>${roundToPlace(panel.height, 2)}mm x ${roundToPlace(panel.width, 2)}mm</b><br/>`;
     });
@@ -236,16 +249,22 @@ export function writeSummary(width, height, outlinePoints, railScrewCoords, cutP
     '<input type="text" id="hp-width-mm" value="' +
     roundToPlace(state.caseWidthHP * HP_TO_MM, 2) +
     '" readonly style="width: 80px;" />';
-  summaryHtml += '&nbsp;<span class="input-span unit">mm (front &amp; back)</span>';
+  summaryHtml +=
+    '&nbsp;<span class="input-span unit">mm (front &amp; back)</span>';
   summaryHtml +=
     '&nbsp;&nbsp;<input type="text" id="hp-width-mm-bottom" value="' +
-    roundToPlace(state.caseWidthHP * HP_TO_MM + 2 * state.caseMaterialThickness, 2) +
+    roundToPlace(
+      state.caseWidthHP * HP_TO_MM + 2 * state.caseMaterialThickness,
+      2
+    ) +
     '" readonly style="width: 80px;" />';
   summaryHtml += '&nbsp;<span class="input-span unit">mm (bottom/base)</span>';
 
   summaryHtml += '<br/><br/><div class="export-buttons">';
-  summaryHtml += '<button type="button" id="download-svg-btn">Download SVG</button>';
-  summaryHtml += '&nbsp;&nbsp;<button type="button" id="download-dxf-btn">Download DXF</button>';
+  summaryHtml +=
+    '<button type="button" id="download-svg-btn">Download SVG</button>';
+  summaryHtml +=
+    '&nbsp;&nbsp;<button type="button" id="download-dxf-btn">Download DXF</button>';
   summaryHtml += "</div>";
 
   document.getElementById("summary-div-2").innerHTML = summaryHtml;

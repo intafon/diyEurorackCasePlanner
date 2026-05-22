@@ -1,4 +1,4 @@
-import { oneUFormats, DEFAULTS, HP_TO_MM } from "./constants.js";
+import { DEFAULTS, HP_TO_MM, oneUFormats } from "./constants.js";
 
 class AppState {
   constructor() {
@@ -22,6 +22,7 @@ class AppState {
     this.actual1URailSeparation = DEFAULTS.actual1URailSeparation;
     this.actualRailDepth = DEFAULTS.actualRailDepth;
     this.actualPanelDepth = DEFAULTS.actualPanelDepth;
+    this.actualPanelBackDepth = DEFAULTS.actualPanelBackDepth;
     this.useStaticRise = false;
     this.caseMaterialThickness = DEFAULTS.caseMaterialThickness;
     this.flattenTopShelf = false;

@@ -1,51 +1,57 @@
-import { state } from "./state.js";
-import { oneUFormats, HP_TO_MM } from "./constants.js";
-import { rad, calculateCaseGeometry } from "./geometry.js";
+import "./style.css";
+
+import { HP_TO_MM, oneUFormats } from "./constants.js";
 import {
-  initCanvas,
-  getCanvas,
-  getContext,
-  drawPath,
-  // drawPanelRails,
-  drawJointDistanceIndicators,
-  calculateViewScale,
-  drawPanelRailHoles,
-} from "./canvas-renderer.js";
-import {
-  setDrawCallback,
-  resetRowInputs,
-  writeSummary,
-  setupHpWidthInput,
-} from "./ui.js";
-import {
-  initThreeRenderer,
   buildScene,
+  initThreeRenderer,
+  resizeThreeCanvas,
   startRenderLoop,
   stopRenderLoop,
-  resizeThreeCanvas,
 } from "./3d-renderer.js";
-import "./style.css";
+import { calculateCaseGeometry, rad } from "./geometry.js";
+import {
+  calculateViewScale,
+  drawJointDistanceIndicators,
+  drawPanelRailHoles,
+  drawPath,
+  getCanvas,
+  getContext,
+  initCanvas,
+} from "./canvas-renderer.js";
+import {
+  resetRowInputs,
+  setDrawCallback,
+  setupHpWidthInput,
+  writeSummary,
+} from "./ui.js";
+
 import packageJson from "../package.json";
+import { state } from "./state.js";
 
 let canvasDiv, canvas, ctx;
 let threeCanvas;
 let activeView = "2d";
 
 function calculateCaseBoundsAndPanels() {
-  let maxX = 0, maxY = 0;
-  let x = 0, y = 0;
+  let maxX = 0,
+    maxY = 0;
+  let x = 0,
+    y = 0;
 
   const firstAngle = state.rowAngles[0];
 
   const bottomPanelDepth = state.useStaticRise
     ? state.actualPanelDepth
-    : Math.abs(state.actualPanelDepth * Math.sin(Math.PI / 2 - rad(firstAngle)));
+    : Math.abs(
+        state.actualPanelDepth * Math.sin(Math.PI / 2 - rad(firstAngle))
+      );
 
   const frontHeight = bottomPanelDepth;
 
   y += bottomPanelDepth;
   x += Math.cos(rad(firstAngle)) * state.caseMaterialThickness;
-  y = Math.sin(rad(firstAngle)) * state.caseMaterialThickness + bottomPanelDepth;
+  y =
+    Math.sin(rad(firstAngle)) * state.caseMaterialThickness + bottomPanelDepth;
 
   state.rowAngles.forEach((angle, i) => {
     const rowHeight = state.getPanelHeightForRow(i);
@@ -62,23 +68,31 @@ function calculateCaseBoundsAndPanels() {
   let backHeight, topShelfDepth;
 
   if (state.flattenTopShelf) {
-    const shelfStartX = lastRowEndX + Math.cos(rad(lastRowAngle)) * state.caseMaterialThickness;
-    const shelfStartY = lastRowEndY + Math.sin(rad(lastRowAngle)) * state.caseMaterialThickness;
-    const normalBackWallInside = lastRowEndX + Math.sin(rad(lastRowAngle)) * state.actualPanelDepth;
-    const normalBackWallOutside = normalBackWallInside + state.caseMaterialThickness;
+    const shelfStartX =
+      lastRowEndX + Math.cos(rad(lastRowAngle)) * state.caseMaterialThickness;
+    const shelfStartY =
+      lastRowEndY + Math.sin(rad(lastRowAngle)) * state.caseMaterialThickness;
+    const normalBackWallInside =
+      lastRowEndX + Math.sin(rad(lastRowAngle)) * state.actualPanelBackDepth;
+    const normalBackWallOutside =
+      normalBackWallInside + state.caseMaterialThickness;
     maxX = Math.max(maxX, normalBackWallOutside);
     maxY = Math.max(maxY, shelfStartY);
 
     backHeight = shelfStartY - state.caseMaterialThickness;
     topShelfDepth = normalBackWallOutside - shelfStartX;
   } else {
-    const backWallOutside = lastRowEndX + Math.sin(rad(lastRowAngle)) * state.actualPanelDepth + state.caseMaterialThickness;
-    const topY = lastRowEndY + Math.sin(rad(lastRowAngle)) * state.caseMaterialThickness;
+    const backWallOutside =
+      lastRowEndX +
+      Math.sin(rad(lastRowAngle)) * state.actualPanelBackDepth +
+      state.caseMaterialThickness;
+    const topY =
+      lastRowEndY + Math.sin(rad(lastRowAngle)) * state.caseMaterialThickness;
     maxX = Math.max(maxX, backWallOutside);
     maxY = Math.max(maxY, topY);
 
     backHeight = topY;
-    topShelfDepth = state.actualPanelDepth;
+    topShelfDepth = state.actualPanelBackDepth;
   }
 
   const panelWidth = state.caseWidth;
@@ -92,9 +106,17 @@ function calculateCaseBoundsAndPanels() {
   ];
 
   if (state.flattenTopShelf) {
-    cutPanels.push({ name: "Top Shelf", width: panelWidth, height: topShelfDepth });
+    cutPanels.push({
+      name: "Top Shelf",
+      width: panelWidth,
+      height: topShelfDepth,
+    });
   } else {
-    cutPanels.push({ name: "Back-Top", width: panelWidth, height: topShelfDepth });
+    cutPanels.push({
+      name: "Back-Top",
+      width: panelWidth,
+      height: topShelfDepth,
+    });
   }
 
   return { maxX, maxY, cutPanels };
@@ -167,7 +189,7 @@ function drawSide() {
       lastRowEndY + Math.sin(rad(lastRowAngle)) * state.caseMaterialThickness;
 
     const normalBackWallInside =
-      lastRowEndX + Math.sin(rad(lastRowAngle)) * state.actualPanelDepth;
+      lastRowEndX + Math.sin(rad(lastRowAngle)) * state.actualPanelBackDepth;
     const normalBackWallOutside =
       normalBackWallInside + state.caseMaterialThickness;
 
@@ -182,9 +204,9 @@ function drawSide() {
     add(shelfEndX, 0);
   } else {
     backWallInside =
-      lastRowEndX + Math.sin(rad(lastRowAngle)) * state.actualPanelDepth;
+      lastRowEndX + Math.sin(rad(lastRowAngle)) * state.actualPanelBackDepth;
     backWallY =
-      lastRowEndY - Math.cos(rad(lastRowAngle)) * state.actualPanelDepth;
+      lastRowEndY - Math.cos(rad(lastRowAngle)) * state.actualPanelBackDepth;
     backWallOutside = backWallInside + state.caseMaterialThickness;
 
     add(
@@ -199,15 +221,15 @@ function drawSide() {
 
   const caseGeometry = calculateCaseGeometry();
 
-//   console.info("createSidePanelOutline", caseGeometry.createSidePanelOutline());
-//   console.info(
-//     "createSidePanel2dSideOutline",
-//     caseGeometry.createSidePanel2dSideOutline()
-//   );
-//   console.info(
-//     "createSidePanelExtrudableOutline",
-//     caseGeometry.createSidePanelExtrudableOutline()
-//   );
+  //   console.info("createSidePanelOutline", caseGeometry.createSidePanelOutline());
+  //   console.info(
+  //     "createSidePanel2dSideOutline",
+  //     caseGeometry.createSidePanel2dSideOutline()
+  //   );
+  //   console.info(
+  //     "createSidePanelExtrudableOutline",
+  //     caseGeometry.createSidePanelExtrudableOutline()
+  //   );
 
   ctx.setLineDash([]);
   // const railScrewCoords = drawPanelRails(state.panels);
@@ -333,7 +355,9 @@ function init() {
   setDrawCallback(drawSide);
   resetRowInputs(state.rowCount);
 
-  const oneUFormatRadios = document.querySelectorAll('input[name="oneUFormat"]');
+  const oneUFormatRadios = document.querySelectorAll(
+    'input[name="oneUFormat"]'
+  );
   oneUFormatRadios.forEach((radio) => {
     radio.addEventListener("change", (event) => {
       state.selected1UFormat = event.target.value;
@@ -352,6 +376,15 @@ function init() {
     }, 0);
   };
   inputDepth.addEventListener("input", onModuleDepthChange);
+
+  const inputBackDepth = document.getElementById("the-input-back-depth");
+  const onModuleBackDepthChange = (event) => {
+    setTimeout(() => {
+      state.actualPanelBackDepth = parseFloat(event.target.value);
+      drawSide();
+    }, 0);
+  };
+  inputBackDepth.addEventListener("input", onModuleBackDepthChange);
 
   const calcRiseCb = document.getElementById("calc-rise");
   calcRiseCb.checked = !state.useStaticRise;
@@ -393,6 +426,7 @@ function init() {
   initThreeRenderer(threeCanvas);
 
   inputDepth.value = state.actualPanelDepth;
+  inputBackDepth.value = state.actualPanelBackDepth;
 
   setupHpWidthInput();
 
@@ -462,7 +496,11 @@ function initVersionPopup() {
 
   // Close popup with Escape key
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && popup && !popup.classList.contains("hidden")) {
+    if (
+      event.key === "Escape" &&
+      popup &&
+      !popup.classList.contains("hidden")
+    ) {
       popup.classList.add("hidden");
       // Save the current version to localStorage when popup is closed
       localStorage.setItem("diy-eurorack-planner-version", currentVersion);

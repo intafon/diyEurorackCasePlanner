@@ -1,5 +1,10 @@
+import {
+  BOX_JOINT_DEFAULT_TAB_WIDTH,
+  BOX_JOINT_MINIMUM_TAB_WIDTH,
+  HP_TO_MM,
+} from "./constants.js";
+
 import { state } from "./state.js";
-import { HP_TO_MM, BOX_JOINT_DEFAULT_TAB_WIDTH, BOX_JOINT_MINIMUM_TAB_WIDTH } from "./constants.js";
 
 export function rad(d) {
   return (d / 180) * Math.PI;
@@ -125,7 +130,7 @@ export function calculateCaseGeometry() {
   const backInnerWallX =
     maxScrewX +
     Math.sin(rad(lastRowAngle)) *
-      (state.actualPanelDepth - state.actualRailDepth);
+      (state.actualPanelBackDepth - state.actualRailDepth);
   const backOuterWallX = backInnerWallX + state.caseMaterialThickness;
 
   console.info("calculateCaseGeometry: ", "backInnerWallX", backInnerWallX);
@@ -466,7 +471,7 @@ export function calculateCaseGeometry() {
   } else {
     const backWallTopY = geometry.outline[geometry.outline.length - 3].y;
     backHeight = geometry.maxY;
-    topShelfDepth = state.actualPanelDepth;
+    topShelfDepth = state.actualPanelBackDepth;
   }
 
   const bottomWidth = panelWidth + 2 * state.caseMaterialThickness;
@@ -557,11 +562,15 @@ export function calculateCaseGeometry() {
     // the side panel matches the tab pattern on the back panel's side edges exactly.
     const backPanelPoints = createBackPanelOutline();
     const backJointsStart = state.flattenTopShelf
-      ? { ...backTop, y: backTop.y - state.caseMaterialThickness, z:0 }
-      : { ...backTop, y: backPanelPoints.topLeft.y, z:0 };
+      ? { ...backTop, y: backTop.y - state.caseMaterialThickness, z: 0 }
+      : { ...backTop, y: backPanelPoints.topLeft.y, z: 0 };
     const backJointsEnd = geometry.hasShelfTop
-      ? {...bottomRight, z: 0}
-      : { x: backPanelPoints.bottomLeft.x, y: backPanelPoints.bottomLeft.y, z:0 };
+      ? { ...bottomRight, z: 0 }
+      : {
+          x: backPanelPoints.bottomLeft.x,
+          y: backPanelPoints.bottomLeft.y,
+          z: 0,
+        };
     // const backBoxJointWidth = Math.min(
     //   BOX_JOINT_DEFAULT_TAB_WIDTH,
     //   (distance(backJointsStart, backJointsEnd) - 1) / 3
@@ -580,7 +589,9 @@ export function calculateCaseGeometry() {
       "point distance",
       distance3d(backJointsStart, backJointsEnd),
       "start point",
-      backJointsStart,"end point", backJointsEnd,
+      backJointsStart,
+      "end point",
+      backJointsEnd
     );
     const backJoints = createBoxJoints({
       point1: backJointsStart,
@@ -678,10 +689,7 @@ export function calculateCaseGeometry() {
     //   BOX_JOINT_DEFAULT_TAB_WIDTH,
     //   (topLeft.y - bottomLeft.y - 1) / 3
     // );
-    const sideBoxJointWidth = calculateCustomBoxJointWidth(
-      bottomLeft,
-      topLeft
-    );
+    const sideBoxJointWidth = calculateCustomBoxJointWidth(bottomLeft, topLeft);
     const leftJoints = createBoxJoints({
       point1: bottomLeft,
       point2: topLeft,
@@ -718,7 +726,7 @@ export function calculateCaseGeometry() {
       bottomLeft,
       ...leftJoints,
       //   topLeft,
-    ];//.reverse();
+    ]; //.reverse();
   };
 
   const createBottomPanelOutline = () => {
@@ -914,7 +922,10 @@ export function calculateCaseGeometry() {
       backJointsEnd
     );
       */
-    const leftSideJointWidth = calculateCustomBoxJointWidth(bottomLeft, topLeft);
+    const leftSideJointWidth = calculateCustomBoxJointWidth(
+      bottomLeft,
+      topLeft
+    );
     const leftJoints = createBoxJoints({
       point1: bottomLeft,
       point2: topLeft,
@@ -1032,7 +1043,6 @@ export function calculateCaseGeometry() {
     // top panel has tabs on the sides and notches on the bottom/back
     const { topLeft, topRight, bottomRight, bottomLeft } =
       createTopPanelOutline();
-
 
     console.info(
       "createTopPanelOutline()",
@@ -1342,10 +1352,10 @@ function distance3d(p1, p2) {
  * @returns The width of the box joints to be placed on the line.
  */
 function calculateCustomBoxJointWidth(startPoint, endPoint) {
-    let boxJointWidth = Math.min(
-      BOX_JOINT_DEFAULT_TAB_WIDTH,
-      (Math.sqrt(Math.pow(distance3d(startPoint, endPoint), 2)) - 1) / 3
-    );
-    boxJointWidth = Math.max(BOX_JOINT_MINIMUM_TAB_WIDTH, boxJointWidth);
-    return boxJointWidth;
+  let boxJointWidth = Math.min(
+    BOX_JOINT_DEFAULT_TAB_WIDTH,
+    (Math.sqrt(Math.pow(distance3d(startPoint, endPoint), 2)) - 1) / 3
+  );
+  boxJointWidth = Math.max(BOX_JOINT_MINIMUM_TAB_WIDTH, boxJointWidth);
+  return boxJointWidth;
 }

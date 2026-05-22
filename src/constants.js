@@ -40,7 +40,8 @@ export const DEFAULTS = {
   actualRailSeparation: SPEC_3U_RAIL_HOLE_SPACING,
   actual1URailSeparation: SPEC_1U_INTELLIJEL_RAIL_HOLE_SPACING,
   actualRailDepth: 14,
-  actualPanelDepth: 39, //60,
+  actualPanelDepth: 60,
+  actualPanelBackDepth: 40,
   caseMaterialThickness: 3.175, // 1/8"
   caseWidthHP: 84,
 };
