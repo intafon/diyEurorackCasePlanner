@@ -29,4 +29,7 @@ The two photos below are of the first case I built from cardboard using the plan
 ![Case with rails and modules.](./imx/case_finished.jpg "Case with rails and modules.")
 
 ## Allons-y!
-Go to [the planner](https://intafon.github.io/diyEurorackCasePlanner/planner.html).
+Go to [the new V2 Alpha planner](https://intafon.com/diyeurorackcase/v2_alpha/) with more rows, 1U options, and 3D visualization.<br/>
+Go to [the original planner](https://intafon.github.io/diyEurorackCasePlanner/planner.html).
+
+
