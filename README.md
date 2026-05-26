@@ -6,11 +6,7 @@ It is loosely based on the [Future Music guide for how to build your own cardboa
 
 This currently only shows the measurements for the side view of the case. Dotted lines show the outlines of the material used on the bottom of the case as well as the front and back of the case to show overlap -- by default this material thickness is based on the Future Music guide's 5mm cardboard thickness.
 
-<<<<<<< HEAD
 _Note_: I have recently completed version 2 (alpha) of this project which can be found [here](https://intafon.com/diyeurorackcase/v2_alpha/). The new version features more rows (up to 5), 1U options (Intellijel and Pulp Logic), 3D case visualization, as well as an SVG/DXF export for laser cutting (outputs an SVG which you can pull into Adobe Illustrator or similar to arrange for laser cutting your material). I have it marked as still in alpha as, though I have built a few prototypes from cardboard using the tool, I have not yet accessed a laser cutter to test prototypes that way. I currently (May 26, 2026) have 2 prototypes layed out and ready to go, but have not visited a local fab place yet to do the cutting -- updates will ensue!
-=======
-Read the rest of this documentation or jump to [the planner](https://intafon.github.io/diyEurorackCasePlanner/).
->>>>>>> f7ae510 (re-arch project, add file export, and screwn size adjustment)
 
 To see some of the other stuff I've got going on, including where to find my music and places to connect, please check out [intafon.com](https://intafon.com/).
 
