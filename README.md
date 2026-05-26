@@ -1,7 +1,7 @@
 # DIY Eurorack Case Planner Tool
 This is a simple one-page HTML app for messing around with planning how to build a DIY (cardboard) eurorack case. My original intent was just to create a tool that would allow me to visualize the angle for a 6U system case and gauge what amount of deskspace (and airspace) it would consume.
 
-It is loosely based on the [Future Music guide for how to build your own cardboard eurorack modular case](http://www.musicradar.com/tuition/tech/how-to-build-your-own-cardboard-eurorack-modular-case-625196) and the accompanying PDF [CardboardCaseGuide](http://cdn.mos.musicradar.com/images/aaaroot/tech/7july15/DIY-Eurorack-case/CardboardCaseGuide.zip). 
+It is loosely based on the [Future Music guide for how to build your own cardboard eurorack modular case](http://www.musicradar.com/tuition/tech/how-to-build-your-own-cardboard-eurorack-modular-case-625196) and the accompanying PDF [CardboardCaseGuide](http://cdn.mos.musicradar.com/images/aaaroot/tech/7july15/DIY-Eurorack-case/CardboardCaseGuide.zip).
 
 This currently only shows the measurements for the side view of the case. Dotted lines show the outlines of the material used on the bottom of the case as well as the front and back of the case to show overlap -- by default this material thickness is based on the Future Music guide's 5mm cardboard thickness.
 
@@ -9,7 +9,7 @@ This currently only shows the measurements for the side view of the case. Dotted
 
 ## Parameters
 
-There are several adjustable parameters in the planner. 
+There are several adjustable parameters in the planner.
 
 The module depth max signifies the deepest module you wish to support in the case, which is set by default to 55mm. Note the "calculate needed rise" checkbox -- if checked, this calculates the necessary rise at the front of the case to accomodate the module depth. Since there is a slight (or unslight) angle for the first row of modules, the full module depth may not be needed. (if your first angle is 30 degrees, 47.6mm is sufficient for 55mm clearance)
 
@@ -29,6 +29,6 @@ The two photos below are of the first case I built from cardboard using the plan
 
 ## Allons-y!
 Go to [the new V2 Alpha planner](https://intafon.com/diyeurorackcase/v2_alpha/) with more rows, 1U options, and 3D visualization.<br/>
-Go to [the original planner](https://intafon.github.io/diyEurorackCasePlanner/planner.html).
+Go to [the original planner](https://intafon.com/diyeurorackcase/v1/).
 
 
