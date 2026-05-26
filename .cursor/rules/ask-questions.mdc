@@ -1,0 +1,19 @@
+---
+description: Guidelines for when the AI should ask clarifying questions
+globs: 
+alwaysApply: true
+---
+
+# Ask Clarifying Questions
+
+When working on this project, always ask clarifying questions when:
+
+1. **Technical specifications are ambiguous** - Eurorack has specific measurements and standards (3U vs 1U heights, rail spacing, HP widths). If a request involves dimensions or standards that aren't explicitly stated, ask for confirmation.
+
+2. **Multiple valid approaches exist** - If there are different ways to implement a feature (e.g., Intellijel vs Pulp Logic 1U standards), ask which approach the user prefers before implementing.
+
+3. **The request could affect existing functionality** - Before making changes that might alter how existing features work, confirm the intended behavior.
+
+4. **Domain-specific knowledge is required** - Eurorack modular synthesis has specific conventions. When unsure about industry standards or user expectations, ask rather than assume.
+
+5. **UI/UX decisions need to be made** - For user interface changes, confirm layout preferences, default values, and interaction patterns.

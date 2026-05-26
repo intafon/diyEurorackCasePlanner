@@ -1,0 +1,801 @@
+import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { state } from "./state.js";
+import { calculateCaseGeometry, rad, getScrewHoleCoords } from "./geometry.js";
+import { HP_TO_MM } from "./constants.js";
+
+let renderer = null;
+let scene = null;
+let camera = null;
+let controls = null;
+let canvasEl = null;
+let rafHandle = null;
+let isRunning = false;
+let sceneRoot = null;
+let preservedCameraState = null;
+let isFirstBuild = true;
+
+const COLOR_BOTTOM = 0x8b6f47; // Keep existing brown
+const COLOR_FRONT = 0x4a90e2; // Blue
+const COLOR_BACK = 0x27ae60; // Green (back wall)
+const COLOR_SHELF = 0xe74c3c; // Red (top shelf)
+const COLOR_SIDE = 0x9b59b6; // Purple
+const COLOR_RAIL = 0xb0b0b0;
+const COLOR_SCREW = 0x444444;
+const COLOR_BG = 0xf2f2f2;
+
+const SIDE_OPACITY = 0.55;
+const BOTTOM_OPACITY = 0.55;
+const OTHER_OPACITY = 0.55;
+const BACK_OPACITY = 0.55;
+
+export function initThreeRenderer(canvas) {
+  canvasEl = canvas;
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setPixelRatio(window.devicePixelRatio || 1);
+
+  // Reset state when initializing
+  isFirstBuild = true;
+  preservedCameraState = null;
+
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(COLOR_BG);
+
+  const w = canvas.clientWidth || 600;
+  const h = canvas.clientHeight || 400;
+  camera = new THREE.PerspectiveCamera(40, w / h, 1, 5000);
+  camera.position.set(350, 250, 450);
+  // camera.zoom = 1;
+
+  controls = new OrbitControls(camera, canvas);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.target.set(0, 60, 0);
+
+  const ambient = new THREE.AmbientLight(0xffffff, 0.55);
+  scene.add(ambient);
+
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.7);
+  dirLight.position.set(200, 400, 300);
+  scene.add(dirLight);
+
+  const fillLight = new THREE.DirectionalLight(0xffffff, 0.25);
+  fillLight.position.set(-200, 100, -200);
+  scene.add(fillLight);
+
+  renderer.setSize(w, h, false);
+}
+
+function disposeNode(node) {
+  node.traverse((child) => {
+    if (child.geometry) {
+      child.geometry.dispose();
+    }
+    if (child.material) {
+      if (Array.isArray(child.material)) {
+        child.material.forEach((m) => m.dispose());
+      } else {
+        child.material.dispose();
+      }
+    }
+  });
+}
+
+export function disposeScene() {
+  if (sceneRoot) {
+    scene.remove(sceneRoot);
+    disposeNode(sceneRoot);
+    sceneRoot = null;
+  }
+}
+
+function storeCameraState() {
+  if (camera && controls) {
+    preservedCameraState = {
+      position: camera.position.clone(),
+      target: controls.target.clone(),
+    };
+  }
+}
+
+function restoreCameraState() {
+  if (preservedCameraState && camera && controls) {
+    camera.position.copy(preservedCameraState.position);
+    controls.target.copy(preservedCameraState.target);
+    controls.update();
+  }
+}
+
+/*
+To extrude along a path:
+const points = [
+  new THREE.Vector2(0, 0),
+  new THREE.Vector2(10, 0),
+  new THREE.Vector2(10, 10),
+  new THREE.Vector2(0, 10)
+];
+
+const shape = new THREE.Shape(points);
+
+const path = new THREE.LineCurve3(
+  new THREE.Vector3(0, 0, 0),
+  new THREE.Vector3(0, 10, 0) // Extrude 10 units up the Y axis
+);
+
+const extrudeSettings = {
+  steps: 20,
+  extrudePath: path,
+  steps: 1, // number of steps to take along the path-- if your line curve is windy, then the
+            // number of steps determines the precision of the extruded curve
+};
+
+const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+
+
+  const matSide = new THREE.MeshLambertMaterial({
+    color: COLOR_SIDE,
+    transparent: true,
+    opacity: SIDE_OPACITY,
+    side: THREE.DoubleSide,
+  });
+
+    const leftSide = makeBoardMesh(
+    sideOutlinePts,
+    sideThickness,
+    matSide,
+    -innerWidth / 2 - sideThickness
+  );
+*/
+
+/*
+function createTiltedExtrusion(points3D, extrudeVec) {
+  // 1. Convert {x,y,z} objects to THREE.Vector3
+  const vecs = points3D.map(p => new THREE.Vector3(p.x, p.y, p.z));
+  const direction = new THREE.Vector3(extrudeVec.x, extrudeVec.y, extrudeVec.z);
+
+  // 2. Define a local coordinate system (Plane) for the shape
+  // We'll use the first three points to find the plane's orientation
+  const v0 = vecs[0];
+  const v1 = vecs[1];
+  const v2 = vecs[2];
+
+  const xAxis = new THREE.Vector3().subVectors(v1, v0).normalize();
+  const tempVec = new THREE.Vector3().subVectors(v2, v0).normalize();
+  const normal = new THREE.Vector3().crossVectors(xAxis, tempVec).normalize();
+  const yAxis = new THREE.Vector3().crossVectors(normal, xAxis).normalize();
+
+  // 3. Project 3D points to 2D Shape coordinates
+  const shape = new THREE.Shape();
+  vecs.forEach((v, i) => {
+    const localX = v.clone().sub(v0).dot(xAxis);
+    const localY = v.clone().sub(v0).dot(yAxis);
+    if (i === 0) shape.moveTo(localX, localY);
+    else shape.lineTo(localX, localY);
+  });
+  shape.closePath();
+
+  // 4. Create the Extrusion Path
+  // We extrude from 0 to the length of your vector
+  const path = new THREE.LineCurve3(
+    new THREE.Vector3(0, 0, 0),
+    new THREE.Vector3(0, 0, direction.length())
+  );
+
+  const geometry = new THREE.ExtrudeGeometry(shape, {
+    extrudePath: path,
+    steps: 1,
+    bevelEnabled: false
+  });
+
+  // 5. Create Mesh and Orient it
+  const material = new THREE.MeshStandardMaterial({ color: 0x0077ff, side: THREE.DoubleSide });
+  const mesh = new THREE.Mesh(geometry, material);
+
+  // Match the mesh orientation to our local 3D plane
+  const matrix = new THREE.Matrix4().makeBasis(xAxis, yAxis, normal);
+  mesh.applyMatrix4(matrix);
+  mesh.position.copy(v0);
+
+  return mesh;
+}
+*/
+
+function makeExtrudedPanelMesh(
+  points3D,
+  extrudeVec,
+  color = "#00FFFF",
+  opacity = SIDE_OPACITY
+) {
+  const vecs = points3D.map((p) => new THREE.Vector3(p.x, p.y, p.z));
+  const direction = new THREE.Vector3(extrudeVec.x, extrudeVec.y, extrudeVec.z);
+
+  // 1. Calculate the Normal of the plane the points sit on
+  const v0 = vecs[0];
+  const v1 = vecs[1];
+  const v2 = vecs[2];
+  const edge1 = new THREE.Vector3().subVectors(v1, v0);
+  const edge2 = new THREE.Vector3().subVectors(v2, v0);
+  const normal = new THREE.Vector3().crossVectors(edge1, edge2).normalize();
+
+  // Check for degenerate normal (all points are collinear)
+  if (normal.length() < 0.001) {
+    console.warn("Degenerate normal detected for panel", points3D.slice(0, 3));
+    return new THREE.Mesh(
+      new THREE.BufferGeometry(),
+      new THREE.MeshBasicMaterial({ visible: false })
+    );
+  }
+
+  // 2. Build a STABLE Basis
+  // Instead of using the first edge as X, we pick a global "up"
+  // and derive X and Y from the plane's normal.
+  let worldUp = new THREE.Vector3(0, 1, 0);
+  // If the normal is already pointing UP, use Forward as a reference instead
+  if (Math.abs(normal.dot(worldUp)) > 0.99) {
+    worldUp.set(0, 0, 1);
+  }
+
+  // Ensure the normal points in a consistent direction relative to the extrusion
+  if (normal.dot(direction) < 0) {
+    normal.negate();
+  }
+
+  const xAxis = new THREE.Vector3().crossVectors(worldUp, normal).normalize();
+  const yAxis = new THREE.Vector3().crossVectors(normal, xAxis).normalize();
+
+  // 3. Project 3D points to 2D Shape
+  const shape = new THREE.Shape();
+  vecs.forEach((v, i) => {
+    const localX = v.clone().sub(v0).dot(xAxis);
+    const localY = v.clone().sub(v0).dot(yAxis);
+    if (i === 0) shape.moveTo(localX, localY);
+    else shape.lineTo(localX, localY);
+  });
+  shape.closePath();
+
+  // 4. Create Extrusion
+  // Since we've aligned the normal with the extrusion direction above,
+  // we can now safely use the dot product
+  const distance = Math.abs(direction.dot(normal));
+
+  console.log(
+    "Panel extrusion - distance:",
+    distance,
+    "normal:",
+    normal,
+    "direction:",
+    direction
+  );
+
+  // Note: Standard ExtrudeGeometry extrudes along the Z axis (the normal)
+  const geometry = new THREE.ExtrudeGeometry(shape, {
+    depth: distance,
+    steps: 1,
+    bevelEnabled: false,
+  });
+
+  // 5. Create Mesh and Orient
+  const material = new THREE.MeshLambertMaterial({
+    color,
+    transparent: true,
+    opacity,
+    side: THREE.DoubleSide,
+  });
+  const mesh = new THREE.Mesh(geometry, material);
+
+  // Apply the rotation matrix to match the 3D plane
+  const matrix = new THREE.Matrix4().makeBasis(xAxis, yAxis, normal);
+  mesh.applyMatrix4(matrix);
+  mesh.position.copy(v0);
+
+  return mesh;
+
+  //   // 1. Convert {x,y,z} objects to THREE.Vector3
+  //   const vecs = points3D.map((p) => new THREE.Vector3(p.x, p.y, p.z));
+  //   const direction = new THREE.Vector3(extrudeVec.x, extrudeVec.y, extrudeVec.z);
+
+  //   // 2. Define a local coordinate system (Plane) for the shape
+  //   // We'll use the first three points to find the plane's orientation
+  //   const v0 = vecs[0];
+  //   const v1 = vecs[1];
+  //   const v2 = vecs[2];
+
+  //   const xAxis = new THREE.Vector3().subVectors(v1, v0).normalize();
+  //   const tempVec = new THREE.Vector3().subVectors(v2, v0).normalize();
+  //   const normal = new THREE.Vector3().crossVectors(xAxis, tempVec).normalize();
+  //   const yAxis = new THREE.Vector3().crossVectors(normal, xAxis).normalize();
+
+  //   // 3. Project 3D points to 2D Shape coordinates
+  //   const shape = new THREE.Shape();
+  //   vecs.forEach((v, i) => {
+  //     const localX = v.clone().sub(v0).dot(xAxis);
+  //     const localY = v.clone().sub(v0).dot(yAxis);
+  //     if (i === 0) shape.moveTo(localX, localY);
+  //     else shape.lineTo(localX, localY);
+  //   });
+  //   shape.closePath();
+
+  //   // 4. Create the Extrusion Path
+  //   // We extrude from 0 to the length of your vector
+  //   const path = new THREE.LineCurve3(
+  //     new THREE.Vector3(0, 0, 0),
+  //     new THREE.Vector3(0, 0, direction.length())
+  //   );
+
+  //   const geometry = new THREE.ExtrudeGeometry(shape, {
+  //     extrudePath: path,
+  //     steps: 1,
+  //     bevelEnabled: false,
+  //   });
+
+  //   // 5. Create Mesh and Orient it
+  //   //   const material = new THREE.MeshStandardMaterial({
+  //   //     color: 0x0077ff,
+  //   //     side: THREE.DoubleSide,
+  //   //   });
+  //   const material = new THREE.MeshLambertMaterial({
+  //     color,
+  //     transparent: true,
+  //     opacity,
+  //     side: THREE.DoubleSide,
+  //   });
+  //   const mesh = new THREE.Mesh(geometry, material);
+
+  //   // Match the mesh orientation to our local 3D plane
+  //   const matrix = new THREE.Matrix4().makeBasis(xAxis, yAxis, normal);
+  //   mesh.applyMatrix4(matrix);
+  //   mesh.position.copy(v0);
+
+  //   return mesh;
+}
+
+function makeExtrudedFromPolygon(points2D, depthZ, material) {
+  const shape = new THREE.Shape();
+  shape.moveTo(points2D[0].x, points2D[0].y);
+  for (let i = 1; i < points2D.length; i++) {
+    shape.lineTo(points2D[i].x, points2D[i].y);
+  }
+  shape.closePath();
+  const geom = new THREE.ExtrudeGeometry(shape, {
+    depth: depthZ,
+    bevelEnabled: false,
+    curveSegments: 4,
+  });
+  return new THREE.Mesh(geom, material);
+}
+
+function makeBoardMesh(points2D, depthZ, material, zOffset) {
+  const mesh = makeExtrudedFromPolygon(points2D, depthZ, material);
+  mesh.position.z = zOffset;
+  return mesh;
+}
+
+function makeHorizontalRailMesh(
+  panel,
+  panelIndex,
+  caseWidth,
+  isBottom,
+  totalRows
+) {
+  const railLength = caseWidth + 2 * state.caseMaterialThickness; // Full width including side walls
+  const railHeight = 15; // 15mm tall
+  const railDepth = 10; // 10mm deep
+
+  const screws = getScrewHoleCoords(panel, panelIndex);
+  const screwPos = isBottom ? screws.bottomScrew : screws.topScrew;
+
+  // Position rail so the screw hole is in the center of the 10mm depth and 5mm from bottom
+  const inwardX = Math.sin(rad(panel.angle));
+  const inwardY = -Math.cos(rad(panel.angle));
+
+  // Rail center should be railDepth/2 inward from the screw hole position
+  const railCenterX = screwPos.x + inwardX * (railDepth / 2);
+  const railCenterY = screwPos.y + inwardY * (railDepth / 2);
+
+  // Adjust Y position so screw is 5mm from bottom of rail
+  const screwOffsetFromBottom = 5; // 5mm from bottom of rail
+  const railBottomOffset = railHeight / 2 - screwOffsetFromBottom;
+  const railY = railCenterY + railBottomOffset * Math.cos(rad(panel.angle));
+  const railX = railCenterX + railBottomOffset * Math.sin(rad(panel.angle));
+
+  // Create rail geometry with holes drilled through it (width-wise, not length-wise)
+  const railGeom = new THREE.BoxGeometry(railDepth, railHeight, railLength);
+  const mat = new THREE.MeshLambertMaterial({ color: COLOR_RAIL });
+  const mesh = new THREE.Mesh(railGeom, mat);
+
+  // Add the screw hole as a dark cylinder going through the ENTIRE case width (Z direction)
+  const holeMatGeom = new THREE.CylinderGeometry(1.5, 1.5, railLength + 10, 12);
+  const holeMat = new THREE.MeshLambertMaterial({ color: 0x222222 });
+  const holeVisMesh = new THREE.Mesh(holeMatGeom, holeMat);
+  holeVisMesh.position.set(0, -railHeight / 2 + screwOffsetFromBottom, 0);
+  holeVisMesh.rotation.x = Math.PI / 2; // Rotate to go through case width (Z direction)
+
+  mesh.add(holeVisMesh);
+
+  // Rotate the rail to align with the panel angle
+  mesh.rotation.z = rad(panel.angle);
+  mesh.position.set(railX, railY, 0);
+
+  return mesh;
+}
+
+function makeScrewHoleMesh(screw, angle, caseWidth, isLeft) {
+  const radius = 1.6;
+  const length = 4;
+  const geom = new THREE.CylinderGeometry(radius, radius, length, 12);
+  const mat = new THREE.MeshLambertMaterial({ color: COLOR_SCREW });
+  const mesh = new THREE.Mesh(geom, mat);
+
+  mesh.rotation.x = Math.PI / 2;
+
+  const railWidth = 10;
+  const zPos = isLeft
+    ? -caseWidth / 2 + railWidth / 2 + state.caseMaterialThickness
+    : caseWidth / 2 - railWidth / 2 - state.caseMaterialThickness;
+
+  mesh.position.set(screw.x, screw.y, zPos);
+  return mesh;
+}
+
+function pointsFromOutline(outline) {
+  return outline.map((p) => ({ x: p.x, y: p.y }));
+}
+
+export function buildScene() {
+  if (!scene) return;
+
+  // Only store camera state if this isn't the first build
+  if (!isFirstBuild) {
+    storeCameraState();
+  }
+
+  disposeScene();
+
+  const geom = calculateCaseGeometry();
+  const caseWidth = state.caseWidthHP * HP_TO_MM;
+  const sideThickness = state.caseMaterialThickness;
+  const innerWidth = caseWidth;
+
+  sceneRoot = new THREE.Group();
+
+  const matBottom = new THREE.MeshLambertMaterial({
+    color: COLOR_BOTTOM,
+    transparent: true,
+    opacity: BOTTOM_OPACITY,
+    side: THREE.DoubleSide,
+  });
+  const matFront = new THREE.MeshLambertMaterial({
+    color: COLOR_FRONT,
+    transparent: true,
+    opacity: OTHER_OPACITY,
+    side: THREE.DoubleSide,
+  });
+  const matBack = new THREE.MeshLambertMaterial({
+    color: COLOR_BACK,
+    transparent: true,
+    opacity: OTHER_OPACITY,
+    side: THREE.DoubleSide,
+  });
+  const matShelf = new THREE.MeshLambertMaterial({
+    color: COLOR_SHELF,
+    transparent: true,
+    opacity: OTHER_OPACITY,
+    side: THREE.DoubleSide,
+  });
+  //   const matSide = new THREE.MeshLambertMaterial({
+  //     color: COLOR_SIDE,
+  //     transparent: true,
+  //     opacity: SIDE_OPACITY,
+  //     side: THREE.DoubleSide,
+  //   });
+
+  //   const sideOutlinePts = pointsFromOutline(geom.outline).filter((_, i, arr) => {
+  //     if (i === 0) return true;
+  //     const prev = arr[i - 1];
+  //     return !(
+  //       Math.abs(prev.x - arr[i].x) < 0.001 && Math.abs(prev.y - arr[i].y) < 0.001
+  //     );
+  //   });
+
+  //   const leftSide = makeBoardMesh(
+  //     sideOutlinePts,
+  //     sideThickness,
+  //     matSide,
+  //     -innerWidth / 2 - sideThickness
+  //   );
+  //   const rightSide = makeBoardMesh(
+  //     sideOutlinePts,
+  //     sideThickness,
+  //     matSide,
+  //     innerWidth / 2
+  //   );
+  //   sceneRoot.add(leftSide);
+  //   sceneRoot.add(rightSide);
+
+  //   makeExtrudedPanelMesh;
+  //createSidePanelExtrudableOutline
+
+  const rightSidePoints = geom.createSidePanelExtrudableOutline();
+  console.log("Right side points:", rightSidePoints);
+  if (rightSidePoints && rightSidePoints.length > 2) {
+    const rightSideMesh = makeExtrudedPanelMesh(
+      rightSidePoints,
+      new THREE.Vector3(0, 0, -state.caseMaterialThickness),
+      COLOR_SIDE,
+      SIDE_OPACITY
+    );
+    if (rightSideMesh) {
+      sceneRoot.add(rightSideMesh);
+    }
+  }
+
+  const leftSidePoints = geom.createSidePanelExtrudableOutline("left");
+  console.log("Left side points:", leftSidePoints);
+  if (leftSidePoints && leftSidePoints.length > 2) {
+    const leftSideMesh = makeExtrudedPanelMesh(
+      leftSidePoints,
+      new THREE.Vector3(0, 0, state.caseMaterialThickness),
+      COLOR_SIDE,
+      SIDE_OPACITY
+    );
+    if (leftSideMesh) {
+      sceneRoot.add(leftSideMesh);
+    }
+  }
+
+  //   if (geom.baseBoardOutline && geom.baseBoardOutline.length > 0) {
+  //     const basePts = geom.baseBoardOutline.map((p) => ({ x: p.x, y: p.y }));
+  //     const baseMesh = makeBoardMesh(
+  //       basePts,
+  //       innerWidth + 2 * sideThickness,
+  //       matBottom,
+  //       -innerWidth / 2 - sideThickness
+  //     );
+  //     sceneRoot.add(baseMesh);
+  //   }
+
+  const bottomPanelPoints = geom.createBottomPanelExtrudableOutline();
+  //   console.info("bottomPanelPoints", bottomPanelPoints);
+  const bottomPanelMesh = makeExtrudedPanelMesh(
+    bottomPanelPoints,
+    new THREE.Vector3(0, state.caseMaterialThickness, 0),
+    COLOR_BOTTOM,
+    OTHER_OPACITY
+  );
+  sceneRoot.add(bottomPanelMesh);
+
+  //   console.log("created base panel");
+
+  //   if (geom.frontPieceOutline && geom.frontPieceOutline.length > 0) {
+  //     const frontPts = geom.frontPieceOutline.map((p) => ({ x: p.x, y: p.y }));
+  //     const frontMesh = makeBoardMesh(
+  //       frontPts,
+  //       innerWidth,
+  //       matFront,
+  //       -innerWidth / 2
+  //     );
+  //     sceneRoot.add(frontMesh);
+  //   }
+
+  // createFrontPanelExtrudableOutline;
+
+  const frontPanelPoints = geom.createFrontPanelExtrudableOutline();
+  //   console.info("frontPanelPoints", frontPanelPoints);
+  const frontPanelMesh = makeExtrudedPanelMesh(
+    frontPanelPoints,
+    new THREE.Vector3(state.caseMaterialThickness, 0, 0),
+    COLOR_FRONT,
+    OTHER_OPACITY
+  );
+  sceneRoot.add(frontPanelMesh);
+
+  //   if (geom.backPieceOutline && geom.backPieceOutline.length > 0) {
+  //     const backPts = geom.backPieceOutline.map((p) => ({ x: p.x, y: p.y }));
+  //     const backMesh = makeBoardMesh(
+  //       backPts,
+  //       innerWidth,
+  //       matBack,
+  //       -innerWidth / 2
+  //     );
+  //     sceneRoot.add(backMesh);
+  //   }
+
+  const backPanelPoints = geom.createBackPanelExtrudableOutline();
+  //   console.info("backPanelPoints", backPanelPoints);
+  const backPanelMesh = makeExtrudedPanelMesh(
+    backPanelPoints,
+    new THREE.Vector3(-state.caseMaterialThickness, 0, 0),
+    COLOR_BACK,
+    BACK_OPACITY //OTHER_OPACITY
+  );
+  sceneRoot.add(backPanelMesh);
+
+  //   // Always render the "shelf"
+  //   //if (state.flattenTopShelf && geom.shelfPieceOutline && geom.shelfPieceOutline.length > 0) {
+  //   const shelfPts = geom.shelfPieceOutline.map((p) => ({ x: p.x, y: p.y }));
+  //   const shelfMesh = makeBoardMesh(
+  //     shelfPts,
+  //     innerWidth,
+  //     matShelf,
+  //     -innerWidth / 2
+  //   );
+  //   sceneRoot.add(shelfMesh);
+  //   //}
+
+  if (geom.hasShelfTop) {
+    const topPanelPoints = geom.createTopPanelExtrudableOutline();
+    const t = state.caseMaterialThickness;
+    let topPanelExtrudeVec;
+    if (state.flattenTopShelf) {
+      topPanelExtrudeVec = new THREE.Vector3(0, -t, 0);
+    } else {
+      const inwardX = -Math.sin(rad(geom.shelfAngle));
+      const inwardY = Math.cos(rad(geom.shelfAngle));
+      topPanelExtrudeVec = new THREE.Vector3(inwardX * t, inwardY * t, 0);
+    }
+    const topPanelMesh = makeExtrudedPanelMesh(
+      topPanelPoints,
+      topPanelExtrudeVec,
+      COLOR_SHELF,
+      OTHER_OPACITY
+    );
+    sceneRoot.add(topPanelMesh);
+  }
+
+  geom.panels.forEach((panel, i) => {
+    // Add horizontal rails that span the full case width (now with holes drilled through them)
+    sceneRoot.add(
+      makeHorizontalRailMesh(panel, i, innerWidth, true, geom.panels.length)
+    ); // Bottom rail
+    sceneRoot.add(
+      makeHorizontalRailMesh(panel, i, innerWidth, false, geom.panels.length)
+    ); // Top rail
+
+    // Add screw holes in the side panels (DO NOT MOVE THESE - they stay exactly where they are)
+    const screws = getScrewHoleCoords(panel, i);
+    sceneRoot.add(
+      makeScrewHoleMesh(screws.bottomScrew, panel.angle, innerWidth, true)
+    );
+    sceneRoot.add(
+      makeScrewHoleMesh(screws.topScrew, panel.angle, innerWidth, true)
+    );
+    sceneRoot.add(
+      makeScrewHoleMesh(screws.bottomScrew, panel.angle, innerWidth, false)
+    );
+    sceneRoot.add(
+      makeScrewHoleMesh(screws.topScrew, panel.angle, innerWidth, false)
+    );
+  });
+
+  const cx = geom.maxX / 2;
+  const cy = geom.maxY / 2;
+  sceneRoot.position.set(-cx, 0, 0);
+
+  scene.add(sceneRoot);
+
+  const maxDim = Math.max(geom.maxX, geom.maxY, innerWidth);
+  const dist = maxDim * 1.8;
+  currentDist = dist; // Update for logging
+
+  if (preservedCameraState && !isFirstBuild) {
+    // Restore the previous camera state to maintain user's viewing angle
+    restoreCameraState();
+  } else {
+    // Set initial camera position to view the front-right corner
+    // This shows both the opposite side profile and the front panel
+    camera.position.set(dist * -0.65, dist * 0.273, dist * 0.891);
+    controls.target.set(0, cy, 0);
+    controls.update();
+  }
+
+  if (isFirstBuild) {
+    zoomToFitScene(camera, sceneRoot); //, controls = null) {
+  }
+
+  // Mark that we've completed the first build
+  isFirstBuild = false;
+}
+
+let lastLoggedPosition = null;
+let currentDist = 1; // Will be updated in buildScene
+
+function renderLoop() {
+  if (!isRunning) return;
+  controls.update();
+
+  // Log camera position as multiples of dist when it changes
+  // if (camera && currentDist > 0) {
+  //   const pos = camera.position;
+  //   const normalizedPos = {
+  //     x: (pos.x / currentDist).toFixed(3),
+  //     y: (pos.y / currentDist).toFixed(3),
+  //     z: (pos.z / currentDist).toFixed(3),
+  //   };
+
+  //   // Only log if position has changed significantly
+  //   if (
+  //     !lastLoggedPosition ||
+  //     Math.abs(normalizedPos.x - lastLoggedPosition.x) > 0.01 ||
+  //     Math.abs(normalizedPos.y - lastLoggedPosition.y) > 0.01 ||
+  //     Math.abs(normalizedPos.z - lastLoggedPosition.z) > 0.01
+  //   ) {
+  //     console.log(
+  //       `Camera position (as multiples of dist): x=${normalizedPos.x}, y=${normalizedPos.y}, z=${normalizedPos.z}`
+  //     );
+  //     lastLoggedPosition = normalizedPos;
+  //   }
+  // }
+
+  renderer.render(scene, camera);
+  rafHandle = requestAnimationFrame(renderLoop);
+}
+
+export function startRenderLoop() {
+  if (isRunning) return;
+  isRunning = true;
+  rafHandle = requestAnimationFrame(renderLoop);
+}
+
+export function stopRenderLoop() {
+  isRunning = false;
+  if (rafHandle !== null) {
+    cancelAnimationFrame(rafHandle);
+    rafHandle = null;
+  }
+}
+
+export function resizeThreeCanvas(w, h) {
+  if (!renderer || !camera) return;
+  if (w <= 0 || h <= 0) return;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  if (isRunning) {
+    renderer.render(scene, camera);
+  }
+}
+
+export function isThreeRunning() {
+  return isRunning;
+}
+
+function zoomToFitScene(camera, sceneRoot, controls = null) {
+  // 1. Compute a bounding box that encompasses all children of sceneRoot
+  const box = new THREE.Box3().setFromObject(sceneRoot);
+
+  // Safety check: if sceneRoot is completely empty, exit early
+  if (box.isEmpty()) return;
+
+  const size = new THREE.Vector3();
+  const center = new THREE.Vector3();
+  box.getSize(size);
+  box.getCenter(center);
+
+  // 2. Find the largest dimension (width, height, or depth)
+  const maxDim = Math.max(size.x, size.y, size.z);
+
+  // 3. Calculate distance using camera Field Of View (FOV)
+  const fovInRadians = (camera.fov * Math.PI) / 180;
+
+  // Calculate required distance and apply a 15% margin (0.85)
+  let distance = maxDim / 2 / Math.tan(fovInRadians / 2);
+  distance = distance / 0.85;
+
+  // 4. Reposition camera along its current angle relative to the center
+  const direction = new THREE.Vector3()
+    .subVectors(camera.position, center)
+    .normalize();
+
+  camera.position.copy(direction.multiplyScalar(distance).add(center));
+
+  // 5. Update camera and control targets
+  camera.lookAt(center);
+  camera.updateProjectionMatrix();
+
+  console.log("zoomToFitScene", camera.position, center, distance);
+
+  if (controls) {
+    controls.target.copy(center);
+    controls.update();
+  }
+}

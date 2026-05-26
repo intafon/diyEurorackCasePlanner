@@ -1,0 +1,363 @@
+html,
+body {
+    background-color: #333;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 11px;
+    font-weight: 300;
+    color: #fff;
+    letter-spacing: 0.02rem;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+#app-header {
+    position: relative;
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 6px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+    backdrop-filter: blur(10px);
+}
+
+#version-display {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 300;
+    letter-spacing: 0.05rem;
+}
+
+input {
+    background-color: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    padding: 3px 6px;
+    border-radius: 2px;
+    font-family: inherit;
+    font-size: inherit;
+    height: 20px;
+    box-sizing: border-box;
+    vertical-align: middle;
+    transition: all 0.2s ease;
+}
+
+input:focus {
+    outline: none;
+    background-color: rgba(255, 255, 255, 0.12);
+    border-color: rgba(171, 171, 171, 0.6);
+}
+
+input[readonly] {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    color: rgba(255, 255, 255, 0.7);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.input-span {
+    padding-right: 15px;
+    white-space: nowrap;
+    opacity: 0.9;
+    transition: opacity 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+}
+
+.input-span:hover {
+    opacity: 1.0;
+}
+
+.input-span.unit {
+    font-size: 85%;
+    padding-left: 3px;
+    opacity: 0.7;
+    font-weight: 300;
+}
+
+#container {
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-flow: column;
+    min-height: 0;
+}
+
+#input-div {
+    margin: 0;
+    padding: 8px 12px;
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+    line-height: 1.4;
+}
+
+#canvas-div {
+    background-color: rgba(255, 255, 255, 0.95);
+    margin: 0;
+    flex: 1;
+    overflow: auto;
+    min-height: 400px;
+    border-radius: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+#the-canvas,
+#three-canvas {
+    display: block;
+    padding: 0px;
+}
+
+.view-toggle-btn {
+    padding: 3px 10px;
+    font-size: 11px;
+    cursor: pointer;
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    font-family: inherit;
+    font-weight: 300;
+    letter-spacing: 0.02rem;
+    height: 20px;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+    margin-right: 4px;
+}
+
+.view-toggle-btn:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+    border-color: rgba(171, 171, 171, 0.6);
+}
+
+.view-toggle-btn.active {
+    background-color: rgba(171, 171, 171, 0.4);
+    border-color: rgba(171, 171, 171, 0.8);
+    color: #fff;
+}
+
+#summary-container {
+    display: flex;
+    flex-direction: row;
+}
+
+.summary-div {
+    flex: auto 1 1;
+    margin: 0;
+    min-height: 80px;
+    padding: 8px 12px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    line-height: 1.4;
+    font-weight: 300;
+    font-size: 10px;
+}
+
+.row-1u-label {
+    margin-right: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+}
+
+.row-1u-label input[type="checkbox"] {
+    margin-right: 4px;
+}
+
+#oneU-format-container label {
+    margin-right: 10px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+}
+
+#oneU-format-container input[type="radio"] {
+    margin-right: 4px;
+}
+
+/* Select styling */
+select {
+    background-color: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    padding: 3px 6px;
+    border-radius: 2px;
+    font-family: inherit;
+    font-size: inherit;
+    height: 20px;
+    box-sizing: border-box;
+    vertical-align: middle;
+    transition: all 0.2s ease;
+}
+
+select:focus {
+    outline: none;
+    background-color: rgba(255, 255, 255, 0.12);
+    border-color: rgba(171, 171, 171, 0.6);
+}
+
+/* Checkbox and radio button styling */
+input[type="checkbox"],
+input[type="radio"] {
+    background-color: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    margin-right: 6px;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    vertical-align: middle;
+    flex-shrink: 0;
+    padding: 0;
+}
+
+input[type="radio"] {
+    border-radius: 50%;
+}
+
+input[type="checkbox"]:checked,
+input[type="radio"]:checked {
+    background-color: rgba(171, 171, 171, 0.6);
+    border-color: rgba(171, 171, 171, 0.8);
+}
+
+input[type="checkbox"]:checked::before {
+    content: '✓';
+    position: absolute;
+    top: -2px;
+    left: 1px;
+    color: #fff;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+input[type="radio"]:checked::before {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 6px;
+    height: 6px;
+    background-color: #fff;
+    border-radius: 50%;
+}
+
+/* Labels */
+label {
+    cursor: pointer;
+    opacity: 0.9;
+    transition: opacity 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+}
+
+label:hover {
+    opacity: 1.0;
+}
+
+/* Links styling inspired by intafon.com */
+a:link {
+    color: #ababab;
+    opacity: 0.9;
+    text-decoration: underline;
+    transition: all 0.2s ease;
+}
+
+a:visited {
+    color: #ababab;
+    opacity: 0.8;
+    text-decoration: underline;
+}
+
+a:hover {
+    color: #cccccc;
+    opacity: 1.0;
+    text-decoration: underline;
+}
+
+a:active {
+    color: #ffffff;
+    opacity: 1.0;
+    text-decoration: underline;
+}
+
+/* Bold text styling */
+b, strong {
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+/* Summary container improvements */
+#summary-container {
+    margin-top: 0;
+}
+
+/* Export options styling */
+.export-options {
+    margin: 10px 0;
+    opacity: 0.9;
+}
+
+.export-options label {
+    display: flex;
+    align-items: center;
+    font-size: 11px;
+}
+
+/* Canvas container title-like styling */
+#canvas-div {
+    position: relative;
+}
+
+/* Input container improvements */
+#input-div > .input-span {
+    display: inline-block;
+    margin-bottom: 4px;
+    vertical-align: top;
+}
+
+.export-buttons {
+    margin-top: 10px;
+}
+
+.export-buttons button {
+    padding: 6px 12px;
+    font-size: 11px;
+    cursor: pointer;
+    background-color: rgba(171, 171, 171, 0.2);
+    color: #fff;
+    border: 1px solid rgba(171, 171, 171, 0.4);
+    border-radius: 2px;
+    font-family: inherit;
+    font-weight: 300;
+    letter-spacing: 0.02rem;
+    transition: all 0.3s ease;
+}
+
+.export-buttons button:hover {
+    background-color: rgba(171, 171, 171, 0.3);
+    border-color: rgba(171, 171, 171, 0.6);
+    opacity: 1.0;
+}
+
+.export-buttons button:active {
+    background-color: rgba(171, 171, 171, 0.4);
+    transform: translateY(1px);
+}
