@@ -1,107 +1,107 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DIY Eurorack Case Planner Tool</title>
-    <style>
-      /* Popup styles matching the app's dark theme */
-      .popup-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.8);
-        backdrop-filter: blur(10px);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 10000;
-      }
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>DIY Eurorack Case Planner Tool</title>
+        <style>
+            /* Popup styles matching the app's dark theme */
+            .popup-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.8);
+                backdrop-filter: blur(10px);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+            }
 
-      .popup-content {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 24px;
-        border-radius: 3px;
-        max-width: 480px;
-        width: 90%;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-        text-align: center;
-        font-family: Helvetica, Arial, sans-serif;
-        font-size: 11px;
-        font-weight: 300;
-        color: #fff;
-        letter-spacing: 0.02rem;
-        backdrop-filter: blur(10px);
-      }
+            .popup-content {
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                padding: 24px;
+                border-radius: 3px;
+                max-width: 480px;
+                width: 90%;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+                text-align: center;
+                font-family: Helvetica, Arial, sans-serif;
+                font-size: 11px;
+                font-weight: 300;
+                color: #fff;
+                letter-spacing: 0.02rem;
+                backdrop-filter: blur(10px);
+            }
 
-      .popup-title {
-        font-size: 14px;
-        font-weight: 400;
-        margin-bottom: 12px;
-        color: rgba(255, 255, 255, 0.95);
-        letter-spacing: 0.05rem;
-      }
+            .popup-title {
+                font-size: 14px;
+                font-weight: 400;
+                margin-bottom: 12px;
+                color: rgba(255, 255, 255, 0.95);
+                letter-spacing: 0.05rem;
+            }
 
-      .popup-version {
-        font-size: 12px;
-        color: rgba(255, 255, 255, 0.8);
-        margin-bottom: 16px;
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        padding: 8px 12px;
-        border-radius: 2px;
-        font-weight: 300;
-      }
+            .popup-version {
+                font-size: 12px;
+                color: rgba(255, 255, 255, 0.8);
+                margin-bottom: 16px;
+                background: rgba(255, 255, 255, 0.08);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                padding: 8px 12px;
+                border-radius: 2px;
+                font-weight: 300;
+            }
 
-      .popup-warning {
-        background-color: rgba(255, 193, 7, 0.1);
-        border: 1px solid rgba(255, 193, 7, 0.3);
-        padding: 12px;
-        border-radius: 2px;
-        margin-bottom: 16px;
-        text-align: left;
-      }
+            .popup-warning {
+                background-color: rgba(255, 193, 7, 0.1);
+                border: 1px solid rgba(255, 193, 7, 0.3);
+                padding: 12px;
+                border-radius: 2px;
+                margin-bottom: 16px;
+                text-align: left;
+            }
 
-      .popup-warning-title {
-        font-weight: 400;
-        color: rgba(255, 193, 7, 0.9);
-        margin-bottom: 6px;
-        font-size: 11px;
-        text-align: center;
-      }
+            .popup-warning-title {
+                font-weight: 400;
+                color: rgba(255, 193, 7, 0.9);
+                margin-bottom: 6px;
+                font-size: 11px;
+                text-align: center;
+            }
 
-      .popup-warning-text {
-        color: rgba(255, 255, 255, 0.85);
-        line-height: 1.4;
-        font-size: 11px;
-      }
+            .popup-warning-text {
+                color: rgba(255, 255, 255, 0.85);
+                line-height: 1.4;
+                font-size: 11px;
+            }
 
-      .popup-close-btn {
-        background-color: rgba(171, 171, 171, 0.2);
-        color: #fff;
-        border: 1px solid rgba(171, 171, 171, 0.4);
-        padding: 6px 16px;
-        border-radius: 2px;
-        font-size: 11px;
-        cursor: pointer;
-        font-family: inherit;
-        font-weight: 300;
-        letter-spacing: 0.02rem;
-        transition: all 0.2s ease;
-      }
+            .popup-close-btn {
+                background-color: rgba(171, 171, 171, 0.2);
+                color: #fff;
+                border: 1px solid rgba(171, 171, 171, 0.4);
+                padding: 6px 16px;
+                border-radius: 2px;
+                font-size: 11px;
+                cursor: pointer;
+                font-family: inherit;
+                font-weight: 300;
+                letter-spacing: 0.02rem;
+                transition: all 0.2s ease;
+            }
 
-      .popup-close-btn:hover {
-        background-color: rgba(171, 171, 171, 0.3);
-        border-color: rgba(171, 171, 171, 0.6);
-      }
+            .popup-close-btn:hover {
+                background-color: rgba(171, 171, 171, 0.3);
+                border-color: rgba(171, 171, 171, 0.6);
+            }
 
-      .popup-close-btn:active {
-        background-color: rgba(171, 171, 171, 0.4);
-        transform: translateY(1px);
-      }
+            .popup-close-btn:active {
+                background-color: rgba(171, 171, 171, 0.4);
+                transform: translateY(1px);
+            }
 
             .hidden {
                 display: none;
@@ -199,93 +199,6 @@
                 <div class="summary-div" id="summary-div-2"></div>
             </div>
         </div>
-        <button id="popup-close-btn" class="popup-close-btn">
-          OK! Allons-y!
-        </button>
-      </div>
-    </div>
-
-    <header id="app-header">
-      <div id="version-display">
-        intafon case build v.<span id="version-text">loading...</span>
-      </div>
-    </header>
-    <div id="container">
-      <div id="input-div">
-        <span class="input-span">
-          Module Depth Max:&nbsp;
-          <input id="the-input-depth" value="0" type="number" />
-          <span class="input-span unit">mm</span>&nbsp;<span class="input-span">
-            Calculate needed rise:
-            <input type="checkbox" id="calc-rise" />
-          </span>
-        </span>
-        <span class="input-span">
-          Row count:&nbsp;
-          <select name="rowCount" id="rowCount"></select>
-        </span>
-        <span class="input-span" id="row-1u-checkboxes-container">
-          1U rows:&nbsp;
-          <span id="row-1u-checkboxes"></span>
-        </span>
-        <span
-          class="input-span"
-          id="oneU-format-container"
-          style="display: none"
-        >
-          1U Format:&nbsp;
-          <label>
-            <input type="radio" name="oneUFormat" value="intellijel" checked />
-            Intellijel
-          </label>
-          <label>
-            <input type="radio" name="oneUFormat" value="pulplogic" />
-            Pulp Logic
-          </label>
-        </span>
-        <span id="row-inputs"> </span>
-        <span class="input-span">
-          Material thickness:&nbsp;
-          <input id="material-thickness" value="0" type="number" />
-          <span class="input-span unit">mm</span>
-        </span>
-        <span class="input-span">
-          Case width:&nbsp;
-          <input
-            id="hp-width-input"
-            value="84"
-            style="width: 60px"
-            type="number"
-          />
-          <span class="input-span unit">hp</span>
-        </span>
-        <span class="input-span">
-          Flatten top shelf:
-          <input type="checkbox" id="flatten-top-shelf" />
-        </span>
-        <span class="input-span" id="view-toggle-container">
-          View:&nbsp;
-          <button
-            type="button"
-            id="view-toggle-2d"
-            class="view-toggle-btn active"
-          >
-            Side View
-          </button>
-          <button type="button" id="view-toggle-3d" class="view-toggle-btn">
-            3D View
-          </button>
-        </span>
-      </div>
-      <div id="canvas-div">
-        <canvas id="the-canvas" width="150" height="150"></canvas>
-        <canvas id="three-canvas" style="display: none"></canvas>
-      </div>
-      <div id="summary-container">
-        <div class="summary-div" id="summary-div"></div>
-        <div class="summary-div" id="summary-div-2"></div>
-      </div>
-    </div>
-    <script type="module" src="/src/main.js"></script>
-  </body>
+        <script type="module" src="/src/main.js"></script>
+    </body>
 </html>
