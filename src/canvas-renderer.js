@@ -10,7 +10,9 @@ import { COLORS, DRILL_HOLE_2D_RADIUS } from "./constants.js";
 
 let canvas, ctx;
 
-const PADDING = 70;
+const MARGIN = 100;
+let canvasOffsetX = 0;
+let canvasOffsetY = 0;
 
 export function initCanvas(canvasElement) {
   canvas = canvasElement;
@@ -34,11 +36,11 @@ export function getContext() {
 }
 
 function startX() {
-  return PADDING * state.viewScale;
+  return canvasOffsetX;
 }
 
 function startY() {
-  return canvas.height - PADDING * state.viewScale;
+  return canvas.height - canvasOffsetY;
 }
 
 export function getPlot(x, y) {
@@ -58,16 +60,22 @@ export function getCaseCoords(canvasX, canvasY) {
 export function calculateViewScale(maxX, maxY) {
   const baseScale = 1 / state.heightRatio;
 
-  const requiredWidth = PADDING + maxX * baseScale + PADDING;
-  const requiredHeight = PADDING + maxY * baseScale + PADDING;
+  const caseWidthBase = maxX * baseScale;
+  const caseHeightBase = maxY * baseScale;
 
   const availableWidth = canvas.width;
   const availableHeight = canvas.height;
 
-  const scaleX = availableWidth / requiredWidth;
-  const scaleY = availableHeight / requiredHeight;
+  const scaleX = (availableWidth - 2 * MARGIN) / caseWidthBase;
+  const scaleY = (availableHeight - 2 * MARGIN) / caseHeightBase;
 
-  state.viewScale = Math.min(1, scaleX, scaleY);
+  state.viewScale = Math.max(0.01, Math.min(scaleX, scaleY));
+
+  const caseWidthPx = caseWidthBase * state.viewScale;
+  const caseHeightPx = caseHeightBase * state.viewScale;
+
+  canvasOffsetX = (availableWidth - caseWidthPx) / 2;
+  canvasOffsetY = (availableHeight - caseHeightPx) / 2;
 }
 
 function moveTo(x, y) {
