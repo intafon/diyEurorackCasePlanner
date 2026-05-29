@@ -2,9 +2,9 @@ import { state } from "./state.js";
 import {
   rad,
   actualDistance,
-  roundToPlace,
+//   roundToPlace,
   getScrewHoleCoords,
-  calculateCaseGeometry,
+//   calculateCaseGeometry,
 } from "./geometry.js";
 import { COLORS, DRILL_HOLE_2D_RADIUS } from "./constants.js";
 
@@ -173,8 +173,29 @@ function drawDistanceIndicator(
   ctx.fillText(actualDistance(distance, false), labelX, labelY);
 }
 
+/**
+ * Draws an outline shape defined by the points.
+ *
+ * @param {Array<{x: number, y: number}>} outlineData Array of points to draw shape
+ * @param {string} color CSS color string
+ * @param {Array<number>} dashes Array of numbers representing the dash pattern
+ */
+export function drawAnOutline(outlineData, color = "#CCCCCC99", dashes = []) {
+  let outlinePts = outlineData.reduce((acc, p) => {
+    acc.push(p.x, p.y);
+    return acc;
+  }, []);
+  outlinePts.push(outlinePts[0], outlinePts[1]);
+  outlinePts.unshift("false");
+  ctx.setLineDash(dashes);
+  ctx.strokeStyle = color;
+  ctx.beginPath();
+  drawPath(outlinePts);
+  ctx.closePath();
+}
+
 function calculatePerpEndpoint(screw, angle, backWallX) {
-  console.info("calculatePerpEndpoint", screw, angle, backWallX);
+//   console.info("calculatePerpEndpoint", screw, angle, backWallX);
 
   const perpDirX = Math.sin(rad(angle));
   const perpDirY = -Math.cos(rad(angle));
@@ -416,115 +437,115 @@ export function drawPanelRailHoles(drillHoles) {
   return p;
 }
 
-const IntersectionType = {
-  NONE: "None",
-  HORIZONTAL: "Horizontal",
-  VERTICAL: "Vertical",
-};
+// const IntersectionType = {
+//   NONE: "None",
+//   HORIZONTAL: "Horizontal",
+//   VERTICAL: "Vertical",
+// };
 
-/**
- * Calculates the first intersection of a perpendicular line projecting from lineA through pointB.
- * Now completely independent of lineAPointBDist!
- * * @param {Object} params
- * @param {Object} params.lineAStart - {x, y} Start point of lineA
- * @param {number} params.lineAAngle - Angle in degrees from horizontal (rising to the right)
- * @param {Object} params.pointB - {x, y} Point below lineA
- * @param {number} params.horiDestLineY - Y-coordinate of the target horizontal line
- * @param {number} params.vertDestLineX - X-coordinate of the target vertical line
- */
-function calculatePerpendicularIntersection(params) {
-  const { lineAStart, lineAAngle, pointB, horiDestLineY, vertDestLineX } =
-    params;
+// /**
+//  * Calculates the first intersection of a perpendicular line projecting from lineA through pointB.
+//  * Now completely independent of lineAPointBDist!
+//  * * @param {Object} params
+//  * @param {Object} params.lineAStart - {x, y} Start point of lineA
+//  * @param {number} params.lineAAngle - Angle in degrees from horizontal (rising to the right)
+//  * @param {Object} params.pointB - {x, y} Point below lineA
+//  * @param {number} params.horiDestLineY - Y-coordinate of the target horizontal line
+//  * @param {number} params.vertDestLineX - X-coordinate of the target vertical line
+//  */
+// function calculatePerpendicularIntersection(params) {
+//   const { lineAStart, lineAAngle, pointB, horiDestLineY, vertDestLineX } =
+//     params;
 
-  /* Use:
-    const testParams = {
-        lineAStart: { x: 0, y: 10 },
-        lineAAngle: 30,                 // 30 degrees slope rising right
-        pointB: { x: 5, y: 5 },          // Below the line
-        horiDestLineY: -5,              // Deep horizontal floor
-        vertDestLineX: 12               // Vertical wall to the right
-    };
+//   /* Use:
+//     const testParams = {
+//         lineAStart: { x: 0, y: 10 },
+//         lineAAngle: 30,                 // 30 degrees slope rising right
+//         pointB: { x: 5, y: 5 },          // Below the line
+//         horiDestLineY: -5,              // Deep horizontal floor
+//         vertDestLineX: 12               // Vertical wall to the right
+//     };
 
-    const result = calculatePerpendicularIntersection(testParams);
-    console.log(result);
-  */
+//     const result = calculatePerpendicularIntersection(testParams);
+//     console.log(result);
+//   */
 
-  // 1. Convert angle to radians and get lineA's unit direction vector
-  const angleRad = (lineAAngle * Math.PI) / 180;
-  const cosA = Math.cos(angleRad);
-  const sinA = Math.sin(angleRad);
+//   // 1. Convert angle to radians and get lineA's unit direction vector
+//   const angleRad = (lineAAngle * Math.PI) / 180;
+//   const cosA = Math.cos(angleRad);
+//   const sinA = Math.sin(angleRad);
 
-  // 2. Vector from lineAStart to pointB
-  const vX = pointB.x - lineAStart.x;
-  const vY = pointB.y - lineAStart.y;
+//   // 2. Vector from lineAStart to pointB
+//   const vX = pointB.x - lineAStart.x;
+//   const vY = pointB.y - lineAStart.y;
 
-  // 3. Project vector V onto lineA's direction vector using the dot product
-  const dotProduct = vX * cosA + vY * sinA;
+//   // 3. Project vector V onto lineA's direction vector using the dot product
+//   const dotProduct = vX * cosA + vY * sinA;
 
-  // 4. Calculate the exact origin point on lineA
-  const originPoint = {
-    x: lineAStart.x + dotProduct * cosA,
-    y: lineAStart.y + dotProduct * sinA,
-  };
+//   // 4. Calculate the exact origin point on lineA
+//   const originPoint = {
+//     x: lineAStart.x + dotProduct * cosA,
+//     y: lineAStart.y + dotProduct * sinA,
+//   };
 
-  // 5. Setup ray casting down the perpendicular line
-  let t_h = Infinity;
-  let t_v = Infinity;
+//   // 5. Setup ray casting down the perpendicular line
+//   let t_h = Infinity;
+//   let t_v = Infinity;
 
-  // Intersection with horizontal line (Y = horiDestLineY)
-  if (Math.abs(cosA) > 1e-9) {
-    const t = (originPoint.y - horiDestLineY) / cosA;
-    if (t > 0) t_h = t;
-  }
+//   // Intersection with horizontal line (Y = horiDestLineY)
+//   if (Math.abs(cosA) > 1e-9) {
+//     const t = (originPoint.y - horiDestLineY) / cosA;
+//     if (t > 0) t_h = t;
+//   }
 
-  // Intersection with vertical line (X = vertDestLineX)
-  if (Math.abs(sinA) > 1e-9) {
-    const t = (vertDestLineX - originPoint.x) / sinA;
-    if (t > 0) t_v = t;
-  }
+//   // Intersection with vertical line (X = vertDestLineX)
+//   if (Math.abs(sinA) > 1e-9) {
+//     const t = (vertDestLineX - originPoint.x) / sinA;
+//     if (t > 0) t_v = t;
+//   }
 
-  // If no forward intersection exists
-  if (t_h === Infinity && t_v === Infinity) {
-    return {
-      intersectionType: IntersectionType.NONE,
-      intersectionPoint: null,
-      originPoint,
-      distanceVector: { x: 0, y: 0 },
-      distance: 0,
-    };
-  }
+//   // If no forward intersection exists
+//   if (t_h === Infinity && t_v === Infinity) {
+//     return {
+//       intersectionType: IntersectionType.NONE,
+//       intersectionPoint: null,
+//       originPoint,
+//       distanceVector: { x: 0, y: 0 },
+//       distance: 0,
+//     };
+//   }
 
-  // 6. Determine which intersection happens first
-  let intersectionType;
-  let finalDistance;
-  let intersectionPoint;
+//   // 6. Determine which intersection happens first
+//   let intersectionType;
+//   let finalDistance;
+//   let intersectionPoint;
 
-  if (t_h < t_v) {
-    intersectionType = IntersectionType.HORIZONTAL;
-    finalDistance = t_h;
-    intersectionPoint = {
-      x: originPoint.x + t_h * sinA,
-      y: horiDestLineY,
-    };
-  } else {
-    intersectionType = IntersectionType.VERTICAL;
-    finalDistance = t_v;
-    intersectionPoint = {
-      x: vertDestLineX,
-      y: originPoint.y - t_v * cosA,
-    };
-  }
+//   if (t_h < t_v) {
+//     intersectionType = IntersectionType.HORIZONTAL;
+//     finalDistance = t_h;
+//     intersectionPoint = {
+//       x: originPoint.x + t_h * sinA,
+//       y: horiDestLineY,
+//     };
+//   } else {
+//     intersectionType = IntersectionType.VERTICAL;
+//     finalDistance = t_v;
+//     intersectionPoint = {
+//       x: vertDestLineX,
+//       y: originPoint.y - t_v * cosA,
+//     };
+//   }
 
-  const distanceVector = {
-    x: intersectionPoint.x - originPoint.x,
-    y: intersectionPoint.y - originPoint.y,
-  };
+//   const distanceVector = {
+//     x: intersectionPoint.x - originPoint.x,
+//     y: intersectionPoint.y - originPoint.y,
+//   };
 
-  return {
-    intersectionType,
-    intersectionPoint,
-    originPoint,
-    distanceVector,
-    distance: finalDistance,
-  };
-}
+//   return {
+//     intersectionType,
+//     intersectionPoint,
+//     originPoint,
+//     distanceVector,
+//     distance: finalDistance,
+//   };
+// }

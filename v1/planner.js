@@ -486,13 +486,13 @@ function createRowInput(i, value) {
             const inputIndex = parseInt(event.target.id.split(inputIdPrefix)[1], 10);
             rowAngles[inputIndex] = parseFloat(event.target.value, 10);
 
-            console.info(
-                "input change event",
-                event.target.value,
-                event.target.id,
-                inputIndex,
-                rowAngles
-            );
+            // console.info(
+            //     "input change event",
+            //     event.target.value,
+            //     event.target.id,
+            //     inputIndex,
+            //     rowAngles
+            // );
             drawSide();
         }, 0);
     };
@@ -548,7 +548,7 @@ function init() {
         }
     });
     rowCountSelector.addEventListener("change", (event) => {
-        console.info("event", event.target.value);
+        // console.info("event", event.target.value);
         rowCount = event.target.value;
         resetRowInputs(rowCount);
         drawSide();

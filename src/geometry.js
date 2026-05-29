@@ -133,7 +133,7 @@ export function calculateCaseGeometry() {
       (state.actualPanelBackDepth - state.actualRailDepth);
   const backOuterWallX = backInnerWallX + state.caseMaterialThickness;
 
-  console.info("calculateCaseGeometry: ", "backInnerWallX", backInnerWallX);
+//   console.info("calculateCaseGeometry: ", "backInnerWallX", backInnerWallX);
 
   let backWallInside, backWallY, backWallOutside;
 
