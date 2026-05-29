@@ -1,6 +1,5 @@
 import { HP_TO_MM, oneUFormats } from "./constants.js";
 import { actualDistance, roundToPlace } from "./geometry.js";
-import { downloadDXF, downloadSVG } from "./export.js";
 import { state } from "./state.js";
 
 let drawSideCallback = null;
@@ -271,31 +270,7 @@ export function writeSummary(
     '" readonly style="width: 80px;" />';
   summaryHtml += '&nbsp;<span class="input-span unit">mm (bottom/base)</span>';
 
-  summaryHtml += '<br/><br/><div class="export-buttons">';
-  summaryHtml +=
-    '<button type="button" id="download-svg-btn">Download SVG</button>';
-  summaryHtml +=
-    '&nbsp;&nbsp;<button type="button" id="download-dxf-btn">Download DXF</button>';
-  summaryHtml += "</div>";
-
   document.getElementById("summary-div-2").innerHTML = summaryHtml;
 
   setupHpWidthInput();
-  setupExportButtons();
-}
-
-function setupExportButtons() {
-  const svgBtn = document.getElementById("download-svg-btn");
-  const dxfBtn = document.getElementById("download-dxf-btn");
-
-  if (svgBtn) {
-    svgBtn.addEventListener("click", () => {
-      downloadSVG();
-    });
-  }
-  if (dxfBtn) {
-    dxfBtn.addEventListener("click", () => {
-      downloadDXF();
-    });
-  }
 }

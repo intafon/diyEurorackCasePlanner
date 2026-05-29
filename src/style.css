@@ -335,34 +335,6 @@ b, strong {
     vertical-align: top;
 }
 
-.export-buttons {
-    margin-top: 10px;
-}
-
-.export-buttons button {
-    padding: 6px 12px;
-    font-size: 11px;
-    cursor: pointer;
-    background-color: rgba(171, 171, 171, 0.2);
-    color: #fff;
-    border: 1px solid rgba(171, 171, 171, 0.4);
-    border-radius: 2px;
-    font-family: inherit;
-    font-weight: 300;
-    letter-spacing: 0.02rem;
-    transition: all 0.3s ease;
-}
-
-.export-buttons button:hover {
-    background-color: rgba(171, 171, 171, 0.3);
-    border-color: rgba(171, 171, 171, 0.6);
-    opacity: 1.0;
-}
-
-.export-buttons button:active {
-    background-color: rgba(171, 171, 171, 0.4);
-    transform: translateY(1px);
-}
 
 /* ── Floating Panel ─────────────────────────────────────────────────────── */
 
@@ -577,4 +549,33 @@ dialog.floating-panel.fp-minimized .fp-content {
 .toggle-switch-sm .toggle-label-left,
 .toggle-switch-sm .toggle-label-right {
     font-size: 9.5px;
+}
+
+/* ── Export buttons inside the panel ───────────────────────────────────── */
+
+.fp-export-btn {
+    flex: 1;
+    padding: 5px 8px;
+    font-size: 10px;
+    cursor: pointer;
+    background-color: rgba(171, 171, 171, 0.15);
+    color: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(171, 171, 171, 0.3);
+    border-radius: 2px;
+    font-family: inherit;
+    font-weight: 300;
+    letter-spacing: 0.02rem;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.fp-export-btn:hover {
+    background-color: rgba(171, 171, 171, 0.25);
+    border-color: rgba(171, 171, 171, 0.5);
+    color: #fff;
+}
+
+.fp-export-btn:active {
+    background-color: rgba(171, 171, 171, 0.35);
+    transform: translateY(1px);
 }

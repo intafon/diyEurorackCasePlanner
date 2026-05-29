@@ -6,6 +6,7 @@ import {
   setDrawCallback,
   setupHpWidthInput,
 } from './ui.js';
+import { downloadDXF, downloadSVG } from './export.js';
 
 export function initControlPanel({ onDraw, onViewChange }) {
   setDrawCallback(onDraw);
@@ -167,6 +168,28 @@ function _buildContent(contentEl, onDraw, onViewChange) {
     }, 0);
   });
   contentEl.appendChild(calcRiseInput);
+
+  // Export buttons
+  contentEl.appendChild(_mkDivider());
+
+  const exportRow = _mkRow();
+  exportRow.style.gap = '8px';
+
+  const svgBtn = document.createElement('button');
+  svgBtn.type = 'button';
+  svgBtn.className = 'fp-export-btn';
+  svgBtn.textContent = 'Download SVG';
+  svgBtn.addEventListener('click', () => downloadSVG());
+
+  const dxfBtn = document.createElement('button');
+  dxfBtn.type = 'button';
+  dxfBtn.className = 'fp-export-btn';
+  dxfBtn.textContent = 'Download DXF';
+  dxfBtn.addEventListener('click', () => downloadDXF());
+
+  exportRow.appendChild(svgBtn);
+  exportRow.appendChild(dxfBtn);
+  contentEl.appendChild(exportRow);
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
