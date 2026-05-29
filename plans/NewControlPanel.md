@@ -10,4 +10,3 @@
 | Row 3 angle ___˚ | [x] Row 3 is 3U |
 | Row 4 angle ___˚ | [x] Row 4 is 4U |
 | Row 5 angle ___˚ | [x] Row 5 is 5U |
-

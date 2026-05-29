@@ -1,7 +1,6 @@
 import { HP_TO_MM, oneUFormats } from "./constants.js";
 import { actualDistance, roundToPlace } from "./geometry.js";
 import { downloadDXF, downloadSVG } from "./export.js";
-
 import { state } from "./state.js";
 
 let drawSideCallback = null;
@@ -16,44 +15,19 @@ function triggerRedraw() {
   }
 }
 
-export function createRowInput(i, value) {
-  const inputIdPrefix = "angle-";
+// Rebuild all per-row controls (angle input + 1U checkbox) for `c` rows.
+// Renders into #row-inputs inside the floating control panel.
+export function resetRowControls(c) {
   const rowInputsEl = document.getElementById("row-inputs");
-  const el = document.createElement("span");
-  el.className = "input-span";
-  el.innerHTML = `Row ${i + 1} angle:&nbsp;`;
+  if (!rowInputsEl) return;
 
-  const inp = document.createElement("input");
-  inp.type = "number";
-  inp.value = value;
-  inp.id = `${inputIdPrefix}${i}`;
-  const onChange = (event) => {
-    setTimeout(() => {
-      const inputIndex = parseInt(event.target.id.split(inputIdPrefix)[1], 10);
-      state.rowAngles[inputIndex] = parseFloat(event.target.value, 10);
-      triggerRedraw();
-    }, 0);
-  };
-  inp.addEventListener("input", onChange);
-  inp.addEventListener("change", onChange);
-  inp.addEventListener("keypress", onChange);
+  while (rowInputsEl.firstChild) {
+    rowInputsEl.removeChild(rowInputsEl.firstChild);
+  }
 
-  el.appendChild(inp);
-
-  const deg = document.createElement("span");
-  deg.className = "input-span unit";
-  deg.innerHTML = "degrees";
-  el.appendChild(deg);
-
-  rowInputsEl.appendChild(el);
-
-  return inp;
-}
-
-export function reset1UCheckboxes(c) {
-  const container = document.getElementById("row-1u-checkboxes");
-  while (container.firstChild) {
-    container.removeChild(container.firstChild);
+  state.rowAngles = state.rowAngles.slice(0, c);
+  while (state.rowAngles.length < c) {
+    state.rowAngles.push(state.defaultAngle);
   }
 
   state.rowIs1U = state.rowIs1U.slice(0, c);
@@ -62,8 +36,45 @@ export function reset1UCheckboxes(c) {
   }
 
   for (let i = 0; i < c; i++) {
-    const label = document.createElement("label");
-    label.className = "row-1u-label";
+    const rowEl = document.createElement("div");
+    rowEl.className = "fp-row fp-row-2col";
+
+    // Left cell: angle input
+    const leftCell = document.createElement("div");
+    leftCell.className = "fp-cell";
+
+    const rowLabel = document.createElement("span");
+    rowLabel.className = "fp-label";
+    rowLabel.textContent = `Row ${i + 1}:`;
+
+    const angleInput = document.createElement("input");
+    angleInput.type = "number";
+    angleInput.value = state.rowAngles[i];
+    angleInput.id = `angle-${i}`;
+    angleInput.style.width = "48px";
+
+    const onChange = (event) => {
+      setTimeout(() => {
+        state.rowAngles[i] = parseFloat(event.target.value) || 0;
+        triggerRedraw();
+      }, 0);
+    };
+    angleInput.addEventListener("input", onChange);
+    angleInput.addEventListener("change", onChange);
+
+    const degUnit = document.createElement("span");
+    degUnit.className = "input-span unit";
+    degUnit.textContent = "°";
+
+    leftCell.appendChild(rowLabel);
+    leftCell.appendChild(angleInput);
+    leftCell.appendChild(degUnit);
+
+    // Right cell: 1U checkbox
+    const rightCell = document.createElement("div");
+    rightCell.className = "fp-cell";
+
+    const checkLabel = document.createElement("label");
 
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
@@ -71,38 +82,43 @@ export function reset1UCheckboxes(c) {
     checkbox.checked = state.rowIs1U[i];
     checkbox.addEventListener("change", (event) => {
       state.rowIs1U[i] = event.target.checked;
-      update1UFormatVisibility();
+      update1UFormatToggle();
       triggerRedraw();
     });
 
-    label.appendChild(checkbox);
-    label.appendChild(document.createTextNode(`${i + 1}`));
-    container.appendChild(label);
+    checkLabel.appendChild(checkbox);
+    checkLabel.appendChild(document.createTextNode(` is 1U`));
+
+    rightCell.appendChild(checkLabel);
+
+    rowEl.appendChild(leftCell);
+    rowEl.appendChild(rightCell);
+    rowInputsEl.appendChild(rowEl);
   }
 
-  update1UFormatVisibility();
+  update1UFormatToggle();
 }
 
-export function update1UFormatVisibility() {
-  const formatContainer = document.getElementById("oneU-format-container");
+// Enable/disable the 1U format toggle based on whether any rows are 1U.
+// When all rows become non-1U, resets the selection to Intellijel.
+export function update1UFormatToggle() {
+  const toggleEl = document.getElementById("oneU-format-toggle");
+  if (!toggleEl) return;
+
   const hasAny1U = state.rowIs1U.some((is1U) => is1U);
-  formatContainer.style.display = hasAny1U ? "inline" : "none";
-}
 
-export function resetRowInputs(c) {
-  const rowInputsEl = document.getElementById("row-inputs");
-  while (rowInputsEl.firstChild) {
-    rowInputsEl.removeChild(rowInputsEl.firstChild);
+  if (hasAny1U) {
+    toggleEl.classList.remove("disabled");
+  } else {
+    // Reset to Intellijel when toggle becomes disabled
+    if (toggleEl.classList.contains("active")) {
+      toggleEl.classList.remove("active");
+      state.selected1UFormat = "intellijel";
+      state.actual1UPanelHeight = oneUFormats.intellijel.height;
+      state.actual1URailSeparation = oneUFormats.intellijel.railSeparation;
+    }
+    toggleEl.classList.add("disabled");
   }
-  state.rowAngles = state.rowAngles.slice(0, c);
-  while (state.rowAngles.length < c) {
-    state.rowAngles.push(state.defaultAngle);
-  }
-  for (let i = 0; i < state.rowCount; i++) {
-    createRowInput(i, state.rowAngles[i]);
-  }
-
-  reset1UCheckboxes(c);
 }
 
 function updateHpWidthReadouts() {

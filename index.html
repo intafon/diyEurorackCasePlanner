@@ -140,63 +140,6 @@
             <div id="version-display">intafon case build v.<span id="version-text">loading...</span></div>
         </header>
         <div id="container">
-            <div id="input-div">
-                <span class="input-span">
-                    Module Depth Max:&nbsp;
-                    <input id="the-input-depth" value="0" type="number" />
-                    <span class="input-span unit">mm</span>&nbsp;
-                    <span class="input-span" style="display: none;">
-                        Calculate needed rise:
-                        <input type="checkbox" id="calc-rise" />
-                    </span>
-                </span>
-                <span class="input-span">
-                    Module Back Wall Depth:&nbsp;
-                    <input id="the-input-back-depth" value="0" type="number" />
-                </span>
-                <span class="input-span">
-                    Row count:&nbsp;
-                    <select
-                        name="rowCount"
-                        id="rowCount"
-                    ></select>
-                </span>
-                <span class="input-span" id="row-1u-checkboxes-container">
-                    1U rows:&nbsp;
-                    <span id="row-1u-checkboxes"></span>
-                </span>
-                <span class="input-span" id="oneU-format-container" style="display: none;">
-                    1U Format:&nbsp;
-                    <label>
-                        <input type="radio" name="oneUFormat" value="intellijel" checked />
-                        Intellijel
-                    </label>
-                    <label>
-                        <input type="radio" name="oneUFormat" value="pulplogic" />
-                        Pulp Logic
-                    </label>
-                </span>
-                <span id="row-inputs"> </span>
-                <span class="input-span">
-                    Material thickness:&nbsp;
-                    <input id="material-thickness" value="0" type="number" />
-                    <span class="input-span unit">mm</span>
-                </span>
-                <span class="input-span">
-                    Case width:&nbsp;
-                    <input id="hp-width-input" value="84" style="width: 60px;" type="number" />
-                    <span class="input-span unit">hp</span>
-                </span>
-                <span class="input-span">
-                    Flatten top shelf:
-                    <input type="checkbox" id="flatten-top-shelf" />
-                </span>
-                <span class="input-span" id="view-toggle-container">
-                    View:&nbsp;
-                    <button type="button" id="view-toggle-2d" class="view-toggle-btn active">Side View</button>
-                    <button type="button" id="view-toggle-3d" class="view-toggle-btn">3D View</button>
-                </span>
-            </div>
             <div id="canvas-div">
                 <canvas id="the-canvas" width="150" height="150"></canvas>
                 <canvas id="three-canvas" style="display: none;"></canvas>

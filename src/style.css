@@ -361,3 +361,218 @@ b, strong {
     background-color: rgba(171, 171, 171, 0.4);
     transform: translateY(1px);
 }
+
+/* ── Floating Panel ─────────────────────────────────────────────────────── */
+
+dialog.floating-panel {
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    padding: 0;
+    max-width: none;
+    max-height: none;
+    overflow: visible;
+    width: 320px;
+    z-index: 1000;
+
+    /* Dark opaque background so the panel reads well over the white canvas.
+       backdrop-filter adds the frosted-glass feel without turning the panel
+       white when it sits over a light surface. */
+    background: rgba(38, 38, 38, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(12px);
+    color: #fff;
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.02rem;
+}
+
+dialog.floating-panel::backdrop {
+    display: none;
+}
+
+.fp-titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    cursor: grab;
+    user-select: none;
+    border-radius: 3px 3px 0 0;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.fp-titlebar:active {
+    cursor: grabbing;
+}
+
+.fp-title {
+    font-size: 12px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.85);
+    letter-spacing: 0.05rem;
+}
+
+/* Minimize / expand button — mirrors .popup-close-btn */
+.fp-btn {
+    background-color: rgba(171, 171, 171, 0.15);
+    color: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(171, 171, 171, 0.3);
+    padding: 1px 7px;
+    border-radius: 2px;
+    font-size: 13px;
+    line-height: 1;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 300;
+    letter-spacing: 0;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.fp-btn:hover {
+    background-color: rgba(171, 171, 171, 0.25);
+    border-color: rgba(171, 171, 171, 0.5);
+    color: #fff;
+}
+
+.fp-btn:active {
+    background-color: rgba(171, 171, 171, 0.35);
+    transform: translateY(1px);
+}
+
+.fp-content {
+    padding: 10px 12px;
+    overflow-y: auto;
+    max-height: 80vh;
+    overflow-x: hidden;
+}
+
+dialog.floating-panel.fp-minimized .fp-content {
+    display: none;
+}
+
+/* ── Control layout ─────────────────────────────────────────────────────── */
+
+.fp-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.fp-row:last-child {
+    margin-bottom: 0;
+}
+
+.fp-row-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    align-items: center;
+}
+
+.fp-cell {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+}
+
+.fp-label {
+    white-space: nowrap;
+    opacity: 0.75;
+    font-size: 10px;
+    flex-shrink: 0;
+}
+
+.fp-divider {
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    margin: 7px 0;
+}
+
+/* ── Toggle switch ──────────────────────────────────────────────────────── */
+
+.toggle-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.toggle-track {
+    width: 28px;
+    height: 14px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 7px;
+    position: relative;
+    flex-shrink: 0;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.toggle-thumb {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.55);
+    border-radius: 50%;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.toggle-switch.active .toggle-thumb {
+    transform: translateX(14px);
+    background: rgba(200, 200, 200, 0.9);
+}
+
+.toggle-switch.active .toggle-track {
+    background: rgba(171, 171, 171, 0.25);
+    border-color: rgba(171, 171, 171, 0.45);
+}
+
+.toggle-label-left,
+.toggle-label-right {
+    font-size: 10px;
+    transition: color 0.2s ease, font-weight 0.2s ease;
+    white-space: nowrap;
+}
+
+/* Off state: left label highlighted */
+.toggle-label-left {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 400;
+}
+
+.toggle-label-right {
+    color: rgba(255, 255, 255, 0.4);
+    font-weight: 300;
+}
+
+/* On state: right label highlighted */
+.toggle-switch.active .toggle-label-left {
+    color: rgba(255, 255, 255, 0.4);
+    font-weight: 300;
+}
+
+.toggle-switch.active .toggle-label-right {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 400;
+}
+
+.toggle-switch.disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Slightly smaller variant used for the 1U format row */
+.toggle-switch-sm .toggle-label-left,
+.toggle-switch-sm .toggle-label-right {
+    font-size: 9.5px;
+}
