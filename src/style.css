@@ -106,7 +106,7 @@ input[readonly] {
     background-color: rgba(255, 255, 255, 0.95);
     margin: 0;
     flex: 1;
-    overflow: auto;
+    overflow: hidden;
     min-height: 0;
     border-radius: 3px;
     border: 1px solid rgba(255, 255, 255, 0.2);

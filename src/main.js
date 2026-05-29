@@ -127,11 +127,10 @@ function init() {
 
   initControlPanel({ onDraw: draw2dView, onViewChange: setActiveView });
 
-  requestAnimationFrame(resizeAllCanvases);
-
-  window.onresize = function () {
+  const resizeObserver = new ResizeObserver(() => {
     resizeAllCanvases();
-  };
+  });
+  resizeObserver.observe(canvasDiv);
 }
 
 function initVersionDisplay() {
