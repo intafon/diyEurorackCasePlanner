@@ -456,22 +456,14 @@ export function calculateCaseGeometry() {
 
   const bottomDepth = geometry.maxX;
 
-  let backHeight, topShelfDepth;
-
-  if (state.flattenTopShelf) {
-    const lastRowEndY = geometry.outline[geometry.outline.length - 4].y;
-    const shelfY =
-      lastRowEndY + Math.sin(rad(lastRowAngle)) * state.caseMaterialThickness;
-    backHeight = shelfY - state.caseMaterialThickness;
-
-    const lastRowEndX = geometry.outline[geometry.outline.length - 5].x;
-    const shelfStartX =
-      lastRowEndX + Math.cos(rad(lastRowAngle)) * state.caseMaterialThickness;
-    topShelfDepth = geometry.maxX - shelfStartX;
-  } else {
-    const backWallTopY = geometry.outline[geometry.outline.length - 3].y;
-    backHeight = geometry.maxY;
-    topShelfDepth = state.actualPanelBackDepth;
+  // The top shelf depth is the physical cut length of the shelf piece (inner-front to inner-back
+  // corner). This formula works for both flat and angled shelf cases because the shelf piece
+  // outline is always a rectangle oriented along the shelf direction.
+  let topShelfDepth;
+  if (geometry.hasShelfTop) {
+    const p0 = geometry.shelfPieceOutline[0];
+    const p3 = geometry.shelfPieceOutline[3];
+    topShelfDepth = distance(p0, p3);
   }
 
   const bottomWidth = panelWidth + 2 * state.caseMaterialThickness;
@@ -487,26 +479,31 @@ export function calculateCaseGeometry() {
       width: bottomWidth,
       height: bottomDepth,
     },
-    {
-      name: "Back",
-      width: panelWidth,
-      height: geometry.backPanelHeight, //backHeight,
-    },
   ];
 
+  // The back panel exists in all configurations.
+  geometry.cutPanels.push({
+    name: "Back",
+    width: panelWidth,
+    height: geometry.backPanelHeight,
+  });
+
   if (state.flattenTopShelf) {
+    // Flat top: horizontal top shelf is a separate cut piece above the back panel.
     geometry.cutPanels.push({
       name: "Top Shelf",
       width: panelWidth,
       height: topShelfDepth,
     });
-  } else {
+  } else if (geometry.hasShelfTop) {
+    // Angled top: the angled shelf piece sits above and behind the back panel.
     geometry.cutPanels.push({
       name: "Back-Top (angled)",
       width: panelWidth,
       height: topShelfDepth,
     });
   }
+  // hasShelfTop=false: no shelf piece—back panel alone closes the back.
 
   const createSidePanelOutline = (side = "right") => {
     // the side panel from calculateCaseGeometry() starts at 0,0 x,y currently and goes up to the top
