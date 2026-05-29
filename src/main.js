@@ -17,6 +17,7 @@ import {
   getCanvas,
   getContext,
   initCanvas,drawAnOutline,
+  resetCanvas,
 } from "./canvas-renderer.js";
 import {
   resetRowInputs,
@@ -32,22 +33,26 @@ let canvasDiv, canvas, ctx;
 let threeCanvas;
 let activeView = "2d";
 
-function drawSide() {
-  const caseGeometry = calculateCaseGeometry();
-  const { maxX , maxY } = caseGeometry;
+function draw2dView() {
+  const {
+    maxX,
+    maxY,
+    panels,
+    outline,
+    drillHoles,
+    cutPanels,
+    backWallInside,
+    frontPieceOutline,
+    backPieceOutline,
+    shelfPieceOutline,
+    baseBoardOutline,
+  } = calculateCaseGeometry();
+
   calculateViewScale(maxX, maxY);
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = "rgb(0, 0, 0)";
-  ctx.strokeStyle = "#999999";
-  ctx.setLineDash([]);
-
-  ctx.setLineDash([]);
-  const railScrewCoords = drawPanelRailHoles(caseGeometry.drillHoles);
-  const pathCoords = caseGeometry.outline.slice(0);
+  resetCanvas();
 
   drawPath(
-    caseGeometry.outline.reduce((acc, p) => {
+    outline.reduce((acc, p) => {
       acc.push(p.x, p.y);
       if (p.marker) {
         acc.push(p.marker);
@@ -55,22 +60,26 @@ function drawSide() {
       return acc;
     }, [])
   );
-  console.info("drawSide", state, caseGeometry);
-  console.info("caseGeometry.panels", caseGeometry.panels);
-  drawJointDistanceIndicators(caseGeometry.panels, caseGeometry.backWallInside);
 
-  writeSummary(maxX, maxY, pathCoords, railScrewCoords, caseGeometry.cutPanels);
+  const railScrewCoords = drawPanelRailHoles(drillHoles);
+  drawJointDistanceIndicators(panels, backWallInside);
 
-  // Redraw the entire side outline
-  // drawAnOutline(calculateCaseGeometry().outline, "#ff0000", [2, 2]);
+  writeSummary(
+    maxX,
+    maxY,
+    outline,
+    railScrewCoords,
+    cutPanels
+  );
+
   // Redraw the front outline
-  drawAnOutline(caseGeometry.frontPieceOutline, "#999999", [3, 3]);
+  drawAnOutline(frontPieceOutline, "#999999", [3, 3]);
   // Redraw the back outline
-  drawAnOutline(caseGeometry.backPieceOutline, "#999999", [3, 3]);
+  drawAnOutline(backPieceOutline, "#999999", [3, 3]);
   // Redraw the shelf/diagonal back outline
-  drawAnOutline(caseGeometry.shelfPieceOutline, "#999999", [3, 3]);
+  drawAnOutline(shelfPieceOutline, "#999999", [3, 3]);
   // Redraw the base outline
-  drawAnOutline(caseGeometry.baseBoardOutline, "#999999", [1, 5]);
+  drawAnOutline(baseBoardOutline, "#999999", [3, 3]);
 
   if (activeView === "3d") {
     buildScene();
@@ -99,7 +108,7 @@ function setActiveView(view) {
     btn3d.classList.remove("active");
     btn2d.classList.add("active");
     resizeAllCanvases();
-    drawSide();
+    draw2dView();
   }
 }
 
@@ -113,7 +122,7 @@ function resizeAllCanvases() {
     canvas.height = h;
     ctx.fillStyle = "rgb(0, 0, 0)";
     ctx.strokeStyle = "#999999";
-    drawSide();
+    draw2dView();
   } else {
     threeCanvas.width = w;
     threeCanvas.height = h;
@@ -138,10 +147,10 @@ function init() {
   rowCountSelector.addEventListener("change", (event) => {
     state.rowCount = parseInt(event.target.value, 10);
     resetRowInputs(state.rowCount);
-    drawSide();
+    draw2dView();
   });
 
-  setDrawCallback(drawSide);
+  setDrawCallback(draw2dView);
   resetRowInputs(state.rowCount);
 
   const oneUFormatRadios = document.querySelectorAll(
@@ -153,7 +162,7 @@ function init() {
       state.actual1UPanelHeight = oneUFormats[state.selected1UFormat].height;
       state.actual1URailSeparation =
         oneUFormats[state.selected1UFormat].railSeparation;
-      drawSide();
+      draw2dView();
     });
   });
 
@@ -161,7 +170,7 @@ function init() {
   const onModuleDepthChange = (event) => {
     setTimeout(() => {
       state.actualPanelDepth = parseFloat(event.target.value);
-      drawSide();
+      draw2dView();
     }, 0);
   };
   inputDepth.addEventListener("input", onModuleDepthChange);
@@ -170,7 +179,7 @@ function init() {
   const onModuleBackDepthChange = (event) => {
     setTimeout(() => {
       state.actualPanelBackDepth = parseFloat(event.target.value);
-      drawSide();
+      draw2dView();
     }, 0);
   };
   inputBackDepth.addEventListener("input", onModuleBackDepthChange);
@@ -180,7 +189,7 @@ function init() {
   const onCalcRiseChange = (event) => {
     setTimeout(() => {
       state.useStaticRise = !event.target.checked;
-      drawSide();
+      draw2dView();
     }, 0);
   };
   calcRiseCb.addEventListener("change", onCalcRiseChange);
@@ -190,7 +199,7 @@ function init() {
   const onMaterialThicknessChange = (event) => {
     setTimeout(() => {
       state.caseMaterialThickness = parseFloat(event.target.value);
-      drawSide();
+      draw2dView();
     }, 0);
   };
   matThickness.addEventListener("input", onMaterialThicknessChange);
@@ -199,7 +208,7 @@ function init() {
   flattenTopShelfCb.checked = state.flattenTopShelf;
   flattenTopShelfCb.addEventListener("change", (event) => {
     state.flattenTopShelf = event.target.checked;
-    drawSide();
+    draw2dView();
     // if (view === "3d") {
     //  buildScene();
     // // } else {

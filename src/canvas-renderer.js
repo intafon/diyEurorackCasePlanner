@@ -18,6 +18,13 @@ export function initCanvas(canvasElement) {
   return ctx;
 }
 
+export function resetCanvas() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "rgb(0, 0, 0)";
+    ctx.strokeStyle = "#999999";
+    ctx.setLineDash([]);
+}
+
 export function getCanvas() {
   return canvas;
 }

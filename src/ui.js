@@ -204,16 +204,10 @@ export function writeSummary(
   function processCoords(outlinePoints) {
     console.info("processCoords", outlinePoints);
     const ops = outlinePoints.slice(0);
-    const s = [];
-    while (ops.length > 0) {
-      const x = `${roundToPlace(ops.shift(), 2)}mm`;
-      const y = `${roundToPlace(ops.shift(), 2)}mm`;
-      if (typeof ops[0] !== "number") {
-        ops.shift();
-      } else {
-        s.push(`(${x}, ${y})`);
-      }
-    }
+    const s = ops.reduce((acc, p) => {
+      acc.push(`(${roundToPlace(p.x, 2)}mm, ${roundToPlace(p.y, 2)}mm)`);
+      return acc;
+    }, []);
     return s.join(", ");
   }
 
