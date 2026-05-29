@@ -422,6 +422,48 @@ export function drawJointDistanceIndicators(panels, backWallX) {
 //   return p;
 // }
 
+export function drawRowDrillHoleDistanceMarkers(panels) {
+  const savedStrokeStyle = ctx.strokeStyle;
+  const savedFillStyle = ctx.fillStyle;
+  const savedLineDash = ctx.getLineDash();
+
+  ctx.strokeStyle = COLORS.indicator;
+  ctx.fillStyle = COLORS.indicator;
+  ctx.setLineDash([3, 4]);
+
+  panels.forEach((panel, i) => {
+    const { bottomScrew, topScrew } = getScrewHoleCoords(panel, i);
+    const railSep = state.getRailSeparationForRow(i);
+    const angle = state.getActualRowAngle(i);
+
+    const plotBottom = getPlot(bottomScrew.x, bottomScrew.y);
+    const plotTop = getPlot(topScrew.x, topScrew.y);
+
+    ctx.beginPath();
+    ctx.moveTo(plotBottom.x, plotBottom.y);
+    ctx.lineTo(plotTop.x, plotTop.y);
+    ctx.stroke();
+    ctx.closePath();
+
+    // Label at midpoint, offset outward (perpendicular away from case interior)
+    const midCaseX = (bottomScrew.x + topScrew.x) / 2;
+    const midCaseY = (bottomScrew.y + topScrew.y) / 2;
+    const offsetMM = 20;
+    const labelCaseX = midCaseX - Math.sin(rad(angle)) * offsetMM;
+    const labelCaseY = midCaseY + Math.cos(rad(angle)) * offsetMM;
+
+    const plotLabel = getPlot(labelCaseX, labelCaseY);
+    ctx.font = "9px sans-serif";
+    const text = actualDistance(railSep, false);
+    const textWidth = ctx.measureText(text).width;
+    ctx.fillText(text, plotLabel.x - textWidth / 2, plotLabel.y + 4);
+  });
+
+  ctx.strokeStyle = savedStrokeStyle;
+  ctx.fillStyle = savedFillStyle;
+  ctx.setLineDash(savedLineDash);
+}
+
 export function drawPanelRailHoles(drillHoles) {
   const p = [];
   drillHoles.forEach((hole, index) => {

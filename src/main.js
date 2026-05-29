@@ -12,6 +12,7 @@ import {
   calculateViewScale,
   drawJointDistanceIndicators,
   drawPanelRailHoles,
+  drawRowDrillHoleDistanceMarkers,
   drawPath,
   initCanvas,
   drawAnOutline,
@@ -58,6 +59,7 @@ function draw2dView() {
   );
 
   const railScrewCoords = drawPanelRailHoles(drillHoles);
+  drawRowDrillHoleDistanceMarkers(panels);
   drawJointDistanceIndicators(panels, backWallInside);
 
   writeSummary(
