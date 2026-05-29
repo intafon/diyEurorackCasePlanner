@@ -202,6 +202,7 @@ export function writeSummary(
     .join("<br/>");
 
   function processCoords(outlinePoints) {
+    console.info("processCoords", outlinePoints);
     const ops = outlinePoints.slice(0);
     const s = [];
     while (ops.length > 0) {

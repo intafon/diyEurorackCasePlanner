@@ -42,97 +42,9 @@ function drawSide() {
   ctx.strokeStyle = "#999999";
   ctx.setLineDash([]);
 
-  let x = 0,
-    y = 0;
-  const p = [];
-
-  function add(xn, yn, noWriteMarker) {
-    x = xn;
-    y = yn;
-  }
-
-  const firstAngle = state.rowAngles[0];
-
-  state.panels = state.rowAngles.map((r, i) => ({
-    angle: state.getActualRowAngle(i),
-    coords: [],
-  }));
-
-  add(0, 0);
-
-  const bottomPanelDepth = state.useStaticRise
-    ? state.actualPanelDepth
-    : Math.abs(
-        state.actualPanelDepth * Math.sin(Math.PI / 2 - rad(firstAngle))
-      );
-  add(x, y + bottomPanelDepth);
-
-  add(
-    x + Math.cos(rad(firstAngle)) * state.caseMaterialThickness,
-    y + Math.sin(rad(firstAngle)) * state.caseMaterialThickness,
-    "nowrite"
-  );
-
-  state.rowAngles.forEach((angle, i) => {
-    const rowHeight = state.getPanelHeightForRow(i);
-    state.panels[i].coords.push(x, y);
-    state.panels[i].is1U = state.rowIs1U[i];
-    add(
-      x + Math.cos(rad(state.getActualRowAngle(i))) * rowHeight,
-      y + Math.sin(rad(state.getActualRowAngle(i))) * rowHeight,
-      i === state.rowAngles.length - 1
-    );
-    state.panels[i].coords.push(x, y);
-  });
-
-  const lastRowEndX = x;
-  const lastRowEndY = y;
-  const lastRowAngle = state.getActualRowAngle();
-
-  let backWallInside, backWallY, backWallOutside;
-
-  if (state.flattenTopShelf) {
-    const shelfStartX =
-      lastRowEndX + Math.cos(rad(lastRowAngle)) * state.caseMaterialThickness;
-    const shelfStartY =
-      lastRowEndY + Math.sin(rad(lastRowAngle)) * state.caseMaterialThickness;
-
-    const normalBackWallInside =
-      lastRowEndX + Math.sin(rad(lastRowAngle)) * state.actualPanelBackDepth;
-    const normalBackWallOutside =
-      normalBackWallInside + state.caseMaterialThickness;
-
-    const shelfEndX = normalBackWallOutside;
-    const shelfEndY = shelfStartY;
-
-    backWallInside = shelfEndX - state.caseMaterialThickness;
-    backWallOutside = shelfEndX;
-
-    add(shelfStartX, shelfStartY);
-    add(shelfEndX, shelfEndY, { labelPos: { below: true, side: "right" } });
-    add(shelfEndX, 0);
-  } else {
-    backWallInside =
-      lastRowEndX + Math.sin(rad(lastRowAngle)) * state.actualPanelBackDepth;
-    backWallY =
-      lastRowEndY - Math.cos(rad(lastRowAngle)) * state.actualPanelBackDepth;
-    backWallOutside = backWallInside + state.caseMaterialThickness;
-
-    add(
-      lastRowEndX + Math.cos(rad(lastRowAngle)) * state.caseMaterialThickness,
-      lastRowEndY + Math.sin(rad(lastRowAngle)) * state.caseMaterialThickness
-    );
-    add(backWallOutside, backWallY);
-    add(backWallOutside, 0, "nowrite");
-  }
-
-  add(0, 0);
-
   ctx.setLineDash([]);
-  // const railScrewCoords = drawPanelRails(state.panels);
   const railScrewCoords = drawPanelRailHoles(caseGeometry.drillHoles);
-  // const railScrewCoords = railScrewCoords2;
-  const pathCoords = p.slice(0);
+  const pathCoords = caseGeometry.outline.slice(0);
 
   drawPath(
     caseGeometry.outline.reduce((acc, p) => {
@@ -144,7 +56,8 @@ function drawSide() {
     }, [])
   );
   console.info("drawSide", state, caseGeometry);
-  drawJointDistanceIndicators(state.panels, caseGeometry.backWallInside);
+  console.info("caseGeometry.panels", caseGeometry.panels);
+  drawJointDistanceIndicators(caseGeometry.panels, caseGeometry.backWallInside);
 
   writeSummary(maxX, maxY, pathCoords, railScrewCoords, caseGeometry.cutPanels);
 
