@@ -48,6 +48,13 @@ export function getPlot(x, y) {
   };
 }
 
+export function getCaseCoords(canvasX, canvasY) {
+  return {
+    x: ((canvasX - startX()) * state.heightRatio) / state.viewScale,
+    y: ((startY() - canvasY) * state.heightRatio) / state.viewScale,
+  };
+}
+
 export function calculateViewScale(maxX, maxY) {
   const baseScale = 1 / state.heightRatio;
 

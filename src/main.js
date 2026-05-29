@@ -16,6 +16,7 @@ import {
   initCanvas,
   drawAnOutline,
   resetCanvas,
+  getCaseCoords,
 } from "./canvas-renderer.js";
 import { writeSummary } from "./ui.js";
 import { initControlPanel } from "./control-panel.js";
@@ -25,6 +26,7 @@ import { state } from "./state.js";
 
 let canvasDiv, canvas, ctx;
 let threeCanvas;
+let cursorCanvas, cursorCtx;
 let activeView = "2d";
 
 function draw2dView() {
@@ -102,6 +104,9 @@ function resizeAllCanvases() {
   const h = canvasDiv.clientHeight;
   if (w <= 0 || h <= 0) return;
 
+  cursorCanvas.width = w;
+  cursorCanvas.height = h;
+
   if (activeView === "2d") {
     canvas.width = w;
     canvas.height = h;
@@ -124,6 +129,60 @@ function init() {
 
   threeCanvas = document.getElementById("three-canvas");
   initThreeRenderer(threeCanvas);
+
+  cursorCanvas = document.getElementById("cursor-canvas");
+  cursorCtx = cursorCanvas.getContext("2d");
+
+  canvas.addEventListener("mousemove", (e) => {
+    if (activeView !== "2d") return;
+    const rect = canvas.getBoundingClientRect();
+    const canvasX = e.clientX - rect.left;
+    const canvasY = e.clientY - rect.top;
+    const { x, y } = getCaseCoords(canvasX, canvasY);
+
+    const xR = Math.round(x * 100) / 100;
+    const yR = Math.round(y * 100) / 100;
+    const text = `x: ${xR}mm, y: ${yR}mm`;
+
+    cursorCtx.clearRect(0, 0, cursorCanvas.width, cursorCanvas.height);
+
+    cursorCtx.font = "10px sans-serif";
+    const textW = cursorCtx.measureText(text).width;
+    const textH = 10;
+    const pad = 4;
+
+    let bx = canvasX + 14;
+    let by = canvasY - textH - pad * 2 - 4;
+
+    if (bx + textW + pad * 2 > cursorCanvas.width) {
+      bx = canvasX - textW - pad * 2 - 14;
+    }
+    if (by < 0) {
+      by = canvasY + 14;
+    }
+
+    cursorCtx.fillStyle = "rgba(20, 20, 20, 0.72)";
+    cursorCtx.fillRect(bx - pad, by - pad, textW + pad * 2, textH + pad * 2);
+
+    cursorCtx.fillStyle = "rgba(255, 255, 255, 0.92)";
+    cursorCtx.fillText(text, bx, by + textH);
+  });
+
+  canvas.addEventListener("mouseleave", () => {
+    cursorCtx.clearRect(0, 0, cursorCanvas.width, cursorCanvas.height);
+  });
+
+  canvas.addEventListener("click", (e) => {
+    if (activeView !== "2d") return;
+    const rect = canvas.getBoundingClientRect();
+    const canvasX = e.clientX - rect.left;
+    const canvasY = e.clientY - rect.top;
+    const { x, y } = getCaseCoords(canvasX, canvasY);
+
+    const xR = Math.round(x * 100) / 100;
+    const yR = Math.round(y * 100) / 100;
+    navigator.clipboard.writeText(`{x: ${xR}, y: ${yR}}`);
+  });
 
   initControlPanel({ onDraw: draw2dView, onViewChange: setActiveView });
 
