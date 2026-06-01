@@ -55,3 +55,30 @@ export const COLORS = {
 export const DRILL_HOLE_2D_RADIUS = 3;
 export const BOX_JOINT_DEFAULT_TAB_WIDTH = 25;
 export const BOX_JOINT_MINIMUM_TAB_WIDTH = 10 * 0.635; // quarter inch is minimum for now
+
+
+/*
+// From synthrotek rails data sheet:
+const SYNTHROTEK_3U_RAIL_HOLE_SPACING = 120.42; // in inches: 4.741"
+const SYNTHROTEK_1U_INTELLIJEL_HOLE_SPACING = 31.75; // in mm: 1.25"
+const SYNTHROTEK_1U_PULP_LOGIC_HOLE_SPACING = 35.2806 ; // in mm: 1.389"
+
+const ZRAILS_3U_RAIL_HOLE_SPACING = 122.5; // in mm: 4.823"
+const ZRAILS_1U_INTELLIJEL_HOLE_SPACING = 29.67
+const ZRAILS_1U_PULP_LOGIC_HOLE_SPACING = 33.2006
+
+
+
+
+
+
+
+
+const ZRAILS_RAIL_DEPTH = 23.8; // in mm: 0.937"
+const ZRAILS_1U_INTELLIJEL_DEPTH = 44.45; // in mm: 1.75"
+const ZRAILS_1U_PULP_LOGIC_DEPTH = 43.18; // in mm: 1.7"
+
+const ZRAILS_RAIL_HEIGHT = 128.5; // in mm: 5.06"
+const ZRAILS_1U_INTELLIJEL_HEIGHT = 44.45; // in mm: 1.75"
+const ZRAILS_1U_PULP_LOGIC_HEIGHT = 43.18; // in mm: 1.7"
+*/
