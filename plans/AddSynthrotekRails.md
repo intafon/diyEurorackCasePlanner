@@ -1,7 +1,9 @@
-### Conversation follows, what this is in relation to
+### Information and related stuff having to do with rails
 
 We need to do a few things:
 - Add UI callouts that let the user know that currently only ZRails are handled
+- probably need to rethink the way the measurements are done:
+  - Take the typical 3U panel height or 3U height
 - Add handling for Synthrotek Rail measurements
 - Clean up the ZRail measurements (off by .5mm currently, maybe some other stuff)
 
@@ -17,7 +19,17 @@ See also:
 - https://www.modwiggler.com/forum/viewtopic.php?t=155376
 - https://synthracks.com/blog/eurorack-rails-diy-guide?srsltid=AfmBOops8cGy5piK0o_DyintmsoM1kGLyMX3Bb2VjouOHj4snzw1Pfgt
 
+Data for rails specifications
+| Type | Lip Size | OE to Ch Center | OE to drill hole | drill hole depth* | tot depth | rail width |
+| -- | -- | -- | -- | --| --| --|
+| ZRails | 1.2mm | 5mm | 5mm | 14.3mm | 23.8mm | 10mm |
+| Synthrotek | 0mm | 3.6957mm | 4.5974mm | 15.5mm | 25.025mm | 7.394mm |
+* OE = Outsided Edge (away from center of panel)
+* drill hole depth = case surface to drill hole, perpendicular to row angle, for zRails includes the lip (2.8mm) since this will reflect panel thickness. will use same lip depth for synthrotek.
+
 ---
+
+### conversation regarding rails follows...
 
 ### Based on the specifications at https://www.tiptopaudio.com/manuals/Tiptop_Audio_z-rails_data_sheet.pdf and https://store.synthrotek.com/eurorack-rails_p_379.html -- what are the main differences between the tiptop and synthrotek rails other than the "lip" that the Tiptop rails have? Are the interchangeable in a case, or would you have to drill different holes for spacing purposes?
 
