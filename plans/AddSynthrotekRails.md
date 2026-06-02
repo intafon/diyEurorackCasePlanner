@@ -26,26 +26,40 @@ Data for rails specifications
 - synthrotek, vector rails do not have lip. drill hole does not align with channel center.
 - synthracks version has 2 side, lipped and non lipped; on both sides, drill hole center aligns with channel center.
 
+---
+
+From Tiptop_Audio_z-rails_data_sheet and Synthrotek-Eurorack-Rails-Technical-Drawing. Lip height is 2.8mm.
+
 | Type | Lip Size | OE to Ch Center | OE to drill hole | drill hole depth* | tot depth | rail width |
 | -- | -- | -- | -- | --| --| --|
 | ZRails | 1.2mm | 5mm | 5mm | 14.3mm | 23.8mm | 10mm |
-| Synthrotek | 0mm | 3.6957mm | 4.5974mm | 15.5mm | 25.025mm | 7.394mm |
+| Synthrotek | 0mm | 3.571875mm | 2.38125mm | 15.5mm | 25.025mm | 7.14375mm |
 * OE = Outsided Edge (away from center of panel)
 * drill hole depth = case surface to drill hole, perpendicular to row angle, for zRails includes the lip (2.8mm) since this will reflect panel thickness. will use same lip depth for synthrotek.
-
-From synthrotek_rail_template_fixed.pdf:
-| model | hole spacing (in) | hole spac (mm) | panel height (in) | panel ht (mm) |
-| -- | -- | -- | -- | -- |
-| 3U all | 4.741" | 120.4214mm | 5.1" | 129.54mm |
-| 1U intellijel | 1.25" | 31.75mm | 1.62" | 41.148mm |
-| 1U pulp logic | 1.389" | 35.2806mm | 1.76" | 44.704mm |
-
+---
 From Intellijel 1U Technical Specifications.pdf:
 | model | row height (w/ lip?) | module panel ht | inner pcb ht | rail mt height |
 | -- | -- | -- | -- | -- |
 | 3U | 133.35mm | 128.5mm | 110.0mm | 122.5 |
 | 1U intellijel | 44.45mm | 39.65mm | 22.5mm | 33.65mm |
+---
+From synthrotek_rail_template_fixed.pdf:
+| model | hole spacing | panel height |
+| -- | -- | -- |
+| 3U all | 120.4214mm (4.741") | 129.54mm (5.1") |
+| 1U intellijel | 31.75mm (1.25") | 41.148mm (1.62") |
+| 1U pulp logic | 35.2806mm (1.389") | 44.704mm (1.76") |
+---
+From Synthrotek-Eurorack-Rails-Technical-Drawing.jpeg
+- in synthrotek rail, distance from edge of rail to center of drill hole is .11" (2.794mm), and distance from edge of rail to center of panel mount is 0.1455" (3.6957mmconvert), so the difference in those is 0.071" for both rails.
 
+
+| model | module panel ht (no lip) | hole spacing (syntro) | rail mt height (synthro) |
+| -- | -- | -- | -- |
+| 3U all |  129.54mm (5.1") | 120.4214mm (4.741" ) | 122.2248mm (4.812") |
+| 1U intellijel |  41.148mm (1.62") | 31.75mm (1.25" ) | 33.5534mm (1.321") |
+| 1U pulp logic |  44.704mm (1.76") | 35.2806mm (1.389" ) | 37.1094mm (1.461") |
+---
 
 From modwiggler:
 The intellijel 1U tiles are designed to work with rails with a lip and the Z-rails have them so they should at least work. The pulp Logics, as said, are designed to work with the full 1U space lip-less rails at the same spacing (1.75-inches or 44.45mm) and so run into the lips on the z-rails. The intellijel tiles are meant to fit the same 1U minus the thickness of the lips on the rails (around 1.2mm on each rail).
@@ -270,3 +284,20 @@ Adding an extra ~1.5 mm of space between the rows will:
 1. Ensure that even warped, extra-thick, or poorly-cut module faceplates will never grind against each other.
 2. Leave a tiny, clean, professional-looking shadow-line gap between the rows.
 3. Make it vastly easier to install and remove modules from either row without needing to loosen the screws on the adjacent row first.
+
+
+
+---
+OLD CONSTANTS
+const MODEL_3U_ROW_HEIGHT = 133.35; // (5.25in)
+const MODEL_1U_INTELLIJEL_ROW_HEIGHT = 44.45; // (1.5625in)
+const MODEL_3U_PANEL_HEIGHT = 128.5;
+const MODEL_1U_INTELLIJEL_PANEL_HEIGHT = 39.65;
+const MODEL_1U_PULP_LOGIC_PANEL_HEIGHT = 43.18;
+// Basing this on panel intellijel 1u panel height minus the 1U spec height.
+const MODEL_1U_PULP_LOGIC_ROW_HEIGHT = 4.8 + MODEL_1U_PULP_LOGIC_PANEL_HEIGHT;
+// This is based on the Future Music guide, and may apply only to TipTop Audio Z-Rails.
+const MODEL_3U_HOLE_SPACING = 123;
+const SPEC_HEIGHT_TO_HOLE_SPACING_DIFF = 10.35; // 3U_SPEC_HEIGHT - 3U_SPEC_RAIL_HOLE_SPACING;
+const MODEL_1U_INTELLIJEL_HOLE_SPACING = MODEL_1U_INTELLIJEL_ROW_HEIGHT - SPEC_HEIGHT_TO_HOLE_SPACING_DIFF;
+const MODEL_1U_PULP_LOGIC_HOLE_SPACING = MODEL_1U_PULP_LOGIC_ROW_HEIGHT - SPEC_HEIGHT_TO_HOLE_SPACING_DIFF;

@@ -1,30 +1,33 @@
 export const HP_TO_MM = 5.08;
 
-const SPEC_3U_HEIGHT = 133.35; // (5.25in)
-const SPEC_1U_INTELLIJEL_HEIGHT = 44.45; // (1.5625in)
-const SPEC_3U_PANEL_HEIGHT = 128.5;
-const SPEC_1U_INTELLIJEL_PANEL_HEIGHT = 39.65;
-const SPEC_1U_PULP_LOGIC_PANEL_HEIGHT = 43.18;
-// Basing this on panel intellijel 1u panel height minus the 1U spec height.
-const SPEC_1U_PULP_LOGIC_HEIGHT = 4.8 + SPEC_1U_PULP_LOGIC_PANEL_HEIGHT;
-// This is based on the Future Music guide, and may apply only to TipTop Audio Z-Rails.
-const SPEC_3U_RAIL_HOLE_SPACING = 123;
-const SPEC_HEIGHT_TO_HOLE_SPACING_DIFF = 10.35; // 3U_SPEC_HEIGHT - 3U_SPEC_RAIL_HOLE_SPACING;
-const SPEC_1U_INTELLIJEL_RAIL_HOLE_SPACING =
-  SPEC_1U_INTELLIJEL_HEIGHT - SPEC_HEIGHT_TO_HOLE_SPACING_DIFF;
-const SPEC_1U_PULP_LOGIC_RAIL_HOLE_SPACING =
-  SPEC_1U_PULP_LOGIC_HEIGHT - SPEC_HEIGHT_TO_HOLE_SPACING_DIFF;
+// From Intellijel 1U Technical Specifications, for lipped rails with nut channel aligned
+// with drill hole.
+const MODEL_3U_ROW_HEIGHT = 133.35;
+const MODEL_3U_PANEL_HEIGHT = 128.5; // 4.85mm less than the row height
+const MODEL_3U_HOLE_SPACING = 122.5;
+const MODEL_1U_INTELLIJEL_ROW_HEIGHT = 44.45;
+const MODEL_1U_INTELLIJEL_PANEL_HEIGHT = 39.65; // 4.8mm less than the row height
+const MODEL_1U_INTELLIJEL_HOLE_SPACING = 33.65;
+
+// From PulpLogic_Standard-Tile-Dims-1024x624. hole spacing here refers to the panel holes
+// from this diagram where the panel is mounted to the rail. The row height here refers to
+// the row height as deduced for lipped rails based on numbers above. 4.85
+const MODEL_1U_PULP_LOGIC_PANEL_HEIGHT = 43.18; // 1.700 inches to mm
+const MODEL_1U_PULP_LOGIC_HOLE_SPACING = 37.1856; // (1.700 - 2 * 0.118) inches to mm
+const MODEL_1U_PULP_LOGIC_ROW_HEIGHT = 47.98; //MODEL_1U_PULP_LOGIC_PANEL_HEIGHT + 4.8
+
+const RAIL_PADDING = 1; // padding on either side of rail (2mm between 2 rows) (needed)?
 
 export const oneUFormats = {
   intellijel: {
     name: "Intellijel",
-    height: SPEC_1U_INTELLIJEL_HEIGHT,
-    railSeparation: SPEC_1U_INTELLIJEL_RAIL_HOLE_SPACING,
+    height: MODEL_1U_INTELLIJEL_ROW_HEIGHT,
+    railSeparation: MODEL_1U_INTELLIJEL_HOLE_SPACING,
   },
   pulplogic: {
     name: "Pulp Logic",
-    height: SPEC_1U_PULP_LOGIC_HEIGHT,
-    railSeparation: SPEC_1U_PULP_LOGIC_RAIL_HOLE_SPACING,
+    height: MODEL_1U_PULP_LOGIC_ROW_HEIGHT,
+    railSeparation: MODEL_1U_PULP_LOGIC_HOLE_SPACING,
   },
 };
 
@@ -35,10 +38,10 @@ export const DEFAULTS = {
   default1URows: [2], // Top row is 1U by default
   defaultAngle: 5,
   // Note, this actualPanelHeight is actually top of top rail to bottom of bottom rail for 3U.
-  actualPanelHeight: SPEC_3U_HEIGHT,
-  actual1UPanelHeight: SPEC_1U_INTELLIJEL_HEIGHT,
-  actualRailSeparation: SPEC_3U_RAIL_HOLE_SPACING,
-  actual1URailSeparation: SPEC_1U_INTELLIJEL_RAIL_HOLE_SPACING,
+  actualPanelHeight: MODEL_3U_ROW_HEIGHT,
+  actual1UPanelHeight: MODEL_1U_INTELLIJEL_ROW_HEIGHT,
+  actualRailSeparation: MODEL_3U_HOLE_SPACING,
+  actual1URailSeparation: MODEL_1U_INTELLIJEL_HOLE_SPACING,
   actualRailDepth: 14,
   actualPanelDepth: 60,
   actualPanelBackDepth: 40,
