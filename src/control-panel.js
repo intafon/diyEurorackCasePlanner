@@ -43,7 +43,7 @@ function _buildContent(contentEl, onDraw, onViewChange) {
 
   const matCell = _mkCell();
   matCell.appendChild(_mkLabel('Material'));
-  const matInput = _mkNumberInput('material-thickness', state.caseMaterialThickness, '50px');
+  const matInput = _mkNumberInput('material-thickness', state.caseMaterialThickness, '70px');
   matInput.addEventListener('input', (e) => {
     setTimeout(() => {
       state.caseMaterialThickness = parseFloat(e.target.value) || 0;
@@ -56,7 +56,7 @@ function _buildContent(contentEl, onDraw, onViewChange) {
   const hpCell = _mkCell();
   hpCell.appendChild(_mkLabel('Width'));
   // Event listener managed by setupHpWidthInput() to avoid duplicating readout logic
-  const hpInput = _mkNumberInput('hp-width-input', state.caseWidthHP, '50px');
+  const hpInput = _mkNumberInput('hp-width-input', state.caseWidthHP, '70px');
   hpCell.appendChild(hpInput);
   hpCell.appendChild(_mkUnit('hp'));
 
