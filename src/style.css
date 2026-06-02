@@ -25,6 +25,9 @@ body {
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     flex-shrink: 0;
     backdrop-filter: blur(10px);
+
+    height: 0px;
+    display:none;
 }
 
 #version-display {

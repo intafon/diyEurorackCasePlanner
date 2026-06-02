@@ -7,13 +7,17 @@ import {
   setupHpWidthInput,
 } from './ui.js';
 import { downloadDXF, downloadSVG } from './export.js';
+import packageJson from "../package.json";
 
 export function initControlPanel({ onDraw, onViewChange }) {
   setDrawCallback(onDraw);
+  const controlPanelTitle = packageJson.version
+    ? `intafon case build v.${packageJson.version}`
+    : "Controls";
 
   const panel = new FloatingPanel({
-    id: 'controls',
-    title: 'Controls',
+    id: "controls",
+    title: controlPanelTitle,
     initialPosition: { top: 20, left: 20 },
     width: 320,
   });
