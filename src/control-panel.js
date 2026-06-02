@@ -203,18 +203,21 @@ function _mkToggle(id, leftLabel, rightLabel, extraClass = '') {
   left.className = 'toggle-label-left';
   left.textContent = leftLabel;
 
+  const trackContainer = document.createElement('div');
+  trackContainer.className = 'toggle-track-container';
   const track = document.createElement('div');
   track.className = 'toggle-track';
+  trackContainer.appendChild(track);
   const thumb = document.createElement('div');
   thumb.className = 'toggle-thumb';
-  track.appendChild(thumb);
+  trackContainer.appendChild(thumb);
 
   const right = document.createElement('span');
   right.className = 'toggle-label-right';
   right.textContent = rightLabel;
 
   el.appendChild(left);
-  el.appendChild(track);
+  el.appendChild(trackContainer);
   el.appendChild(right);
   return el;
 }
