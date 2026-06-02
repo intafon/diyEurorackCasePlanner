@@ -20,12 +20,36 @@ See also:
 - https://synthracks.com/blog/eurorack-rails-diy-guide?srsltid=AfmBOops8cGy5piK0o_DyintmsoM1kGLyMX3Bb2VjouOHj4snzw1Pfgt
 
 Data for rails specifications
+
+-
+- zRails, modularsynthlab, and synthracks have lipped rails. drill hole aligns with channel center
+- synthrotek, vector rails do not have lip. drill hole does not align with channel center.
+- synthracks version has 2 side, lipped and non lipped; on both sides, drill hole center aligns with channel center.
+
 | Type | Lip Size | OE to Ch Center | OE to drill hole | drill hole depth* | tot depth | rail width |
 | -- | -- | -- | -- | --| --| --|
 | ZRails | 1.2mm | 5mm | 5mm | 14.3mm | 23.8mm | 10mm |
 | Synthrotek | 0mm | 3.6957mm | 4.5974mm | 15.5mm | 25.025mm | 7.394mm |
 * OE = Outsided Edge (away from center of panel)
 * drill hole depth = case surface to drill hole, perpendicular to row angle, for zRails includes the lip (2.8mm) since this will reflect panel thickness. will use same lip depth for synthrotek.
+
+From synthrotek_rail_template_fixed.pdf:
+| model | hole spacing (in) | hole spac (mm) | panel height (in) | panel ht (mm) |
+| -- | -- | -- | -- | -- |
+| 3U all | 4.741" | 120.4214mm | 5.1" | 129.54mm |
+| 1U intellijel | 1.25" | 31.75mm | 1.62" | 41.148mm |
+| 1U pulp logic | 1.389" | 35.2806mm | 1.76" | 44.704mm |
+
+From Intellijel 1U Technical Specifications.pdf:
+| model | row height (w/ lip?) | module panel ht | inner pcb ht | rail mt height |
+| -- | -- | -- | -- | -- |
+| 3U | 133.35mm | 128.5mm | 110.0mm | 122.5 |
+| 1U intellijel | 44.45mm | 39.65mm | 22.5mm | 33.65mm |
+
+
+From modwiggler:
+The intellijel 1U tiles are designed to work with rails with a lip and the Z-rails have them so they should at least work. The pulp Logics, as said, are designed to work with the full 1U space lip-less rails at the same spacing (1.75-inches or 44.45mm) and so run into the lips on the z-rails. The intellijel tiles are meant to fit the same 1U minus the thickness of the lips on the rails (around 1.2mm on each rail).
+https://www.modwiggler.com/forum/viewtopic.php?t=200211
 
 ---
 
