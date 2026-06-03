@@ -1,6 +1,6 @@
 {
   "name": "diy-eurorack-case-planner",
-  "version": "2.0.4-alpha",
+  "version": "2.0.5-alpha",
   "description": "A simple tool for planning DIY eurorack modular synthesizer cases",
   "type": "module",
   "scripts": {
