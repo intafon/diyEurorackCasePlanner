@@ -1,11 +1,14 @@
-/* Overrides for the help page — applied after src/style.css */
+/* Pull in the app base styles first so our overrides always win */
+@import url('./src/style.css');
+
+/* Overrides for the help page */
 
 html,
 body {
     background-color: #f0efeb;
     color: #1a1a1a;
     overflow-x: hidden;
-    overflow-y:auto;
+    overflow-y: auto;
     display: block;
     height: auto;
 }
