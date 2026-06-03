@@ -41,7 +41,7 @@ let threeCanvas;
 let svgCanvas;
 let cursorCanvas, cursorCtx;
 let activeView = "2d";
-let active2dSubview = "canvas"; // "canvas" | "svg"
+let active2dSubview = "svg"; // "canvas" | "svg"
 let _setSubviewToggleVisible = null;
 
 function draw2dView() {
@@ -305,6 +305,8 @@ function init() {
     onSubviewChange: setActive2dSubview,
   });
   _setSubviewToggleVisible = cp.setSubviewToggleVisible;
+  _setSubviewToggleVisible(false);
+  setActive2dSubview("svg");
   initInfoPanel();
 
   const resizeObserver = new ResizeObserver(() => {
