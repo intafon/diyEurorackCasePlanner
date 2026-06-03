@@ -483,6 +483,13 @@ dialog.floating-panel.fp-minimized .fp-content {
     margin: 7px 0;
 }
 
+/* ── Info panel ──────────────────────────────────────────────────────── */
+
+#info-outline-coords, #info-rail-screws {
+    font-size: 1em;
+    height: 6em;
+}
+
 /* ── Toggle switch ──────────────────────────────────────────────────────── */
 
 .toggle-switch {

@@ -1,5 +1,5 @@
 import { HP_TO_MM, oneUFormats } from "./constants.js";
-import { actualDistance, roundToPlace } from "./geometry.js";
+import { roundToPlace } from "./geometry.js";
 import { state } from "./state.js";
 
 let drawSideCallback = null;
@@ -148,66 +148,4 @@ export function setupHpWidthInput() {
     });
   }
   updateHpWidthReadouts();
-}
-
-export function writeSummary(
-  width,
-  height,
-  outlinePoints,
-  railScrewCoords,
-  cutPanels, caseBottomWidth,
-) {
-  const cabinetInfo = [
-    "Cabinet width, height, and depth: ",
-    actualDistance(caseBottomWidth, true) + " x " + actualDistance(height, true) + " x " + actualDistance(width, true),
-  ];
-
-  const info = [
-    cabinetInfo,
-  ];
-  document.getElementById("summary-div").innerHTML = info
-    .map((a) => a[0] + "<b>" + a[1] + "</b>")
-    .join("<br/>");
-
-  function processCoords(outlinePoints) {
-    console.info("processCoords", outlinePoints);
-    const ops = outlinePoints.slice(0);
-    const s = ops.reduce((acc, p) => {
-      acc.push(`(${roundToPlace(p.x, 2)}mm, ${roundToPlace(p.y, 2)}mm)`);
-      return acc;
-    }, []);
-    return s.join(", ");
-  }
-
-  function processRailScrewCoords(railScrewCoords) {
-    const rcs = railScrewCoords.slice(0);
-    const s = [];
-    while (rcs.length > 0) {
-      s.push(
-        `(${roundToPlace(rcs.shift(), 2)}mm, ${roundToPlace(rcs.shift(), 2)}mm)`
-      );
-    }
-    return s.join(", ");
-  }
-
-  const info2 = [
-    ["Coordinates for outline: ", processCoords(outlinePoints)],
-    ["Coordinates for rail screws: ", processRailScrewCoords(railScrewCoords)],
-  ];
-
-  let summaryHtml = info2
-    .map((a) => a[0] + "<b>" + a[1] + "</b>")
-    .join("<br/>");
-
-  if (cutPanels && cutPanels.length > 0) {
-    summaryHtml +=
-      "<br/><br/><b>Cut panel dimensions (depth x width):</b><br/>";
-    cutPanels.forEach((panel) => {
-      summaryHtml += `&nbsp;&nbsp;${panel.name}: <b>${roundToPlace(panel.height, 2)}mm x ${roundToPlace(panel.width, 2)}mm</b><br/>`;
-    });
-  }
-
-  document.getElementById("summary-div-2").innerHTML = summaryHtml;
-
-//   setupHpWidthInput();
 }

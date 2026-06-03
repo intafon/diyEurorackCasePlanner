@@ -19,9 +19,8 @@ import {
   resetCanvas,
   getCaseCoords,
 } from "./canvas-renderer.js";
-import { writeSummary } from "./ui.js";
 import { initControlPanel } from "./control-panel.js";
-import { initInfoPanel } from "./info-panel.js";
+import { initInfoPanel, updateInfoPanel } from "./info-panel.js";
 
 import packageJson from "../package.json";
 import { state } from "./state.js";
@@ -64,7 +63,7 @@ function draw2dView() {
   drawRowDrillHoleDistanceMarkers(panels);
   drawJointDistanceIndicators(panels, backWallInside);
 
-  writeSummary(maxX, maxY, outline, railScrewCoords, cutPanels, bottomWidth);
+  updateInfoPanel(maxX, maxY, outline, railScrewCoords, cutPanels, bottomWidth);
 
   drawAnOutline(frontPieceOutline, "#999999", [3, 3]);
   drawAnOutline(backPieceOutline, "#999999", [3, 3]);
