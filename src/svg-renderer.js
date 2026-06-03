@@ -1,3 +1,4 @@
+import "./svg-renderer.css";
 import { state } from "./state.js";
 import {
   rad,
@@ -96,12 +97,18 @@ function add(el) {
  * Mirrors writeCoords from canvas-renderer.
  * Adds a <text> element for a coordinate label at the given case coordinates.
  */
-export function writeCoordsSvg(x, y, showBelow, side, color) {
+export function writeCoordsSvg(
+  x,
+  y,
+  showBelow,
+  side,
+  cssClass = "side-panel-outline-coord-text"
+) {
   const yFactor = showBelow ? -1 : 1;
   const plot = getPlotSvg(x, y);
   const text = actualDistance(x) + ", " + actualDistance(y);
 
-  // Use SVG text-anchor instead of manual text-width measurement
+  // text-anchor stays as an SVG attribute — it varies per element at runtime
   let textAnchor, tx;
   if (side === "left") {
     textAnchor = "end";
@@ -116,10 +123,8 @@ export function writeCoordsSvg(x, y, showBelow, side, color) {
   const el = mk("text", {
     x: tx,
     y: ty,
-    "font-family": "sans-serif",
-    "font-size": "10",
     "text-anchor": textAnchor,
-    fill: color || "#000000",
+    class: cssClass,
   });
   el.textContent = text;
   add(el);
@@ -132,7 +137,7 @@ export function writeCoordsSvg(x, y, showBelow, side, color) {
  * pts: flat array of [x, y, x, y, ...] numbers, with optional non-number
  * markers interspersed (same contract as canvas drawPath).
  */
-export function drawPathSvg(pts, strokeColor = COLORS.outline) {
+export function drawPathSvg(pts) {
   if (!Array.isArray(pts)) {
     pts = Array.prototype.slice.call(pts);
   }
@@ -174,14 +179,7 @@ export function drawPathSvg(pts, strokeColor = COLORS.outline) {
     }
   }
 
-  add(
-    mk("path", {
-      d,
-      stroke: strokeColor,
-      "stroke-width": "1",
-      fill: "none",
-    })
-  );
+  add(mk("path", { d, class: "side-panel-outline" }));
 
   for (const lp of labeledPoints) {
     writeCoordsSvg(lp.x, lp.y, lp.showBelow, lp.side);
@@ -192,7 +190,7 @@ export function drawPathSvg(pts, strokeColor = COLORS.outline) {
  * Mirrors drawAnOutline from canvas-renderer.
  * Draws a closed polygon outline from an array of {x, y} case-coordinate points.
  */
-export function drawAnOutlineSvg(outlineData, color = "#CCCCCC99", dashes = []) {
+export function drawAnOutlineSvg(outlineData) {
   if (!outlineData || outlineData.length === 0) return;
 
   const plot0 = getPlotSvg(outlineData[0].x, outlineData[0].y);
@@ -204,18 +202,7 @@ export function drawAnOutlineSvg(outlineData, color = "#CCCCCC99", dashes = []) 
   }
   d += " Z";
 
-  const attrs = {
-    d,
-    stroke: color,
-    "stroke-width": "1",
-    fill: "none",
-  };
-
-  if (dashes && dashes.length > 0) {
-    attrs["stroke-dasharray"] = dashes.join(" ");
-  }
-
-  add(mk("path", attrs));
+  add(mk("path", { d, class: "other-panel-outline" }));
 }
 
 // ── Drill holes ───────────────────────────────────────────────────────────────
@@ -233,26 +220,23 @@ export function drawPanelRailHolesSvg(drillHoles) {
     const plot = getPlotSvg(screwX, screwY);
     const isBottomHole = index % 2 === 0;
 
-    // Outer ring (stroke only)
+    // Outer ring
     add(
       mk("circle", {
         cx: plot.x,
         cy: plot.y,
         r: DRILL_HOLE_2D_RADIUS,
-        stroke: COLORS.drillHole,
-        "stroke-width": "1",
-        fill: "none",
+        class: "drill-hole-circle",
       })
     );
 
-    // Centre dot (filled)
+    // Centre mark ring
     add(
       mk("circle", {
         cx: plot.x,
         cy: plot.y,
         r: DRILL_HOLE_2D_RADIUS / 5,
-        fill: COLORS.drillHole,
-        stroke: "none",
+        class: "drill-hole-dot",
       })
     );
 
@@ -261,7 +245,7 @@ export function drawPanelRailHolesSvg(drillHoles) {
       screwY,
       isBottomHole,
       isBottomHole ? "right" : "left",
-      COLORS.drillHole
+      "drill-hole-coord-text"
     );
 
     p.push(screwX, screwY);
@@ -278,11 +262,7 @@ export function drawPanelRailHolesSvg(drillHoles) {
  * Draws dashed lines between screw holes with measurement labels.
  */
 export function drawRowDrillHoleDistanceMarkersSvg(panels) {
-  const g = mk("g", {
-    stroke: COLORS.indicator,
-    fill: COLORS.indicator,
-    "stroke-dasharray": "3 4",
-  });
+  const g = mk("g");
   svgEl.appendChild(g);
 
   const parentEl = svgEl;
@@ -302,7 +282,7 @@ export function drawRowDrillHoleDistanceMarkersSvg(panels) {
         y1: plotBottom.y,
         x2: plotTop.x,
         y2: plotTop.y,
-        "stroke-width": "1",
+        class: "drill-hole-spacing-line",
       })
     );
 
@@ -321,11 +301,8 @@ export function drawRowDrillHoleDistanceMarkersSvg(panels) {
     const textEl = mk("text", {
       x: plotLabel.x,
       y: plotLabel.y + 4,
-      "font-family": "sans-serif",
-      "font-size": "9",
       "text-anchor": "middle",
-      fill: COLORS.indicator,
-      stroke: "none",
+      class: "row-height-angle-text",
     });
     textEl.textContent = text;
     add(textEl);
@@ -336,7 +313,7 @@ export function drawRowDrillHoleDistanceMarkersSvg(panels) {
 
 // ── Joint distance indicators ─────────────────────────────────────────────────
 
-function _arrowHeadSvg(toX, toY, angle, headLength, strokeColor) {
+function _arrowHeadSvg(toX, toY, angle, headLength) {
   const headAngle = Math.PI / 6;
   const x1 = toX - headLength * Math.cos(angle - headAngle);
   const y1 = toY - headLength * Math.sin(angle - headAngle);
@@ -346,9 +323,7 @@ function _arrowHeadSvg(toX, toY, angle, headLength, strokeColor) {
   add(
     mk("path", {
       d: `M ${toX} ${toY} L ${x1} ${y1} M ${toX} ${toY} L ${x2} ${y2}`,
-      stroke: strokeColor,
-      "stroke-width": "1",
-      fill: "none",
+      class: "row-depth-line",
     })
   );
 }
@@ -376,11 +351,11 @@ function _drawDistanceIndicatorSvg(
       y1: plotStart.y,
       x2: plotEnd.x,
       y2: plotEnd.y,
-      "stroke-width": "1",
+      class: "row-depth-line",
     })
   );
 
-  _arrowHeadSvg(plotEnd.x, plotEnd.y, angle, 6, COLORS.indicator);
+  _arrowHeadSvg(plotEnd.x, plotEnd.y, angle, 6);
 
   let labelX, labelY;
   if (labelPosition === "end") {
@@ -394,10 +369,7 @@ function _drawDistanceIndicatorSvg(
   const textEl = mk("text", {
     x: labelX,
     y: labelY,
-    "font-family": "sans-serif",
-    "font-size": "9",
-    fill: COLORS.indicator,
-    stroke: "none",
+    class: "row-depth-coord-text",
   });
   textEl.textContent = actualDistance(distance, false);
   add(textEl);
@@ -446,11 +418,7 @@ function _calculatePerpEndpoint(screw, angle, backWallX) {
  * Draws dashed indicator lines with arrow heads and measurement labels.
  */
 export function drawJointDistanceIndicatorsSvg(panels, backWallX) {
-  const g = mk("g", {
-    stroke: COLORS.indicator,
-    fill: COLORS.indicator,
-    "stroke-dasharray": "3 3",
-  });
+  const g = mk("g");
   svgEl.appendChild(g);
 
   const parentEl = svgEl;

@@ -1,0 +1,79 @@
+/* ── SVG renderer styles ────────────────────────────────────────────────── */
+
+/* Base text defaults — overrides the app-wide font-weight: 300 */
+#svg-canvas text {
+  font-family: sans-serif;
+  font-weight: 400;
+  /* font-size: 1rem; */
+}
+
+/* ── Side panel outline ───────────────────────────────────────────────── */
+
+.side-panel-outline {
+  stroke: #999999;
+  stroke-width: 1;
+  fill: none;
+}
+
+.side-panel-outline-coord-text {
+  font-size: 1rem;
+  fill: #333333;
+  /* font-weight: 900; */
+}
+
+/* ── Other panel outlines (front, back, shelf, base — dashed) ─────────── */
+
+.other-panel-outline {
+  stroke: #999999;
+  stroke-width: 1;
+  fill: none;
+  stroke-dasharray: 3 3;
+}
+
+/* ── Drill hole circles ───────────────────────────────────────────────── */
+
+.drill-hole-circle {
+  stroke: #a33;
+  stroke-width: 1;
+  fill: none;
+}
+
+/* Inner centre-mark ring — small radius reads visually as a dot */
+.drill-hole-dot {
+  stroke: #a33;
+  stroke-width: 1;
+  fill: none;
+}
+
+.drill-hole-coord-text {
+  font-size: .9rem;
+  fill: #a33;
+}
+
+/* ── Drill hole spacing lines (connects top/bottom screw holes per row) ── */
+
+.drill-hole-spacing-line {
+  stroke: #888888;
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+  fill: none;
+}
+
+.row-height-angle-text {
+  font-size: .9rem;
+  fill: #888888;
+}
+
+/* ── Row depth indicator lines and arrowheads ─────────────────────────── */
+
+.row-depth-line {
+  stroke: #888888;
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  fill: none;
+}
+
+.row-depth-coord-text {
+  font-size: .9rem;
+  fill: #888888;
+}

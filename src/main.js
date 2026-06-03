@@ -124,10 +124,10 @@ function drawSvgView() {
 
   updateInfoPanel(maxX, maxY, outline, railScrewCoords, cutPanels, bottomWidth);
 
-  drawAnOutlineSvg(frontPieceOutline, "#999999", [3, 3]);
-  drawAnOutlineSvg(backPieceOutline, "#999999", [3, 3]);
-  drawAnOutlineSvg(shelfPieceOutline, "#999999", [3, 3]);
-  drawAnOutlineSvg(baseBoardOutline, "#999999", [3, 3]);
+  drawAnOutlineSvg(frontPieceOutline);
+  drawAnOutlineSvg(backPieceOutline);
+  drawAnOutlineSvg(shelfPieceOutline);
+  drawAnOutlineSvg(baseBoardOutline);
 }
 
 // Unified draw — called by control panel callbacks so the correct view redraws.
