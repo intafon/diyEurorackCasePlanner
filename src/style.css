@@ -443,6 +443,10 @@ dialog.floating-panel.fp-minimized .fp-content {
 
 /* ── Control layout ─────────────────────────────────────────────────────── */
 
+.fp-section-title {
+    padding-bottom: 5px;
+}
+
 .fp-row {
     display: flex;
     align-items: center;

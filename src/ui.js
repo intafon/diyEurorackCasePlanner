@@ -120,7 +120,7 @@ export function update1UFormatToggle() {
   }
 }
 
-function updateHpWidthReadouts() {
+export function updateHpWidthReadouts() {
   const hpWidthMmDisplay = document.getElementById("hp-width-mm");
   const hpWidthMmBottomDisplay = document.getElementById("hp-width-mm-bottom");
   const innerWidth = state.caseWidthHP * HP_TO_MM;
@@ -253,22 +253,6 @@ export function writeSummary(
       summaryHtml += `&nbsp;&nbsp;${panel.name}: <b>${roundToPlace(panel.height, 2)}mm x ${roundToPlace(panel.width, 2)}mm</b><br/>`;
     });
   }
-
-  summaryHtml += "<br/>Panel widths from HP setting:&nbsp;";
-  summaryHtml +=
-    '<input type="text" id="hp-width-mm" value="' +
-    roundToPlace(state.caseWidthHP * HP_TO_MM, 2) +
-    '" readonly style="width: 80px;" />';
-  summaryHtml +=
-    '&nbsp;<span class="input-span unit">mm (front &amp; back)</span>';
-  summaryHtml +=
-    '&nbsp;&nbsp;<input type="text" id="hp-width-mm-bottom" value="' +
-    roundToPlace(
-      state.caseWidthHP * HP_TO_MM + 2 * state.caseMaterialThickness,
-      2
-    ) +
-    '" readonly style="width: 80px;" />';
-  summaryHtml += '&nbsp;<span class="input-span unit">mm (bottom/base)</span>';
 
   document.getElementById("summary-div-2").innerHTML = summaryHtml;
 
