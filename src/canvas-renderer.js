@@ -2,7 +2,7 @@ import { state } from "./state.js";
 import {
   rad,
   actualDistance,
-//   roundToPlace,
+  roundToPlace,
   getScrewHoleCoords,
 //   calculateCaseGeometry,
 } from "./geometry.js";
@@ -454,7 +454,8 @@ export function drawRowDrillHoleDistanceMarkers(panels) {
 
     const plotLabel = getPlot(labelCaseX, labelCaseY);
     ctx.font = "9px sans-serif";
-    const text = actualDistance(railSep, false);
+    const absoluteAngle = state.getActualRowAngle(i);
+    const text = actualDistance(railSep, false) + `, ${roundToPlace(absoluteAngle, 1)}° angle`;
     const textWidth = ctx.measureText(text).width;
     ctx.fillText(text, plotLabel.x - textWidth / 2, plotLabel.y + 4);
   });

@@ -155,62 +155,15 @@ export function writeSummary(
   height,
   outlinePoints,
   railScrewCoords,
-  cutPanels
+  cutPanels, caseBottomWidth,
 ) {
   const cabinetInfo = [
-    "Cabinet depth and height: ",
-    actualDistance(width, true) + " x " + actualDistance(height, true),
+    "Cabinet width, height, and depth: ",
+    actualDistance(caseBottomWidth, true) + " x " + actualDistance(height, true) + " x " + actualDistance(width, true),
   ];
-//   const has1URows = state.rowIs1U.some((is1U) => is1U);
-//   const oneUHeight = oneUFormats[state.selected1UFormat].height;
-//   let panelHeightInfo;
-//   if (has1URows) {
-//     panelHeightInfo = [
-//       "Panel heights: ",
-//       `3U: ${actualDistance(state.actualPanelHeight, true)}, 1U (${oneUFormats[state.selected1UFormat].name}): ${actualDistance(oneUHeight, true)}`,
-//     ];
-//   } else {
-//     panelHeightInfo = [
-//       "Panel height used: ",
-//       actualDistance(state.actualPanelHeight, true),
-//     ];
-//   }
-//   const panelDepthInfo = [
-//     "Panel depth used: ",
-//     actualDistance(state.actualPanelDepth, true),
-//   ];
-//   const panelBackDepthInfo = [
-//     "Panel back depth used: ",
-//     actualDistance(state.actualPanelBackDepth, true),
-//   ];
-//   const railDepthInfo = [
-//     "Rails depth inset: ",
-//     actualDistance(state.actualRailDepth, true),
-//   ];
-//   const railSpacingInfo = [
-//     "Rail screw spacing*: ",
-//     actualDistance(state.actualRailSeparation, true),
-//   ];
-  const totalRowtation = [
-    `Top row absolute rotation: `,
-    `${state.getActualRowAngle()}`,
-  ];
-//   const footnote = [
-//     "<b>*Note: rail spacing based on the measurements provided by " +
-//       '<a href="http://www.musicradar.com/tuition/tech/how-to-build-your-own-cardboard-' +
-//       "eurorack-modular-case-625196\">Future Music's cardboard DIY</a> " +
-//       "case using TipTop Audio Z-Rails.</b>",
-//     "",
-//   ];
+
   const info = [
     cabinetInfo,
-    // panelHeightInfo,
-    // panelDepthInfo,
-    // panelBackDepthInfo,
-    // railDepthInfo,
-    // railSpacingInfo,
-    totalRowtation,
-    // footnote,
   ];
   document.getElementById("summary-div").innerHTML = info
     .map((a) => a[0] + "<b>" + a[1] + "</b>")
@@ -256,5 +209,5 @@ export function writeSummary(
 
   document.getElementById("summary-div-2").innerHTML = summaryHtml;
 
-  setupHpWidthInput();
+//   setupHpWidthInput();
 }
