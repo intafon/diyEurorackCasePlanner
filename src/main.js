@@ -19,6 +19,16 @@ import {
   resetCanvas,
   getCaseCoords,
 } from "./canvas-renderer.js";
+import {
+  initSvg,
+  calculateViewScaleSvg,
+  resetSvg,
+  drawPathSvg,
+  drawPanelRailHolesSvg,
+  drawRowDrillHoleDistanceMarkersSvg,
+  drawJointDistanceIndicatorsSvg,
+  drawAnOutlineSvg,
+} from "./svg-renderer.js";
 import { initControlPanel } from "./control-panel.js";
 import { initInfoPanel, updateInfoPanel } from "./info-panel.js";
 
@@ -27,8 +37,11 @@ import { state } from "./state.js";
 
 let canvasDiv, canvas, ctx;
 let threeCanvas;
+let svgCanvas;
 let cursorCanvas, cursorCtx;
 let activeView = "2d";
+let active2dSubview = "canvas"; // "canvas" | "svg"
+let _setSubviewToggleVisible = null;
 
 function draw2dView() {
   const {
@@ -75,6 +88,85 @@ function draw2dView() {
   }
 }
 
+function drawSvgView() {
+  const {
+    maxX,
+    maxY,
+    panels,
+    outline,
+    drillHoles,
+    cutPanels,
+    backWallInside,
+    frontPieceOutline,
+    backPieceOutline,
+    shelfPieceOutline,
+    baseBoardOutline,
+    bottomWidth,
+  } = calculateCaseGeometry();
+
+  calculateViewScaleSvg(maxX, maxY);
+  resetSvg();
+
+  drawPathSvg(
+    outline.reduce((acc, p) => {
+      acc.push(p.x, p.y);
+      if (p.marker) {
+        acc.push(p.marker);
+      }
+      return acc;
+    }, [])
+  );
+
+  const railScrewCoords = drawPanelRailHolesSvg(drillHoles);
+  drawRowDrillHoleDistanceMarkersSvg(panels);
+  drawJointDistanceIndicatorsSvg(panels, backWallInside);
+
+  updateInfoPanel(maxX, maxY, outline, railScrewCoords, cutPanels, bottomWidth);
+
+  drawAnOutlineSvg(frontPieceOutline, "#999999", [3, 3]);
+  drawAnOutlineSvg(backPieceOutline, "#999999", [3, 3]);
+  drawAnOutlineSvg(shelfPieceOutline, "#999999", [3, 3]);
+  drawAnOutlineSvg(baseBoardOutline, "#999999", [3, 3]);
+}
+
+// Unified draw — called by control panel callbacks so the correct view redraws.
+function draw() {
+  if (activeView === "3d") {
+    buildScene();
+  } else if (active2dSubview === "svg") {
+    drawSvgView();
+  } else {
+    draw2dView();
+  }
+}
+
+// Switches between canvas and SVG within the 2D view.
+function setActive2dSubview(subview) {
+  active2dSubview = subview;
+  const w = canvasDiv.clientWidth;
+  const h = canvasDiv.clientHeight;
+
+  if (subview === "svg") {
+    canvas.style.display = "none";
+    svgCanvas.style.display = "block";
+    if (w > 0 && h > 0) {
+      svgCanvas.setAttribute("width", w);
+      svgCanvas.setAttribute("height", h);
+      drawSvgView();
+    }
+  } else {
+    svgCanvas.style.display = "none";
+    canvas.style.display = "block";
+    if (w > 0 && h > 0) {
+      canvas.width = w;
+      canvas.height = h;
+      ctx.fillStyle = "rgb(0, 0, 0)";
+      ctx.strokeStyle = "#999999";
+      draw2dView();
+    }
+  }
+}
+
 // Switches the visible canvas. The view toggle in the control panel manages
 // its own active class; this function only handles the canvas/renderer state.
 function setActiveView(view) {
@@ -83,16 +175,18 @@ function setActiveView(view) {
 
   if (view === "3d") {
     canvas.style.display = "none";
+    svgCanvas.style.display = "none";
     threeCanvas.style.display = "block";
+    if (_setSubviewToggleVisible) _setSubviewToggleVisible(false);
     resizeAllCanvases();
     buildScene();
     startRenderLoop();
   } else {
     stopRenderLoop();
     threeCanvas.style.display = "none";
-    canvas.style.display = "block";
-    resizeAllCanvases();
-    draw2dView();
+    if (_setSubviewToggleVisible) _setSubviewToggleVisible(true);
+    // Restore whichever 2D sub-view was last active
+    setActive2dSubview(active2dSubview);
   }
 }
 
@@ -104,18 +198,22 @@ function resizeAllCanvases() {
   cursorCanvas.width = w;
   cursorCanvas.height = h;
 
-  if (activeView === "2d") {
-    canvas.width = w;
-    canvas.height = h;
-    ctx.fillStyle = "rgb(0, 0, 0)";
-    ctx.strokeStyle = "#999999";
-    draw2dView();
-  } else {
+  if (activeView === "3d") {
     threeCanvas.width = w;
     threeCanvas.height = h;
     threeCanvas.style.width = w + "px";
     threeCanvas.style.height = h + "px";
     resizeThreeCanvas(w, h);
+  } else if (active2dSubview === "svg") {
+    svgCanvas.setAttribute("width", w);
+    svgCanvas.setAttribute("height", h);
+    drawSvgView();
+  } else {
+    canvas.width = w;
+    canvas.height = h;
+    ctx.fillStyle = "rgb(0, 0, 0)";
+    ctx.strokeStyle = "#999999";
+    draw2dView();
   }
 }
 
@@ -127,11 +225,14 @@ function init() {
   threeCanvas = document.getElementById("three-canvas");
   initThreeRenderer(threeCanvas);
 
+  svgCanvas = document.getElementById("svg-canvas");
+  initSvg(svgCanvas);
+
   cursorCanvas = document.getElementById("cursor-canvas");
   cursorCtx = cursorCanvas.getContext("2d");
 
   canvas.addEventListener("mousemove", (e) => {
-    if (activeView !== "2d") return;
+    if (activeView !== "2d" || active2dSubview !== "canvas") return;
     const rect = canvas.getBoundingClientRect();
     const canvasX = e.clientX - rect.left;
     const canvasY = e.clientY - rect.top;
@@ -170,7 +271,7 @@ function init() {
   });
 
   canvas.addEventListener("click", (e) => {
-    if (activeView !== "2d") return;
+    if (activeView !== "2d" || active2dSubview !== "canvas") return;
     const rect = canvas.getBoundingClientRect();
     const canvasX = e.clientX - rect.left;
     const canvasY = e.clientY - rect.top;
@@ -181,7 +282,12 @@ function init() {
     navigator.clipboard.writeText(`{x: ${xR}, y: ${yR}}`);
   });
 
-  initControlPanel({ onDraw: draw2dView, onViewChange: setActiveView });
+  const cp = initControlPanel({
+    onDraw: draw,
+    onViewChange: setActiveView,
+    onSubviewChange: setActive2dSubview,
+  });
+  _setSubviewToggleVisible = cp.setSubviewToggleVisible;
   initInfoPanel();
 
   const resizeObserver = new ResizeObserver(() => {

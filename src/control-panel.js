@@ -11,7 +11,7 @@ import { roundToPlace } from './geometry.js';
 import { downloadDXF, downloadSVG } from './export.js';
 import packageJson from "../package.json";
 
-export function initControlPanel({ onDraw, onViewChange }) {
+export function initControlPanel({ onDraw, onViewChange, onSubviewChange }) {
   setDrawCallback(onDraw);
   const controlPanelTitle = packageJson.version
     ? `intafon case build v.${packageJson.version}`
@@ -24,14 +24,21 @@ export function initControlPanel({ onDraw, onViewChange }) {
     width: 320,
   });
 
-  _buildContent(panel.contentEl, onDraw, onViewChange);
+  const { setSubviewToggleVisible } = _buildContent(
+    panel.contentEl,
+    onDraw,
+    onViewChange,
+    onSubviewChange
+  );
   panel.appendTo(document.body);
 
   resetRowControls(state.rowCount);
   setupHpWidthInput();
+
+  return { setSubviewToggleVisible };
 }
 
-function _buildContent(contentEl, onDraw, onViewChange) {
+function _buildContent(contentEl, onDraw, onViewChange, onSubviewChange) {
   // Row 1: 2D / 3D view toggle (full width)
   const viewRow = _mkRow();
   const viewToggle = _mkToggle("view-toggle", "Side View", "3D View");
@@ -41,6 +48,20 @@ function _buildContent(contentEl, onDraw, onViewChange) {
   });
   viewRow.appendChild(viewToggle);
   contentEl.appendChild(viewRow);
+
+  // Row 1b: Canvas / SVG sub-view toggle (only visible in 2D mode)
+  const subviewRow = _mkRow();
+  const subviewToggle = _mkToggle("subview-toggle", "Canvas", "SVG", "toggle-switch-sm");
+  subviewToggle.addEventListener("click", () => {
+    const isSvg = subviewToggle.classList.toggle("active");
+    if (onSubviewChange) onSubviewChange(isSvg ? "svg" : "canvas");
+  });
+  subviewRow.appendChild(subviewToggle);
+  contentEl.appendChild(subviewRow);
+
+  const setSubviewToggleVisible = (visible) => {
+    subviewRow.style.display = visible ? "flex" : "none";
+  };
 
   contentEl.appendChild(_mkDivider());
 
@@ -263,6 +284,8 @@ function _buildContent(contentEl, onDraw, onViewChange) {
   exportRow.appendChild(svgBtn);
   exportRow.appendChild(dxfBtn);
   contentEl.appendChild(exportRow);
+
+  return { setSubviewToggleVisible };
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────

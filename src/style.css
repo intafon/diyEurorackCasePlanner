@@ -117,7 +117,8 @@ input[readonly] {
 }
 
 #the-canvas,
-#three-canvas {
+#three-canvas,
+#svg-canvas {
     display: block;
     padding: 0px;
 }
