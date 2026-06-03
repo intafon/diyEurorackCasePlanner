@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>DIY Eurorack Case Planner – Help</title>
+        <link rel="stylesheet" href="./src/style.css" />
+        <link rel="stylesheet" href="./help.css" />
+    </head>
+    <body>
+        <div class="help-warning-box">
+            <div class="help-box-title">⚠️ Alpha Software Warning</div>
+            <div class="help-text">
+                This application is currently in alpha stage and the exported SVG shapes have not been verified to work using a laser cutter. (this is planned soon) Multiple cardboard and handcut thin wood models have been built by hand using the planner listed dimensions and cut points.
+            </div>
+            <div class="help-spacer"></div>
+            <div class="help-text">
+                Please verify all measurements and cut patterns in the SVG file; you will need to rearrange the panels to fit on the material of your choosing anyway in a vector drawing program. Use at your own discretion and always double-check exported files. Have fun!
+            </div>
+        </div>
+
+        <div class="help-note-box">
+            <div class="help-box-title help-box-title--note">ℹ️ Quick Note</div>
+            <div class="help-text">
+                Also, please note that the planner is currently meant for building cases using Tiptop ZRails; I am currently working on adding support for Synthrotek Rails, but have not yet implemented it.
+            </div>
+        </div>
+
+        <div class="help-docs">
+
+
+
+
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+
+
+<p>This is a somewhat simple one-page HTML app for messing around with planning how to build a DIY (cardboard) eurorack case. My original intent was just to create a tool that would allow me to visualize the angle for a 6U system case and gauge what amount of deskspace (and airspace) it would consume. It has since grown to support more rows (up to 5), 1U options (Intellijel and Pulp Logic), 3D case visualization, as well as an SVG/DXF export for laser cutting (outputs an SVG which you can pull into Adobe Illustrator or similar to arrange for laser cutting your material).</p>
+
+<p>It is loosely based on the <a href="http://www.musicradar.com/tuition/tech/how-to-build-your-own-cardboard-eurorack-modular-case-625196">Future Music guide for how to build your own cardboard eurorack modular case</a> and the accompanying PDF <a href="http://cdn.mos.musicradar.com/images/aaaroot/tech/7july15/DIY-Eurorack-case/CardboardCaseGuide.zip">CardboardCaseGuide</a>. Other references and specifications include:
+    <ul>
+        <li><a href="https://doepfer.de/a100_man/a100m_e.htm" target="_blank">Doepfer A-100 Construction Details</a></li>
+        <li><a href="https://intellijel.com/support/1u-technical-specifications/" target="_blank">Intellijel 1U Technical Specifications</a></li>
+        <li><a href="https://store.synthrotek.com/assets/images/Synthrotek-Eurorack-Rails-Technical-Drawing.jpeg" target="_blank">Synthrotek Rails Technical Drawing</a></li>
+        <li><a href="https://synthracks.com/blog/eurorack-rails-diy-guide" target="_blank">Synthracks Eurorack Rails DIY Guide</a></li>
+        <li><a href="https://www.exploding-shed.com/synth-diy-guides/standards-of-eurorack/eurorack-dimensions/" target="_blank">Exploding Shed Eurorack Dimensions</a> </li>
+        <li><a href="https://www.modwiggler.com/forum/viewtopic.php?t=155376" target="_blank">Modwiggler Eurorack Rails DIY post</a> </li>
+        <li><a href="https://www.synthrotek.com/wp-content/uploads/2023/06/rail_template_fixed.pdf" target="_blank">Synthrotek Rails Template</a> </li>
+        <li><a href="https://www.tiptopaudio.com/manuals/Tiptop_Audio_z-rails_data_sheet.pdf" target="_blank">Tiptop Z-Rails Data Sheet</a> </li>
+
+    </ul>
+</p>
+
+<p>
+    The most important concept in building this is to help line up the rails for build out. The most important thing about that is the spacing of the drill holes for the screws that go into the ends of the mounting rails. Second to that is the size that that rows take up. I combed through the specifications above to determine the spacing required for 3U and the 2 1U formats and started from there. The drill holes are then placed centered into the row size, whether that be the 133.35mm 3U size, or the 44.45mm Intellijel 1U row height. These heights accommodate the rails with the lips; the other non-lipped rails have drill hole positions offset from the channel onto which the modules mount <i>and</i> don't have the lips, so the hole spacing for mounting the rails and the row height changes somewhat. I have some Synthotek rails on order, so hopefully that will help figure that out a bit. For now, this goes with the Tiptop Z-Rails style rails, which have the lips, and for which the mounting channel is centered over the holes into which the screws go that attach the rails to the case sides.
+</p>
+
+<h3 id="features">Features</h3>
+
+<p>The first view that is shown is the side view. Originally this was constructed using HTML canvas but was recently updated to use SVG instead for better visual clarity and flexibility. The side view shows what the side profile of the case will be. There are also dotted outlines that represent the bottom panel/base for the case, the front panel, and the one or two back panels (depending on the configuration). Around the perimeter of the outline, the points are noted, starting with the origin point at the bottom left. These were added for the case where you might be cutting your own case parts manually and measuring with a ruler. In addition, the drill holes for the rails are marked for reference. Finally, there are some other reference lines and measurements that include the depth to the bottom of the case from a given row, the height of the row hole-to-hole spacing, and the absolute angle from zero for each row.</p>
+
+<p>The second view, the 3D view, shows a basic rendering of the case so you can spin it around an look at it. It also gives a representation of what the case and parts will look like when constructed using the SVG/DXF export for laser cutting. I have done my best to make the box joints as reasonable as possible. Given that the idea is to laser cut the parts, when parts do not meet at 90 angles, the box joints will mesh together but will potentially not be perfectly flush. The side view outlines of the parts show how the parts will meet without the box joints.</p>
+
+<p><b>NOTE: as noted, I have it marked as still in alpha as, though I have built a few prototypes from cardboard using the tool, I have not yet accessed a laser cutter to test prototypes that way. I currently (June 3, 2026) have 2 prototypes layed out and ready to go, but have not visited a local fab place yet to do the laser cutting – updates will ensue!</b></p>
+
+<p><b>ADDITIONALLY, as noted: this prototype currently only supports Tiptop Z-Rails (and possibly the double sided ones at www.synthwerks.com). I am currently working on adding support for Synthrotek Rails, but have not yet implemented it. The combination of the offset of the mounting holes and the nut channel, as well as the absense of the lip make it so that they do not work with this case designer.</b></p>
+
+<h3 id="export-features">Export Features</h3>
+
+<p>The planner now supports exporting diagrams for use with laser cutters:
+    <ul>
+    <li><b>SVG Export</b>: Download the diagram as an SVG file with separate layers for cut lines, drill holes, and reference lines.</li>
+    <li><b>DXF Export</b>: Download the diagram as a DXF file compatible with most CAD software and laser cutting services.</li>
+    </ul>
+    The exported SVG files are laid out such that the front, sides, back, etc. are laid out in a row, so if you want to apply a design for laser engraving in addition to the laser cutting, you can do so without moving stuff around too much. However, you will need to break up the panels into different artboards in Illustrator depending on your laser cutter bed size. To be honest, I used AI to generate the 2 formats, and you could probably do without the DXF format since you probably will want to move things around in Illustrator or another vector application.
+</p>
+
+<h3 id="parameters">Parameters</h3>
+
+<p>
+    There are several adjustable parameters in the planner.
+    <ul>
+        <li>Case material thickness - maybe a max of 5mm depending on your laser cutter, or maybe more if you are inventive...</li>
+        <li>Case width in HP</li>
+        <li>Module minimum depth to bottom and to the back of the case (when angled enough) - this allows you to make sure you can have a super flat case in the front, but then support your ES-9 in the back or middle. This depth marker lines also help out here.</li>
+        <li>The rows. Here you can set the number of rows, the relative angle to one another, 3U or 1U (Intellijel or Pulp Logic)</li>
+        <li>Flatten top shelf - in some configurations, the case is simpler to build with just a single back piece. At a certain point it makes more sense to have 2 piece at the top and back. The flatten top shelf allows you to set the angle of the topmost piece to a flat shelf, so it could be useful for putting things on, like small toys, tiny plants, or whatever.</li>
+    </ul>
+</p>
+
+
+
+
+
+
+
+<h3 id="finished-build">Finished build</h3>
+
+<p>The three photos below are of the first case I built from cardboard using the planner version 1 as a guide (and also the full bottom width measurement from the FM guide). The angles used were 10 and 15 degrees (where the 15 degree is from the 10 degree line, so actually 25 degrees). This uses 2 pair of Tiptop Audio Z-Rails, 84hp, and a Tiptop uZeus for power.</p>
+
+<p><img src="./imx/shape_finished.jpg" alt="Case without rails." title="Case without rails." /></p>
+<p><img src="./imx/case_finished.jpg" alt="Case with rails and modules." title="Case with rails and modules." /></p>
+<p><img src="./imx/3x3U_wood.jpeg" alt="Case with rails and modules." title="Case with rails and modules." /></p>
+
+<p>This photo is of a case built using version 2 with 1U support.</p>
+<p><img src="./imx/4U_intellijel_cardboard.jpeg" alt="Case with rails and modules." title="Case with rails and modules." /></p>
+
+<h3>Other me</h3>
+<p>To see some of the other stuff I’ve got going on, including where to find my music and places to connect, please check out <a href="https://intafon.com/">intafon.com</a>.</p>
+
+        </div>
+
+
+    </body>
+</html>

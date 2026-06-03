@@ -5,12 +5,14 @@ let _cabinetDimsEl = null;
 let _cutPanelsEl = null;
 let _outlineCoordsEl = null;
 let _railScrewsEl = null;
+let _openDocFunc = null;
 
-export function initInfoPanel() {
+export function initInfoPanel({ openDocFunc }) {
+  _openDocFunc = openDocFunc;
   const panel = new FloatingPanel({
     id: "info",
-    title: "Case Info",
-    initialPosition: { top: 20, left: 320 },
+    title: "Info",
+    initialPosition: { top: 20, left: 360 },
     width: 320,
   });
 
@@ -107,6 +109,15 @@ function _buildContent(contentEl) {
   contentEl.appendChild(_mkSectionTitle("Rail screw coordinates"));
   _railScrewsEl = _mkTextarea("info-rail-screws");
   contentEl.appendChild(_railScrewsEl);
+
+  contentEl.appendChild(_mkDivider());
+
+    const helpBtn = document.createElement("button");
+    helpBtn.type = "button";
+    helpBtn.className = "fp-export-btn help-btn";
+    helpBtn.textContent = "READ ME / HELP!";
+    helpBtn.addEventListener("click", () => _openDocFunc && _openDocFunc());
+  contentEl.appendChild(helpBtn);
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

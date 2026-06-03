@@ -612,3 +612,7 @@ dialog.floating-panel.fp-minimized .fp-content {
     background-color: rgba(171, 171, 171, 0.35);
     transform: translateY(1px);
 }
+
+.help-btn {
+    width: 100%;
+}

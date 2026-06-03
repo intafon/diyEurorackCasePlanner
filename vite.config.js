@@ -5,6 +5,12 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
+    rollupOptions: {
+      input: {
+        main: 'index.html',
+        help: 'help.html',
+      },
+    },
   },
   publicDir: 'public',
   server: {

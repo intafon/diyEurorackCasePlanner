@@ -26,8 +26,12 @@
                 border: 1px solid rgba(255, 255, 255, 0.1);
                 padding: 24px;
                 border-radius: 3px;
-                max-width: 480px;
-                width: 90%;
+                width: 50vw;
+                max-width: 900px;
+                height: 80vh;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
                 box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
                 text-align: center;
                 font-family: Helvetica, Arial, sans-serif;
@@ -41,43 +45,28 @@
             .popup-title {
                 font-size: 14px;
                 font-weight: 400;
-                margin-bottom: 12px;
                 color: rgba(255, 255, 255, 0.95);
                 letter-spacing: 0.05rem;
+                flex-shrink: 0;
             }
 
             .popup-version {
                 font-size: 12px;
                 color: rgba(255, 255, 255, 0.8);
-                margin-bottom: 16px;
                 background: rgba(255, 255, 255, 0.08);
                 border: 1px solid rgba(255, 255, 255, 0.2);
                 padding: 8px 12px;
                 border-radius: 2px;
                 font-weight: 300;
+                flex-shrink: 0;
             }
 
-            .popup-warning {
-                background-color: rgba(255, 193, 7, 0.1);
-                border: 1px solid rgba(255, 193, 7, 0.3);
-                padding: 12px;
+            .popup-iframe {
+                flex: 1;
+                width: 100%;
+                border: 1px solid rgba(255, 255, 255, 0.1);
                 border-radius: 2px;
-                margin-bottom: 16px;
-                text-align: left;
-            }
-
-            .popup-warning-title {
-                font-weight: 400;
-                color: rgba(255, 193, 7, 0.9);
-                margin-bottom: 6px;
-                font-size: 11px;
-                text-align: center;
-            }
-
-            .popup-warning-text {
-                color: rgba(255, 255, 255, 0.85);
-                line-height: 1.4;
-                font-size: 11px;
+                min-height: 0;
             }
 
             .popup-close-btn {
@@ -117,21 +106,12 @@
                 <div class="popup-version">
                     Version: <span id="popup-version-text">loading...</span>
                 </div>
-                <div class="popup-warning">
-                    <div class="popup-warning-title">⚠️ Alpha Software Warning</div>
-                    <div class="popup-warning-text">
-                        This application is currently in alpha stage and the exported SVG shapes have not been verified to work using a laser cutter. (this is planned soon) Multiple cardboard and handcut thin wood models have been built by hand using the planner listed dimensions and cut points.
-                    </div>
-                    <div><br/></div>
-                    <div class="popup-warning-text">
-                        Please verify all measurements and cut patterns in the SVG file; you will need to rearrange the panels to fit on the material of your choosing anyway in a vector drawing program. Use at your own discretion and always double-check exported files. Have fun!
-                    </div>
-                    <div><br/></div>
-                    <div class="popup-warning-title">ℹ️ Quick Note</div>
-                    <div class="popup-warning-text">
-                        Also, please note that the planner is currently meant for building cases using Tiptop ZRails; I am currently working on adding support for Synthrotek Rails, but have not yet implemented it.
-                    </div>
-                </div>
+                <iframe
+                    id="help-iframe"
+                    src="./help.html"
+                    class="popup-iframe"
+                    title="Help"
+                ></iframe>
                 <button id="popup-close-btn" class="popup-close-btn">OK! Allons-y!</button>
             </div>
         </div>

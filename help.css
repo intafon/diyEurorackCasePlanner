@@ -1,0 +1,73 @@
+/* Overrides for the help page — applied after src/style.css */
+
+html,
+body {
+    background-color: #f0efeb;
+    color: #1a1a1a;
+    overflow-x: hidden;
+    overflow-y:auto;
+    display: block;
+    height: auto;
+}
+
+/* body {
+    padding: 16px;
+} */
+
+.help-warning-box {
+    background-color: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.4);
+    padding: 12px;
+    border-radius: 2px;
+    margin-bottom: 10px;
+    margin: 10px;
+}
+
+.help-note-box {
+    background-color: rgba(100, 160, 210, 0.1);
+    border: 1px solid rgba(100, 160, 210, 0.35);
+    padding: 12px;
+    border-radius: 2px;
+    margin-bottom: 10px;
+    margin: 10px;
+}
+
+.help-box-title {
+    font-weight: 400;
+    color: rgba(160, 110, 0, 0.95);
+    margin-bottom: 6px;
+    text-align: center;
+}
+
+.help-box-title--note {
+    color: rgba(50, 120, 180, 0.95);
+}
+
+.help-text {
+    color: #2a2a2a;
+    line-height: 1.5;
+}
+
+.help-spacer {
+    height: 8px;
+}
+
+.help-docs {
+    font-size: 1.2em;
+    /* text-align: center; */
+    color: #0a0a0a;
+    /* font-style: italic; */
+    padding: 16px 0;
+    margin: 10px;
+}
+
+.help-docs  a:link {
+    color: #000000;
+}
+.help-docs b {
+    color: #000000;
+}
+
+.help-docs img {
+    width: 100%;
+}

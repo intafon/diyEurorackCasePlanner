@@ -307,12 +307,19 @@ function init() {
   _setSubviewToggleVisible = cp.setSubviewToggleVisible;
   _setSubviewToggleVisible(false);
   setActive2dSubview("svg");
-  initInfoPanel();
+  initInfoPanel({ openDocFunc: openHelpDoc });
 
   const resizeObserver = new ResizeObserver(() => {
     resizeAllCanvases();
   });
   resizeObserver.observe(canvasDiv);
+}
+
+function openHelpDoc() {
+    const popup = document.getElementById("version-popup");
+    if (popup) {
+        popup.classList.remove("hidden");
+    }
 }
 
 function initVersionDisplay() {
