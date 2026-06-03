@@ -45,6 +45,14 @@ export function getPlotSvg(x, y) {
   };
 }
 
+/** Inverse of getPlotSvg — converts SVG pixel coords back to case mm coords. */
+export function getCaseCoordsFromSvg(svgX, svgY) {
+  return {
+    x: ((svgX - svgStartX()) * state.heightRatio) / state.viewScale,
+    y: ((svgStartY() - svgY) * state.heightRatio) / state.viewScale,
+  };
+}
+
 export function calculateViewScaleSvg(maxX, maxY) {
   _svgWidth =
     parseFloat(svgEl.getAttribute("width")) || svgEl.clientWidth || 300;

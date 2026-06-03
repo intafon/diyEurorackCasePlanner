@@ -28,6 +28,7 @@ import {
   drawRowDrillHoleDistanceMarkersSvg,
   drawJointDistanceIndicatorsSvg,
   drawAnOutlineSvg,
+  getCaseCoordsFromSvg,
 } from "./svg-renderer.js";
 import { initControlPanel } from "./control-panel.js";
 import { initInfoPanel, updateInfoPanel } from "./info-panel.js";
@@ -231,15 +232,9 @@ function init() {
   cursorCanvas = document.getElementById("cursor-canvas");
   cursorCtx = cursorCanvas.getContext("2d");
 
-  canvas.addEventListener("mousemove", (e) => {
-    if (activeView !== "2d" || active2dSubview !== "canvas") return;
-    const rect = canvas.getBoundingClientRect();
-    const canvasX = e.clientX - rect.left;
-    const canvasY = e.clientY - rect.top;
-    const { x, y } = getCaseCoords(canvasX, canvasY);
-
-    const xR = Math.round(x * 100) / 100;
-    const yR = Math.round(y * 100) / 100;
+  function _drawCursorTooltip(clientX, clientY, caseX, caseY) {
+    const xR = Math.round(caseX * 100) / 100;
+    const yR = Math.round(caseY * 100) / 100;
     const text = `x: ${xR}mm, y: ${yR}mm`;
 
     cursorCtx.clearRect(0, 0, cursorCanvas.width, cursorCanvas.height);
@@ -249,14 +244,15 @@ function init() {
     const textH = 10;
     const pad = 4;
 
-    let bx = canvasX + 14;
-    let by = canvasY - textH - pad * 2 - 4;
+    const rect = cursorCanvas.getBoundingClientRect();
+    let bx = clientX - rect.left + 14;
+    let by = clientY - rect.top - textH - pad * 2 - 4;
 
     if (bx + textW + pad * 2 > cursorCanvas.width) {
-      bx = canvasX - textW - pad * 2 - 14;
+      bx = clientX - rect.left - textW - pad * 2 - 14;
     }
     if (by < 0) {
-      by = canvasY + 14;
+      by = clientY - rect.top + 14;
     }
 
     cursorCtx.fillStyle = "rgba(20, 20, 20, 0.72)";
@@ -264,6 +260,13 @@ function init() {
 
     cursorCtx.fillStyle = "rgba(255, 255, 255, 0.92)";
     cursorCtx.fillText(text, bx, by + textH);
+  }
+
+  canvas.addEventListener("mousemove", (e) => {
+    if (activeView !== "2d" || active2dSubview !== "canvas") return;
+    const rect = canvas.getBoundingClientRect();
+    const { x, y } = getCaseCoords(e.clientX - rect.left, e.clientY - rect.top);
+    _drawCursorTooltip(e.clientX, e.clientY, x, y);
   });
 
   canvas.addEventListener("mouseleave", () => {
@@ -280,6 +283,20 @@ function init() {
     const xR = Math.round(x * 100) / 100;
     const yR = Math.round(y * 100) / 100;
     navigator.clipboard.writeText(`{x: ${xR}, y: ${yR}}`);
+  });
+
+  svgCanvas.addEventListener("mousemove", (e) => {
+    if (activeView !== "2d" || active2dSubview !== "svg") return;
+    const rect = svgCanvas.getBoundingClientRect();
+    const { x, y } = getCaseCoordsFromSvg(
+      e.clientX - rect.left,
+      e.clientY - rect.top
+    );
+    _drawCursorTooltip(e.clientX, e.clientY, x, y);
+  });
+
+  svgCanvas.addEventListener("mouseleave", () => {
+    cursorCtx.clearRect(0, 0, cursorCanvas.width, cursorCanvas.height);
   });
 
   const cp = initControlPanel({
