@@ -185,7 +185,7 @@ function setActiveView(view) {
   } else {
     stopRenderLoop();
     threeCanvas.style.display = "none";
-    if (_setSubviewToggleVisible) _setSubviewToggleVisible(true);
+    if (_setSubviewToggleVisible) _setSubviewToggleVisible(false);
     // Restore whichever 2D sub-view was last active
     setActive2dSubview(active2dSubview);
   }
