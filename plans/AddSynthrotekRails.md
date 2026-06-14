@@ -21,6 +21,20 @@ See also:
 
 Data for rails specifications
 
+---
+Measurements created manually and used to create halliburton zero case:
+- 0mm - top of case, 1U row
+- 4.7mm - first rail drill hole for 1U row
+- 36.45mm - second rail drill hole for 1U row
+- 41.148mm - end of 1U row
+- 46.23mm - first rail hole for first 3U row
+- 165.6mm - second rail hole for first 3U row
+- 170.688mm - end of 2nd row
+- 175.77mm - first rail hole for 2nd 3U row
+- 295.15mm - second rail hole for 2nd 3U row
+- 300.228mm - end of 2nd 3U row
+---
+
 -
 - zRails, modularsynthlab, and synthracks have lipped rails. drill hole aligns with channel center
 - synthrotek, vector rails do not have lip. drill hole does not align with channel center.
